@@ -1,0 +1,7 @@
+<!-- guardian_active_gradient.xml -->
+<gradient xmlns:android="http://schemas.android.com/apk/res/android"
+    android:angle="90"
+    android:startColor="#D32F2F"
+    android:centerColor="#F44336"
+    android:endColor="#FF5722"
+    android:type="linear" />

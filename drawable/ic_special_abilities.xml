@@ -1,0 +1,26 @@
+<!-- ============== ICONOS DE HABILIDADES ESPECIALES ============== -->
+
+<!-- ic_special_abilities.xml -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="28dp"
+    android:height="28dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="#FF6F00"
+        android:pathData="M7,2L13,8L7,14L1,8L7,2M7,4.83L3.83,8L7,11.17L10.17,8L7,4.83M17.5,3C18.3,3 19,3.7 19,4.5V5.5C19,6.3 18.3,7 17.5,7S16,6.3 16,5.5V4.5C16,3.7 16.7,3 17.5,3M17.5,9C18.3,9 19,9.7 19,10.5V11.5C19,12.3 18.3,13 17.5,13S16,12.3 16,11.5V10.5C16,9.7 16.7,9 17.5,9M17.5,15C18.3,15 19,15.7 19,16.5V17.5C19,18.3 18.3,19 17.5,19S16,18.3 16,17.5V16.5C16,15.7 16.7,15 17.5,15M17.5,21C18.3,21 19,21.7 19,22.5V23.5C19,24.3 18.3,25 17.5,25S16,24.3 16,23.5V22.5C16,21.7 16.7,21 17.5,21" />
+</vector>
+
+    <!-- ic_night_vision.xml -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+android:width="32dp"
+android:height="32dp"
+android:viewportWidth="24"
+android:viewportHeight="24">
+<path
+    android:fillColor="#00E676"
+    android:pathData="M12,9A3,3 0 0,0 9,12A3,3 0 0,0 12,15A3,3 0 0,0 15,12A3,3 0 0,0 12,9M12,17A5,5 0 0,1 7,12A5,5 0 0,1 12,7A5,5 0 0,1 17,12A5,5 0 0,1 12,17M12,4.5C7,4.5 2.73,7.61 1,12C2.73,16.39 7,19.5 12,19.5C17,19.5 21.27,16.39 23,12C21.27,7.61 17,4.5 12,4.5Z" />
+<!-- Círculos de visión nocturna -->
+<circle android:fillColor="none" android:strokeColor="#00E676" android:strokeWidth="1" android:cx="12" android:cy="12" android:r="8"/>
+<circle android:fillColor="none" android:strokeColor="#00E676" android:strokeWidth="0.5" android:cx="12" android:cy="12" android:r="10"/>
+</vector>

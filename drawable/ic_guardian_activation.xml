@@ -1,0 +1,14 @@
+<!-- ic_guardian_activation.xml -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M8,5.14V19.14L19,12.14L8,5.14Z" />
+    <!-- Chispas de activación -->
+    <path
+        android:fillColor="#FFD700"
+        android:pathData="M21,12L18,9V11H14V13H18V15L21,12M3,12L6,15V13H10V11H6V9L3,12M12,3L15,6H13V10H11V6H9L12,3M12,21L9,18H11V14H13V18H15L12,21" />
+</vector>

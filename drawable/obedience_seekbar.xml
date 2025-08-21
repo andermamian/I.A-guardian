@@ -1,0 +1,21 @@
+<!-- obedience_seekbar.xml -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:id="@android:id/background">
+        <shape android:shape="rectangle">
+            <corners android:radius="4dp"/>
+            <solid android:color="#E0E0E0"/>
+        </shape>
+    </item>
+    <item android:id="@android:id/progress">
+        <clip>
+            <shape android:shape="rectangle">
+                <corners android:radius="4dp"/>
+                <gradient
+                    android:startColor="#D1C4E9"
+                    android:centerColor="#9575CD"
+                    android:endColor="#6A1B9A"
+                    android:angle="0"/>
+            </shape>
+        </clip>
+    </item>
+</layer-list>

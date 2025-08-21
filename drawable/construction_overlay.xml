@@ -1,0 +1,15 @@
+
+<!-- ic_creation_magic.xml - Flecha mágica de creación -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="32dp"
+    android:height="32dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="#FFD700"
+        android:pathData="M7,2L13,8L7,14L1,8L7,2M7,4.83L3.83,8L7,11.17L10.17,8L7,4.83M17.5,9C18.3,9 19,9.7 19,10.5V11.5C19,12.3 18.3,13 17.5,13S16,12.3 16,11.5V10.5C16,9.7 16.7,9 17.5,9M17.5,15C18.3,15 19,15.7 19,16.5V17.5C19,18.3 18.3,19 17.5,19S16,18.3 16,17.5V16.5C16,15.7 16.7,15 17.5,15M17.5,21C18.3,21 19,21.7 19,22.5V23.5C19,24.3 18.3,25 17.5,25S16,24.3 16,23.5V22.5C16,21.7 16.7,21 17.5,21" />
+    <!-- Partículas mágicas -->
+    <circle android:fillColor="#FFFFFF" android:cx="11" android:cy="6" android:r="1"/>
+    <circle android:fillColor="#FFFFFF" android:cx="14" android:cy="10" android:r="0.5"/>
+    <circle android:fillColor="#FFFFFF" android:cx="9" android:cy="12" android:r="0.7"/>
+</vector>

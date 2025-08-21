@@ -1,0 +1,105 @@
+<!-- ============== TRANSFERENCIA DE DATOS - ic_data_transfer.xml ============== -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+
+    <!-- SERVIDOR ORIGEN -->
+    <rect
+        android:width="6"
+        android:height="8"
+        android:x="2"
+        android:y="8"
+        android:fillColor="#3F51B5"
+        android:rx="1" />
+
+    <!-- LUCES DEL SERVIDOR -->
+    <circle
+        android:cx="4"
+        android:cy="10"
+        android:radius="0.5"
+        android:fillColor="#00E676" />
+
+    <circle
+        android:cx="6"
+        android:cy="10"
+        android:radius="0.5"
+        android:fillColor="#00E676" />
+
+    <circle
+        android:cx="4"
+        android:cy="12"
+        android:radius="0.5"
+        android:fillColor="#FFC107" />
+
+    <circle
+        android:cx="6"
+        android:cy="12"
+        android:radius="0.5"
+        android:fillColor="#FFC107" />
+
+    <!-- SERVIDOR DESTINO -->
+    <rect
+        android:width="6"
+        android:height="8"
+        android:x="16"
+        android:y="8"
+        android:fillColor="#3F51B5"
+        android:rx="1" />
+
+    <!-- LUCES DEL SERVIDOR DESTINO -->
+    <circle
+        android:cx="18"
+        android:cy="10"
+        android:radius="0.5"
+        android:fillColor="#00E676" />
+
+    <circle
+        android:cx="20"
+        android:cy="10"
+        android:radius="0.5"
+        android:fillColor="#00E676" />
+
+    <circle
+        android:cx="18"
+        android:cy="12"
+        android:radius="0.5"
+        android:fillColor="#FFC107" />
+
+    <circle
+        android:cx="20"
+        android:cy="12"
+        android:radius="0.5"
+        android:fillColor="#FFC107" />
+
+    <!-- FLECHA DE TRANSFERENCIA -->
+    <path
+        android:pathData="M8,12 L16,12"
+        android:strokeColor="#2196F3"
+        android:strokeWidth="2" />
+
+    <path
+        android:pathData="M13,9 L16,12 L13,15"
+        android:strokeColor="#2196F3"
+        android:strokeWidth="2"
+        android:fillType="nonZero" />
+
+    <!-- PAQUETES DE DATOS -->
+    <rect
+        android:width="2"
+        android:height="1"
+        android:x="10"
+        android:y="11.5"
+        android:fillColor="#FF5722"
+        android:rx="0.5" />
+
+    <rect
+        android:width="1.5"
+        android:height="1"
+        android:x="11.5"
+        android:y="10"
+        android:fillColor="#FF9800"
+        android:rx="0.5" />
+
+</vector>

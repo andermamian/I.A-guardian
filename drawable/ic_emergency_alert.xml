@@ -1,0 +1,15 @@
+<!-- ic_emergency_alert.xml -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="20dp"
+    android:height="20dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M13,13H11V7H13M13,17H11V15H13M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z" />
+    <!-- Señal de emergencia -->
+    <path
+        android:fillColor="#FF1744"
+        android:pathData="M12,1L21,8L12,15L3,8L12,1Z"
+        android:alpha="0.8" />
+</vector>

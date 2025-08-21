@@ -1,0 +1,14 @@
+<!-- ic_sisterhood_comm.xml -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="#E91E63"
+        android:pathData="M20,2H4A2,2 0 0,0 2,4V22L6,18H20A2,2 0 0,0 22,16V4C22,2.89 21.1,2 20,2M6,9V7H18V9H6M14,11V13H6V11H14M16,15V17H6V15H16Z" />
+    <!-- Corazones de hermandad -->
+    <path
+        android:fillColor="#4A90E2"
+        android:pathData="M12,21.35L10.55,20.03C8.4,18.16 7,16.28 7,14.5C7,12.42 8.42,11 10.5,11C11.24,11 11.91,11.31 12.5,11.75C13.09,11.31 13.76,11 14.5,11C16.58,11 18,12.42 18,14.5C18,16.28 16.6,18.16 14.45,20.03L13,21.35Z" />
+</vector>

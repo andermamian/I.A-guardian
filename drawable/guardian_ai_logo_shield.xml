@@ -1,0 +1,68 @@
+<!-- ============== LOGO PRINCIPAL - guardian_ai_logo_shield.xml ============== -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="72dp"
+    android:height="72dp"
+    android:viewportWidth="72"
+    android:viewportHeight="72">
+
+    <!-- ESCUDO BASE -->
+    <path
+        android:pathData="M36,4 L60,16 L60,42 Q60,56 36,68 Q12,56 12,42 L12,16 Z"
+        android:fillColor="#D32F2F"
+        android:strokeColor="#B71C1C"
+        android:strokeWidth="2" />
+
+    <!-- GRADIENTE INTERNO -->
+    <path
+        android:pathData="M36,8 L56,18 L56,40 Q56,52 36,62 Q16,52 16,40 L16,18 Z"
+        android:fillColor="#F44336" />
+
+    <!-- SÍMBOLO AI EN EL CENTRO -->
+    <path
+        android:pathData="M30,28 L42,28 L42,32 L30,32 Z"
+        android:fillColor="#FFFFFF" />
+
+    <path
+        android:pathData="M28,34 L32,34 L32,44 L28,44 Z"
+        android:fillColor="#FFFFFF" />
+
+    <path
+        android:pathData="M40,34 L44,34 L44,44 L40,44 Z"
+        android:fillColor="#FFFFFF" />
+
+    <!-- CIRCUITO NEURAL -->
+    <circle
+        android:cx="24"
+        android:cy="24"
+        android:radius="2"
+        android:fillColor="#FFFFFF" />
+
+    <circle
+        android:cx="48"
+        android:cy="24"
+        android:radius="2"
+        android:fillColor="#FFFFFF" />
+
+    <circle
+        android:cx="36"
+        android:cy="48"
+        android:radius="2"
+        android:fillColor="#FFFFFF" />
+
+    <!-- CONEXIONES NEURALES -->
+    <path
+        android:pathData="M24,24 L36,28"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="1.5" />
+
+    <path
+        android:pathData="M48,24 L36,28"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="1.5" />
+
+    <path
+        android:pathData="M36,32 L36,48"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="1.5" />
+
+</vector>

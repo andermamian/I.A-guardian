@@ -1,0 +1,39 @@
+<!-- ============== LISTA VACÍA - ic_empty_contact_list.xml ============== -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="120dp"
+    android:height="120dp"
+    android:viewportWidth="120"
+    android:viewportHeight="120">
+
+    <!-- CÍRCULO BASE -->
+    <circle
+        android:cx="60"
+        android:cy="60"
+        android:r="50"
+        android:fillColor="#E0E0E0"
+        android:strokeColor="#BDBDBD"
+        android:strokeWidth="2" />
+
+    <!-- PERSONA VACÍA -->
+    <circle
+        android:cx="60"
+        android:cy="45"
+        android:r="12"
+        android:fillColor="#BDBDBD" />
+
+    <path
+        android:pathData="M60,65 C50,65 42,73 42,83 L78,83 C78,73 70,65 60,65 Z"
+        android:fillColor="#BDBDBD" />
+
+    <!-- X TACHADO -->
+    <path
+        android:pathData="M35,35 L85,85"
+        android:strokeColor="#F44336"
+        android:strokeWidth="4" />
+
+    <path
+        android:pathData="M85,35 L35,85"
+        android:strokeColor="#F44336"
+        android:strokeWidth="4" />
+
+</vector>

@@ -1,0 +1,9 @@
+<!-- pulse_dot_active.xml - Pulso de vida de Guardian -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item>
+        <shape android:shape="oval">
+            <solid android:color="#00E676"/>
+            <size android:width="8dp" android:height="8dp"/>
+        </shape>
+    </item>
+</selector>

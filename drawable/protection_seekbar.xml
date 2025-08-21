@@ -1,0 +1,21 @@
+<!-- protection_seekbar.xml -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:id="@android:id/background">
+        <shape android:shape="rectangle">
+            <corners android:radius="4dp"/>
+            <solid android:color="#E0E0E0"/>
+        </shape>
+    </item>
+    <item android:id="@android:id/progress">
+        <clip>
+            <shape android:shape="rectangle">
+                <corners android:radius="4dp"/>
+                <gradient
+                    android:startColor="#FFCDD2"
+                    android:centerColor="#EF5350"
+                    android:endColor="#D32F2F"
+                    android:angle="0"/>
+            </shape>
+        </clip>
+    </item>
+</layer-list>

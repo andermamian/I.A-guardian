@@ -1,0 +1,13 @@
+
+<!-- ============== MENSAJE - ic_message_edit.xml ============== -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="16dp"
+    android:height="16dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+
+    <path
+        android:pathData="M20,2H4A2,2 0 0,0 2,4V16A2,2 0 0,0 4,18H18L22,22V4A2,2 0 0,0 20,2M6,9V7H18V9H6M14,11V13H6V11H14Z"
+        android:fillColor="#4CAF50" />
+
+</vector>

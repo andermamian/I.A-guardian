@@ -1,0 +1,93 @@
+<!-- ============== ESCUDO PROTECTOR - ic_protect_shield.xml ============== -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+
+    <!-- ESCUDO BASE -->
+    <path
+        android:pathData="M12,2 L20,6 L20,12 C20,18 12,22 12,22 C12,22 4,18 4,12 L4,6 L12,2 Z"
+        android:fillColor="#FF9800"
+        android:strokeColor="#F57C00"
+        android:strokeWidth="1" />
+
+    <!-- GRADIENTE INTERNO -->
+    <path
+        android:pathData="M12,4 L18,7 L18,12 C18,16.5 12,20 12,20 C12,20 6,16.5 6,12 L6,7 L12,4 Z"
+        android:fillColor="#FFC107" />
+
+    <!-- SÍMBOLO DE PROTECCIÓN -->
+    <path
+        android:pathData="M9,11 L11,13 L15,9"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="2"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:fillType="nonZero" />
+
+    <!-- CIRCUITO DE PROTECCIÓN -->
+    <circle
+        android:cx="12"
+        android:cy="15"
+        android:radius="1"
+        android:fillColor="#FFFFFF" />
+
+    <path
+        android:pathData="M12,15 L12,17"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="1" />
+
+</vector>
+
+    <!-- ============== CHAT IA - ic_ai_chat.xml ============== -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+android:width="20dp"
+android:height="20dp"
+android:viewportWidth="24"
+android:viewportHeight="24">
+
+<!-- BURBUJA DE CHAT PRINCIPAL -->
+<path
+    android:pathData="M20,2 L4,2 C2.9,2 2,2.9 2,4 L2,16 C2,17.1 2.9,18 4,18 L6,18 L6,22 L10,18 L20,18 C21.1,18 22,17.1 22,16 L22,4 C22,2.9 21.1,2 20,2 Z"
+    android:fillColor="#2196F3" />
+
+<!-- PUNTOS DE CONVERSACIÓN -->
+<circle
+    android:cx="8"
+    android:cy="10"
+    android:radius="1.5"
+    android:fillColor="#FFFFFF" />
+
+<circle
+    android:cx="12"
+    android:cy="10"
+    android:radius="1.5"
+    android:fillColor="#FFFFFF" />
+
+<circle
+    android:cx="16"
+    android:cy="10"
+    android:radius="1.5"
+    android:fillColor="#FFFFFF" />
+
+<!-- BURBUJA SECUNDARIA -->
+<circle
+    android:cx="19"
+    android:cy="19"
+    android:radius="3"
+    android:fillColor="#4CAF50" />
+
+<circle
+    android:cx="18.5"
+    android:cy="18.5"
+    android:radius="0.5"
+    android:fillColor="#FFFFFF" />
+
+<circle
+    android:cx="19.5"
+    android:cy="18.5"
+    android:radius="0.5"
+    android:fillColor="#FFFFFF" />
+
+</vector>

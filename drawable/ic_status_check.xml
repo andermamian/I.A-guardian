@@ -1,0 +1,92 @@
+<!-- ============== VERIFICAR ESTADO - ic_status_check.xml ============== -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+
+    <!-- MONITOR/PANTALLA -->
+    <rect
+        android:width="18"
+        android:height="12"
+        android:x="3"
+        android:y="4"
+        android:fillColor="#1A1A1A"
+        android:strokeColor="#4A4A4A"
+        android:strokeWidth="1"
+        android:rx="2" />
+
+    <!-- BARRA SUPERIOR -->
+    <rect
+        android:width="18"
+        android:height="2"
+        android:x="3"
+        android:y="4"
+        android:fillColor="#2196F3"
+        android:rx="2" />
+
+    <!-- GRÁFICO DE BARRAS -->
+    <rect
+        android:width="2"
+        android:height="3"
+        android:x="6"
+        android:y="11"
+        android:fillColor="#4CAF50" />
+
+    <rect
+        android:width="2"
+        android:height="5"
+        android:x="9"
+        android:y="9"
+        android:fillColor="#4CAF50" />
+
+    <rect
+        android:width="2"
+        android:height="4"
+        android:x="12"
+        android:y="10"
+        android:fillColor="#FF9800" />
+
+    <rect
+        android:width="2"
+        android:height="6"
+        android:x="15"
+        android:y="8"
+        android:fillColor="#4CAF50" />
+
+    <rect
+        android:width="2"
+        android:height="3"
+        android:x="18"
+        android:y="11"
+        android:fillColor="#4CAF50" />
+
+    <!-- INDICADOR OK -->
+    <circle
+        android:cx="19"
+        android:cy="6"
+        android:radius="1.5"
+        android:fillColor="#4CAF50" />
+
+    <path
+        android:pathData="M18,6 L18.5,6.5 L20,5"
+        android:strokeColor="#0B0B0B"
+        android:strokeWidth="1"
+        android:fillType="nonZero" />
+
+    <!-- BASE DEL MONITOR -->
+    <rect
+        android:width="6"
+        android:height="1"
+        android:x="9"
+        android:y="17"
+        android:fillColor="#4A4A4A" />
+
+    <rect
+        android:width="2"
+        android:height="2"
+        android:x="11"
+        android:y="16"
+        android:fillColor="#4A4A4A" />
+
+</vector>

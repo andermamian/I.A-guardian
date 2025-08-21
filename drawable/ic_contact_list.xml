@@ -1,0 +1,12 @@
+<!-- ============== LISTA CONTACTOS - ic_contact_list.xml ============== -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="20dp"
+    android:height="20dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+
+    <path
+        android:pathData="M12,5.9A2.1,2.1 0 0,1 14.1,8A2.1,2.1 0 0,1 12,10.1A2.1,2.1 0 0,1 9.9,8A2.1,2.1 0 0,1 12,5.9M12,2C13.1,2 14,2.9 14,4C14,5.1 13.1,6 12,6C10.9,6 10,5.1 10,4C10,2.9 10.9,2 12,2M21,9V7H9V9H21M21,13V11H9V13H21M21,17V15H9V17H21M5,13.5A1.5,1.5 0 0,1 6.5,12A1.5,1.5 0 0,1 8,13.5A1.5,1.5 0 0,1 6.5,15A1.5,1.5 0 0,1 5,13.5M5,17.5A1.5,1.5 0 0,1 6.5,16A1.5,1.5 0 0,1 8,17.5A1.5,1.5 0 0,1 6.5,19A1.5,1.5 0 0,1 5,17.5Z"
+        android:fillColor="#4A4A4A" />
+
+</vector>

@@ -1,0 +1,7 @@
+<!-- designer_header_gradient.xml -->
+<gradient xmlns:android="http://schemas.android.com/apk/res/android"
+    android:angle="90"
+    android:startColor="#4A90E2"
+    android:centerColor="#357ABD"
+    android:endColor="#1E88E5"
+    android:type="linear" />
