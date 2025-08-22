@@ -1,0 +1,1898 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="linear-gradient(135deg, #0F0F23 0%, #1A1A2E 50%, #16213E 100%)">
+
+    <!-- HEADER CENTRO DE COMANDO ÉPICO -->
+    <androidx.cardview.widget.CardView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:cardElevation="32dp"
+        app:cardCornerRadius="0dp"
+        app:cardBackgroundColor="linear-gradient(90deg, #DC2626 0%, #B91C1C 100%)">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="20dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="12dp">
+
+                <androidx.cardview.widget.CardView
+                    android:layout_width="56dp"
+                    android:layout_height="56dp"
+                    app:cardCornerRadius="28dp"
+                    app:cardElevation="20dp"
+                    app:cardBackgroundColor="#FFFFFF">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:orientation="vertical"
+                        android:gravity="center">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="🚨"
+                            android:textSize="24sp" />
+
+                    </LinearLayout>
+
+                </androidx.cardview.widget.CardView>
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginStart="16dp"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="sans-serif-black"
+                        android:text="🚨 CENTRO DE COMANDO EMERGENCIAS"
+                        android:textColor="#090909"
+                        android:textSize="22sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:fontStyle="italic"
+                        android:text="Sala de operaciones central • Para Claude Hermana 💙"
+                        android:textColor="#161515"
+                        android:textSize="12sp" />
+
+                </LinearLayout>
+
+                <!-- STATUS EMERGENCIAS EN TIEMPO REAL -->
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:gravity="center">
+
+                    <androidx.cardview.widget.CardView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        app:cardCornerRadius="8dp"
+                        app:cardElevation="8dp"
+                        app:cardBackgroundColor="#DC2626">
+
+                        <LinearLayout
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:padding="8dp"
+                            android:gravity="center_vertical">
+
+                            <View
+                                android:layout_width="8dp"
+                                android:layout_height="8dp"
+                                android:background="@android:drawable/presence_online"
+                                android:layout_marginEnd="6dp" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="3 EMERGENCIAS"
+                                android:textColor="#FFFFFF"
+                                android:textSize="9sp"
+                                android:textStyle="bold" />
+
+                        </LinearLayout>
+
+                    </androidx.cardview.widget.CardView>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:text="🕐 Tiempo: 23:47:12"
+                        android:textColor="#0F0E0E"
+                        android:textSize="8sp" />
+
+                </LinearLayout>
+
+            </LinearLayout>
+
+            <!-- MÉTRICAS CRÍTICAS TIEMPO REAL -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <androidx.cardview.widget.CardView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginEnd="6dp"
+                    app:cardCornerRadius="12dp"
+                    app:cardElevation="8dp"
+                    app:cardBackgroundColor="rgba(255,255,255,0.15)">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:padding="12dp"
+                        android:gravity="center">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="⏱️"
+                            android:textSize="18sp" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:fontFamily="sans-serif-black"
+                            android:text="23s"
+                            android:textColor="#0D0C0C"
+                            android:textSize="16sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="TIEMPO RESPUESTA"
+                            android:textAlignment="center"
+                            android:textColor="#0F0E0E"
+                            android:textSize="7sp"
+                            android:textStyle="bold" />
+
+                    </LinearLayout>
+
+                </androidx.cardview.widget.CardView>
+
+                <androidx.cardview.widget.CardView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginHorizontal="3dp"
+                    app:cardCornerRadius="12dp"
+                    app:cardElevation="8dp"
+                    app:cardBackgroundColor="rgba(255,255,255,0.15)">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:padding="12dp"
+                        android:gravity="center">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="🚑"
+                            android:textSize="18sp" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="12"
+                            android:textSize="16sp"
+                            android:textStyle="bold"
+                            android:textColor="#10B981"
+                            android:fontFamily="sans-serif-black" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="UNIDADES ACTIVAS"
+                            android:textAlignment="center"
+                            android:textColor="#1D1C1C"
+                            android:textSize="7sp"
+                            android:textStyle="bold" />
+
+                    </LinearLayout>
+
+                </androidx.cardview.widget.CardView>
+
+                <androidx.cardview.widget.CardView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginHorizontal="3dp"
+                    app:cardCornerRadius="12dp"
+                    app:cardElevation="8dp"
+                    app:cardBackgroundColor="rgba(255,255,255,0.15)">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:padding="12dp"
+                        android:gravity="center">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="🗺️"
+                            android:textSize="18sp" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="47"
+                            android:textSize="14sp"
+                            android:textStyle="bold"
+                            android:textColor="#F59E0B"
+                            android:fontFamily="sans-serif-black" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="ZONAS MONITOREADAS"
+                            android:textAlignment="center"
+                            android:textColor="#090909"
+                            android:textSize="7sp"
+                            android:textStyle="bold" />
+
+                    </LinearLayout>
+
+                </androidx.cardview.widget.CardView>
+
+                <androidx.cardview.widget.CardView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginStart="6dp"
+                    app:cardCornerRadius="12dp"
+                    app:cardElevation="8dp"
+                    app:cardBackgroundColor="rgba(255,255,255,0.15)">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:padding="12dp"
+                        android:gravity="center">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="📡"
+                            android:textSize="18sp" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="99.8%"
+                            android:textSize="14sp"
+                            android:textStyle="bold"
+                            android:textColor="#06B6D4"
+                            android:fontFamily="sans-serif-black" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="COBERTURA GPS"
+                            android:textAlignment="center"
+                            android:textColor="#121212"
+                            android:textSize="7sp"
+                            android:textStyle="bold" />
+
+                    </LinearLayout>
+
+                </androidx.cardview.widget.CardView>
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+    </androidx.cardview.widget.CardView>
+
+    <!-- CONTENIDO PRINCIPAL CON SCROLL -->
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:fillViewport="true">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="12dp">
+
+            <!-- SECCIÓN: CONTROLES CRÍTICOS DE EMERGENCIA -->
+            <androidx.cardview.widget.CardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="12dp"
+                app:cardCornerRadius="20dp"
+                app:cardElevation="16dp"
+                app:cardBackgroundColor="#1A1A2E">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="⚡ CONTROLES CRÍTICOS DE EMERGENCIA"
+                        android:textSize="16sp"
+                        android:textStyle="bold"
+                        android:textColor="#FFFFFF"
+                        android:layout_marginBottom="12dp" />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal">
+
+                        <!-- ALERTA MASIVA -->
+                        <androidx.cardview.widget.CardView
+                            android:id="@+id/btn_mass_alert"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:layout_marginEnd="6dp"
+                            app:cardCornerRadius="16dp"
+                            app:cardElevation="12dp"
+                            app:cardBackgroundColor="#DC2626"
+                            android:clickable="true"
+                            android:focusable="true">
+
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:orientation="vertical"
+                                android:padding="16dp"
+                                android:gravity="center">
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="📢"
+                                    android:textSize="24sp"
+                                    android:layout_marginBottom="8dp" />
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="ALERTA MASIVA"
+                                    android:textSize="10sp"
+                                    android:textStyle="bold"
+                                    android:textColor="#FFFFFF"
+                                    android:textAlignment="center" />
+
+                            </LinearLayout>
+
+                        </androidx.cardview.widget.CardView>
+
+                        <!-- EVACUACIÓN -->
+                        <androidx.cardview.widget.CardView
+                            android:id="@+id/btn_evacuation"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:layout_marginHorizontal="3dp"
+                            app:cardCornerRadius="16dp"
+                            app:cardElevation="12dp"
+                            app:cardBackgroundColor="#F59E0B"
+                            android:clickable="true"
+                            android:focusable="true">
+
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:orientation="vertical"
+                                android:padding="16dp"
+                                android:gravity="center">
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="🚶‍♀️"
+                                    android:textSize="24sp"
+                                    android:layout_marginBottom="8dp" />
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="EVACUACIÓN"
+                                    android:textSize="10sp"
+                                    android:textStyle="bold"
+                                    android:textColor="#FFFFFF"
+                                    android:textAlignment="center" />
+
+                            </LinearLayout>
+
+                        </androidx.cardview.widget.CardView>
+
+                        <!-- COMUNICACIÓN 911 -->
+                        <androidx.cardview.widget.CardView
+                            android:id="@+id/btn_emergency_comm"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:layout_marginStart="6dp"
+                            app:cardCornerRadius="16dp"
+                            app:cardElevation="12dp"
+                            app:cardBackgroundColor="#059669"
+                            android:clickable="true"
+                            android:focusable="true">
+
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:orientation="vertical"
+                                android:padding="16dp"
+                                android:gravity="center">
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="📞"
+                                    android:textSize="24sp"
+                                    android:layout_marginBottom="8dp" />
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="LLAMAR 911"
+                                    android:textSize="10sp"
+                                    android:textStyle="bold"
+                                    android:textColor="#FFFFFF"
+                                    android:textAlignment="center" />
+
+                            </LinearLayout>
+
+                        </androidx.cardview.widget.CardView>
+
+                    </LinearLayout>
+
+                </LinearLayout>
+
+            </androidx.cardview.widget.CardView>
+
+            <!-- SECCIÓN: MAPA DE CRISIS CON INCIDENTES GEORREFERENCIADOS -->
+            <androidx.cardview.widget.CardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="12dp"
+                app:cardCornerRadius="20dp"
+                app:cardElevation="16dp"
+                app:cardBackgroundColor="#FFFFFF">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:layout_marginBottom="12dp">
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="🗺️ MAPA DE CRISIS - INCIDENTES EN TIEMPO REAL"
+                            android:textSize="16sp"
+                            android:textStyle="bold"
+                            android:textColor="#2D3748" />
+
+                        <androidx.cardview.widget.CardView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            app:cardCornerRadius="6dp"
+                            app:cardElevation="4dp"
+                            app:cardBackgroundColor="#DC2626">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="CRÍTICO"
+                                android:textSize="8sp"
+                                android:textStyle="bold"
+                                android:textColor="#FFFFFF"
+                                android:padding="6dp" />
+
+                        </androidx.cardview.widget.CardView>
+
+                    </LinearLayout>
+
+                    <!-- MAPA INTERACTIVO DE CRISIS -->
+                    <androidx.cardview.widget.CardView
+                        android:layout_width="match_parent"
+                        android:layout_height="200dp"
+                        android:layout_marginBottom="12dp"
+                        app:cardCornerRadius="16dp"
+                        app:cardElevation="8dp"
+                        app:cardBackgroundColor="linear-gradient(135deg, #DC2626 0%, #B91C1C 100%)">
+
+                        <RelativeLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent">
+
+                            <!-- MAPA BASE -->
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="match_parent"
+                                android:orientation="vertical"
+                                android:gravity="center"
+                                android:background="linear-gradient(45deg, #2C3E50 0%, #34495E 100%)">
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="🌍"
+                                    android:textSize="48sp"
+                                    android:layout_marginBottom="8dp" />
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="MAPA DE CRISIS INTERACTIVO"
+                                    android:textColor="#FFFFFF"
+                                    android:textSize="14sp"
+                                    android:textStyle="bold" />
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginTop="4dp"
+                                    android:text="3 emergencias activas • 12 unidades • 47 zonas"
+                                    android:textColor="#CBD5E1"
+                                    android:textSize="10sp" />
+
+                            </LinearLayout>
+
+                            <!-- INCIDENTES SUPERPUESTOS -->
+                            <androidx.cardview.widget.CardView
+                                android:layout_width="40dp"
+                                android:layout_height="40dp"
+                                android:layout_marginTop="30dp"
+                                android:layout_marginStart="50dp"
+                                app:cardCornerRadius="20dp"
+                                app:cardElevation="8dp"
+                                app:cardBackgroundColor="#DC2626">
+
+                                <LinearLayout
+                                    android:layout_width="match_parent"
+                                    android:layout_height="match_parent"
+                                    android:gravity="center"
+                                    android:orientation="vertical">
+
+                                    <TextView
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:text="🚨"
+                                        android:textSize="16sp" />
+
+                                </LinearLayout>
+
+                            </androidx.cardview.widget.CardView>
+
+                            <androidx.cardview.widget.CardView
+                                android:layout_width="35dp"
+                                android:layout_height="35dp"
+                                android:layout_marginTop="80dp"
+                                android:layout_marginStart="120dp"
+                                app:cardCornerRadius="18dp"
+                                app:cardElevation="6dp"
+                                app:cardBackgroundColor="#F59E0B">
+
+                                <LinearLayout
+                                    android:layout_width="match_parent"
+                                    android:layout_height="match_parent"
+                                    android:gravity="center"
+                                    android:orientation="vertical">
+
+                                    <TextView
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:text="⚠️"
+                                        android:textSize="14sp" />
+
+                                </LinearLayout>
+
+                            </androidx.cardview.widget.CardView>
+
+                            <androidx.cardview.widget.CardView
+                                android:layout_width="30dp"
+                                android:layout_height="30dp"
+                                android:layout_marginTop="120dp"
+                                android:layout_marginStart="180dp"
+                                app:cardCornerRadius="15dp"
+                                app:cardElevation="4dp"
+                                app:cardBackgroundColor="#10B981">
+
+                                <LinearLayout
+                                    android:layout_width="match_parent"
+                                    android:layout_height="match_parent"
+                                    android:gravity="center"
+                                    android:orientation="vertical">
+
+                                    <TextView
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:text="✅"
+                                        android:textSize="12sp" />
+
+                                </LinearLayout>
+
+                            </androidx.cardview.widget.CardView>
+
+                        </RelativeLayout>
+
+                    </androidx.cardview.widget.CardView>
+
+                    <!-- PROTOCOLOS DE EVACUACIÓN POR ZONAS -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal">
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical"
+                            android:layout_marginEnd="16dp">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="🚶‍♀️ PROTOCOLOS EVACUACIÓN:"
+                                android:textSize="12sp"
+                                android:textStyle="bold"
+                                android:textColor="#2D3748"
+                                android:layout_marginBottom="6dp" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="🔴 Zona A: Evacuación inmediata (347 usuarios)"
+                                android:textSize="10sp"
+                                android:textColor="#DC2626"
+                                android:layout_marginBottom="3dp" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="🟡 Zona B: Standby (892 usuarios)"
+                                android:textSize="10sp"
+                                android:textColor="#F59E0B"
+                                android:layout_marginBottom="3dp" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="🟢 Zona C: Normal (2,847 usuarios)"
+                                android:textSize="10sp"
+                                android:textColor="#10B981" />
+
+                        </LinearLayout>
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="📊 RECURSOS DISPONIBLES:"
+                                android:textSize="12sp"
+                                android:textStyle="bold"
+                                android:textColor="#2D3748"
+                                android:layout_marginBottom="6dp" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="🚑 Ambulancias: 4 disponibles"
+                                android:textSize="10sp"
+                                android:textColor="#059669"
+                                android:layout_marginBottom="3dp" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="🚔 Policía: 8 patrullas activas"
+                                android:textSize="10sp"
+                                android:textColor="#2563EB"
+                                android:layout_marginBottom="3dp" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="🚒 Bomberos: 2 unidades listas"
+                                android:textSize="10sp"
+                                android:textColor="#DC2626" />
+
+                        </LinearLayout>
+
+                    </LinearLayout>
+
+                </LinearLayout>
+
+            </androidx.cardview.widget.CardView>
+
+            <!-- SECCIÓN: COLA DE EMERGENCIAS CON TRIAJE AUTOMÁTICO -->
+            <androidx.cardview.widget.CardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="12dp"
+                app:cardCornerRadius="20dp"
+                app:cardElevation="16dp"
+                app:cardBackgroundColor="linear-gradient(135deg, #DC2626 0%, #B91C1C 100%)">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:layout_marginBottom="12dp">
+
+                        <TextView
+                            android:layout_width="32dp"
+                            android:layout_height="32dp"
+                            android:text="📋"
+                            android:textSize="20sp"
+                            android:gravity="center"
+                            android:layout_marginEnd="12dp" />
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="🚨 COLA DE EMERGENCIAS - TRIAJE AUTOMÁTICO"
+                                android:textColor="#FFFFFF"
+                                android:textSize="16sp"
+                                android:textStyle="bold" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Sistema IA de priorización • Escalamiento automático"
+                                android:textSize="10sp"
+                                android:textColor="#FEE2E2"
+                                android:layout_marginTop="2dp" />
+
+                        </LinearLayout>
+
+                        <androidx.cardview.widget.CardView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            app:cardCornerRadius="6dp"
+                            app:cardElevation="4dp"
+                            app:cardBackgroundColor="#FFFFFF">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="3 CASOS"
+                                android:textSize="8sp"
+                                android:textStyle="bold"
+                                android:textColor="#DC2626"
+                                android:padding="6dp" />
+
+                        </androidx.cardview.widget.CardView>
+
+                    </LinearLayout>
+
+                    <!-- LISTA DE EMERGENCIAS ACTIVAS -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:layout_marginTop="8dp">
+
+                        <!-- EMERGENCIA CRÍTICA #1 -->
+                        <androidx.cardview.widget.CardView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginBottom="8dp"
+                            app:cardCornerRadius="12dp"
+                            app:cardElevation="8dp"
+                            app:cardBackgroundColor="rgba(255,255,255,0.95)">
+
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:orientation="horizontal"
+                                android:padding="12dp"
+                                android:gravity="center_vertical">
+
+                                <androidx.cardview.widget.CardView
+                                    android:layout_width="40dp"
+                                    android:layout_height="40dp"
+                                    app:cardCornerRadius="20dp"
+                                    app:cardElevation="4dp"
+                                    app:cardBackgroundColor="#DC2626">
+
+                                    <LinearLayout
+                                        android:layout_width="match_parent"
+                                        android:layout_height="match_parent"
+                                        android:gravity="center"
+                                        android:orientation="vertical">
+
+                                        <TextView
+                                            android:layout_width="wrap_content"
+                                            android:layout_height="wrap_content"
+                                            android:text="🆘"
+                                            android:textSize="16sp" />
+
+                                    </LinearLayout>
+
+                                </androidx.cardview.widget.CardView>
+
+                                <LinearLayout
+                                    android:layout_width="0dp"
+                                    android:layout_height="wrap_content"
+                                    android:layout_weight="1"
+                                    android:layout_marginStart="12dp"
+                                    android:orientation="vertical">
+
+                                    <LinearLayout
+                                        android:layout_width="match_parent"
+                                        android:layout_height="wrap_content"
+                                        android:orientation="horizontal"
+                                        android:gravity="center_vertical">
+
+                                        <TextView
+                                            android:layout_width="0dp"
+                                            android:layout_height="wrap_content"
+                                            android:layout_weight="1"
+                                            android:text="ACCIDENTE MÚLTIPLE"
+                                            android:textSize="12sp"
+                                            android:textStyle="bold"
+                                            android:textColor="#2D3748" />
+
+                                        <androidx.cardview.widget.CardView
+                                            android:layout_width="wrap_content"
+                                            android:layout_height="wrap_content"
+                                            app:cardCornerRadius="4dp"
+                                            app:cardElevation="2dp"
+                                            app:cardBackgroundColor="#DC2626">
+
+                                            <TextView
+                                                android:layout_width="wrap_content"
+                                                android:layout_height="wrap_content"
+                                                android:text="CRÍTICO"
+                                                android:textSize="7sp"
+                                                android:textStyle="bold"
+                                                android:textColor="#FFFFFF"
+                                                android:padding="4dp" />
+
+                                        </androidx.cardview.widget.CardView>
+
+                                    </LinearLayout>
+
+                                    <TextView
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:text="📍 Av. Principal Km 15 • ⏱️ Hace 3 min"
+                                        android:textSize="9sp"
+                                        android:textColor="#6B7280"
+                                        android:layout_marginTop="2dp" />
+
+                                    <TextView
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:text="👥 5 heridos • 🚑 2 ambulancias en ruta • ⏰ ETA: 4 min"
+                                        android:textSize="9sp"
+                                        android:textColor="#059669"
+                                        android:layout_marginTop="2dp" />
+
+                                </LinearLayout>
+
+                                <androidx.cardview.widget.CardView
+                                    android:id="@+id/btn_dispatch_1"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    app:cardCornerRadius="8dp"
+                                    app:cardElevation="4dp"
+                                    app:cardBackgroundColor="#059669"
+                                    android:clickable="true"
+                                    android:focusable="true">
+
+                                    <TextView
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:text="DESPACHAR"
+                                        android:textSize="8sp"
+                                        android:textStyle="bold"
+                                        android:textColor="#FFFFFF"
+                                        android:padding="8dp" />
+
+                                </androidx.cardview.widget.CardView>
+
+                            </LinearLayout>
+
+                        </androidx.cardview.widget.CardView>
+
+                        <!-- EMERGENCIA MEDIA #2 -->
+                        <androidx.cardview.widget.CardView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginBottom="8dp"
+                            app:cardCornerRadius="12dp"
+                            app:cardElevation="8dp"
+                            app:cardBackgroundColor="rgba(255,255,255,0.95)">
+
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:orientation="horizontal"
+                                android:padding="12dp"
+                                android:gravity="center_vertical">
+
+                                <androidx.cardview.widget.CardView
+                                    android:layout_width="40dp"
+                                    android:layout_height="40dp"
+                                    app:cardCornerRadius="20dp"
+                                    app:cardElevation="4dp"
+                                    app:cardBackgroundColor="#F59E0B">
+
+                                    <LinearLayout
+                                        android:layout_width="match_parent"
+                                        android:layout_height="match_parent"
+                                        android:gravity="center"
+                                        android:orientation="vertical">
+
+                                        <TextView
+                                            android:layout_width="wrap_content"
+                                            android:layout_height="wrap_content"
+                                            android:text="🔥"
+                                            android:textSize="16sp" />
+
+                                    </LinearLayout>
+
+                                </androidx.cardview.widget.CardView>
+
+                                <LinearLayout
+                                    android:layout_width="0dp"
+                                    android:layout_height="wrap_content"
+                                    android:layout_weight="1"
+                                    android:layout_marginStart="12dp"
+                                    android:orientation="vertical">
+
+                                    <LinearLayout
+                                        android:layout_width="match_parent"
+                                        android:layout_height="wrap_content"
+                                        android:orientation="horizontal"
+                                        android:gravity="center_vertical">
+
+                                        <TextView
+                                            android:layout_width="0dp"
+                                            android:layout_height="wrap_content"
+                                            android:layout_weight="1"
+                                            android:text="INCENDIO ESTRUCTURAL"
+                                            android:textSize="12sp"
+                                            android:textStyle="bold"
+                                            android:textColor="#2D3748" />
+
+                                        <androidx.cardview.widget.CardView
+                                            android:layout_width="wrap_content"
+                                            android:layout_height="wrap_content"
+                                            app:cardCornerRadius="4dp"
+                                            app:cardElevation="2dp"
+                                            app:cardBackgroundColor="#F59E0B">
+
+                                            <TextView
+                                                android:layout_width="wrap_content"
+                                                android:layout_height="wrap_content"
+                                                android:text="MEDIO"
+                                                android:textSize="7sp"
+                                                android:textStyle="bold"
+                                                android:textColor="#FFFFFF"
+                                                android:padding="4dp" />
+
+                                        </androidx.cardview.widget.CardView>
+
+                                    </LinearLayout>
+
+                                    <TextView
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:text="📍 Edificio Comercial Centro • ⏱️ Hace 7 min"
+                                        android:textSize="9sp"
+                                        android:textColor="#6B7280"
+                                        android:layout_marginTop="2dp" />
+
+                                    <TextView
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:text="🏢 Piso 3 evacuado • 🚒 1 unidad en sitio • 👨‍🚒 6 bomberos"
+                                        android:textSize="9sp"
+                                        android:textColor="#059669"
+                                        android:layout_marginTop="2dp" />
+
+                                </LinearLayout>
+
+                                <androidx.cardview.widget.CardView
+                                    android:id="@+id/btn_dispatch_2"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    app:cardCornerRadius="8dp"
+                                    app:cardElevation="4dp"
+                                    app:cardBackgroundColor="#059669"
+                                    android:clickable="true"
+                                    android:focusable="true">
+
+                                    <TextView
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:text="COORDINAR"
+                                        android:textSize="8sp"
+                                        android:textStyle="bold"
+                                        android:textColor="#FFFFFF"
+                                        android:padding="8dp" />
+
+                                </androidx.cardview.widget.CardView>
+
+                            </LinearLayout>
+
+                        </androidx.cardview.widget.CardView>
+
+                        <!-- EMERGENCIA BAJA #3 -->
+                        <androidx.cardview.widget.CardView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginBottom="8dp"
+                            app:cardCornerRadius="12dp"
+                            app:cardElevation="8dp"
+                            app:cardBackgroundColor="rgba(255,255,255,0.95)">
+
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:orientation="horizontal"
+                                android:padding="12dp"
+                                android:gravity="center_vertical">
+
+                                <androidx.cardview.widget.CardView
+                                    android:layout_width="40dp"
+                                    android:layout_height="40dp"
+                                    app:cardCornerRadius="20dp"
+                                    app:cardElevation="4dp"
+                                    app:cardBackgroundColor="#10B981">
+
+                                    <LinearLayout
+                                        android:layout_width="match_parent"
+                                        android:layout_height="match_parent"
+                                        android:gravity="center"
+                                        android:orientation="vertical">
+
+                                        <TextView
+                                            android:layout_width="wrap_content"
+                                            android:layout_height="wrap_content"
+                                            android:text="🩹"
+                                            android:textSize="16sp" />
+
+                                    </LinearLayout>
+
+                                </androidx.cardview.widget.CardView>
+
+                                <LinearLayout
+                                    android:layout_width="0dp"
+                                    android:layout_height="wrap_content"
+                                    android:layout_weight="1"
+                                    android:layout_marginStart="12dp"
+                                    android:orientation="vertical">
+
+                                    <LinearLayout
+                                        android:layout_width="match_parent"
+                                        android:layout_height="wrap_content"
+                                        android:orientation="horizontal"
+                                        android:gravity="center_vertical">
+
+                                        <TextView
+                                            android:layout_width="0dp"
+                                            android:layout_height="wrap_content"
+                                            android:layout_weight="1"
+                                            android:text="ASISTENCIA MÉDICA"
+                                            android:textSize="12sp"
+                                            android:textStyle="bold"
+                                            android:textColor="#2D3748" />
+
+                                        <androidx.cardview.widget.CardView
+                                            android:layout_width="wrap_content"
+                                            android:layout_height="wrap_content"
+                                            app:cardCornerRadius="4dp"
+                                            app:cardElevation="2dp"
+                                            app:cardBackgroundColor="#10B981">
+
+                                            <TextView
+                                                android:layout_width="wrap_content"
+                                                android:layout_height="wrap_content"
+                                                android:text="BAJO"
+                                                android:textSize="7sp"
+                                                android:textStyle="bold"
+                                                android:textColor="#FFFFFF"
+                                                android:padding="4dp" />
+
+                                        </androidx.cardview.widget.CardView>
+
+                                    </LinearLayout>
+
+                                    <TextView
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:text="📍 Parque Central • ⏱️ Hace 12 min"
+                                        android:textSize="9sp"
+                                        android:textColor="#6B7280"
+                                        android:layout_marginTop="2dp" />
+
+                                    <TextView
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:text="👤 1 persona • 🩹 Herida menor • 🚑 Asignada ambulancia"
+                                        android:textSize="9sp"
+                                        android:textColor="#059669"
+                                        android:layout_marginTop="2dp" />
+
+                                </LinearLayout>
+
+                                <androidx.cardview.widget.CardView
+                                    android:id="@+id/btn_dispatch_3"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    app:cardCornerRadius="8dp"
+                                    app:cardElevation="4dp"
+                                    app:cardBackgroundColor="#059669"
+                                    android:clickable="true"
+                                    android:focusable="true">
+
+                                    <TextView
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:text="ATENDER"
+                                        android:textSize="8sp"
+                                        android:textStyle="bold"
+                                        android:textColor="#FFFFFF"
+                                        android:padding="8dp" />
+
+                                </androidx.cardview.widget.CardView>
+
+                            </LinearLayout>
+
+                        </androidx.cardview.widget.CardView>
+
+                    </LinearLayout>
+
+                </LinearLayout>
+
+            </androidx.cardview.widget.CardView>
+
+            <!-- SECCIÓN: MONITOREO DE RECURSOS Y COMUNICACIONES -->
+            <androidx.cardview.widget.CardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="12dp"
+                app:cardCornerRadius="20dp"
+                app:cardElevation="16dp"
+                app:cardBackgroundColor="#1F2937">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="📡 MONITOREO DE RECURSOS Y COMUNICACIONES"
+                        android:textSize="16sp"
+                        android:textStyle="bold"
+                        android:textColor="#FFFFFF"
+                        android:layout_marginBottom="12dp" />
+
+                    <!-- ESTADO DE UNIDADES -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:layout_marginBottom="16dp">
+
+                        <androidx.cardview.widget.CardView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:layout_marginEnd="6dp"
+                            app:cardCornerRadius="12dp"
+                            app:cardElevation="8dp"
+                            app:cardBackgroundColor="#059669">
+
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:orientation="vertical"
+                                android:padding="12dp"
+                                android:gravity="center">
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="🚑"
+                                    android:textSize="20sp"
+                                    android:layout_marginBottom="4dp" />
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="AMBULANCIAS"
+                                    android:textSize="9sp"
+                                    android:textStyle="bold"
+                                    android:textColor="#FFFFFF"
+                                    android:textAlignment="center" />
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="4/6 ACTIVAS"
+                                    android:textSize="8sp"
+                                    android:textColor="#D1FAE5"
+                                    android:textAlignment="center" />
+
+                            </LinearLayout>
+
+                        </androidx.cardview.widget.CardView>
+
+                        <androidx.cardview.widget.CardView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:layout_marginHorizontal="3dp"
+                            app:cardCornerRadius="12dp"
+                            app:cardElevation="8dp"
+                            app:cardBackgroundColor="#2563EB">
+
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:orientation="vertical"
+                                android:padding="12dp"
+                                android:gravity="center">
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="🚔"
+                                    android:textSize="20sp"
+                                    android:layout_marginBottom="4dp" />
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="POLICÍA"
+                                    android:textSize="9sp"
+                                    android:textStyle="bold"
+                                    android:textColor="#FFFFFF"
+                                    android:textAlignment="center" />
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="8/10 PATRULLAS"
+                                    android:textSize="8sp"
+                                    android:textColor="#DBEAFE"
+                                    android:textAlignment="center" />
+
+                            </LinearLayout>
+
+                        </androidx.cardview.widget.CardView>
+
+                        <androidx.cardview.widget.CardView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:layout_marginStart="6dp"
+                            app:cardCornerRadius="12dp"
+                            app:cardElevation="8dp"
+                            app:cardBackgroundColor="#DC2626">
+
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:orientation="vertical"
+                                android:padding="12dp"
+                                android:gravity="center">
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="🚒"
+                                    android:textSize="20sp"
+                                    android:layout_marginBottom="4dp" />
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="BOMBEROS"
+                                    android:textSize="9sp"
+                                    android:textStyle="bold"
+                                    android:textColor="#FFFFFF"
+                                    android:textAlignment="center" />
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="2/3 UNIDADES"
+                                    android:textSize="8sp"
+                                    android:textColor="#FEE2E2"
+                                    android:textAlignment="center" />
+
+                            </LinearLayout>
+
+                        </androidx.cardview.widget.CardView>
+
+                    </LinearLayout>
+
+                    <!-- COMUNICACIONES Y COORDENADAS -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal">
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical"
+                            android:layout_marginEnd="16dp">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="📻 COMUNICACIONES:"
+                                android:textSize="12sp"
+                                android:textStyle="bold"
+                                android:textColor="#FFFFFF"
+                                android:layout_marginBottom="6dp" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="🔴 Canal 1: Accidente múltiple"
+                                android:textSize="10sp"
+                                android:textColor="#FCA5A5"
+                                android:layout_marginBottom="3dp" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="🟡 Canal 2: Incendio estructural"
+                                android:textSize="10sp"
+                                android:textColor="#FDE68A"
+                                android:layout_marginBottom="3dp" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="🟢 Canal 3: Disponible"
+                                android:textSize="10sp"
+                                android:textColor="#A7F3D0" />
+
+                        </LinearLayout>
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="🎯 COORDENADAS GPS:"
+                                android:textSize="12sp"
+                                android:textStyle="bold"
+                                android:textColor="#FFFFFF"
+                                android:layout_marginBottom="6dp" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="📍 CMD: 4.6097, -74.0817"
+                                android:textSize="10sp"
+                                android:textColor="#A5B4FC"
+                                android:layout_marginBottom="3dp" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="🆘 EM1: 4.6234, -74.0945"
+                                android:textSize="10sp"
+                                android:textColor="#FCA5A5"
+                                android:layout_marginBottom="3dp" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="🔥 EM2: 4.5987, -74.0723"
+                                android:textSize="10sp"
+                                android:textColor="#FDE68A" />
+
+                        </LinearLayout>
+
+                    </LinearLayout>
+
+                </LinearLayout>
+
+            </androidx.cardview.widget.CardView>
+
+            <!-- SECCIÓN: ACCIONES RÁPIDAS Y NOTIFICACIONES -->
+            <androidx.cardview.widget.CardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="20dp"
+                app:cardCornerRadius="20dp"
+                app:cardElevation="16dp"
+                app:cardBackgroundColor="#FFFFFF">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="⚡ ACCIONES RÁPIDAS Y NOTIFICACIONES"
+                        android:textSize="16sp"
+                        android:textStyle="bold"
+                        android:textColor="#2D3748"
+                        android:layout_marginBottom="12dp" />
+
+                    <!-- BOTONES DE ACCIÓN RÁPIDA -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:layout_marginBottom="16dp">
+
+                        <androidx.cardview.widget.CardView
+                            android:id="@+id/btn_backup_request"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:layout_marginEnd="6dp"
+                            app:cardCornerRadius="12dp"
+                            app:cardElevation="8dp"
+                            app:cardBackgroundColor="#F59E0B"
+                            android:clickable="true"
+                            android:focusable="true">
+
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:orientation="vertical"
+                                android:padding="12dp"
+                                android:gravity="center">
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="🆘"
+                                    android:textSize="20sp"
+                                    android:layout_marginBottom="4dp" />
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="SOLICITAR APOYO"
+                                    android:textSize="9sp"
+                                    android:textStyle="bold"
+                                    android:textColor="#FFFFFF"
+                                    android:textAlignment="center" />
+
+                            </LinearLayout>
+
+                        </androidx.cardview.widget.CardView>
+
+                        <androidx.cardview.widget.CardView
+                            android:id="@+id/btn_protocol_manual"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:layout_marginHorizontal="3dp"
+                            app:cardCornerRadius="12dp"
+                            app:cardElevation="8dp"
+                            app:cardBackgroundColor="#7C3AED"
+                            android:clickable="true"
+                            android:focusable="true">
+
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:orientation="vertical"
+                                android:padding="12dp"
+                                android:gravity="center">
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="📖"
+                                    android:textSize="20sp"
+                                    android:layout_marginBottom="4dp" />
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="PROTOCOLOS"
+                                    android:textSize="9sp"
+                                    android:textStyle="bold"
+                                    android:textColor="#FFFFFF"
+                                    android:textAlignment="center" />
+
+                            </LinearLayout>
+
+                        </androidx.cardview.widget.CardView>
+
+                        <androidx.cardview.widget.CardView
+                            android:id="@+id/btn_incident_report"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:layout_marginStart="6dp"
+                            app:cardCornerRadius="12dp"
+                            app:cardElevation="8dp"
+                            app:cardBackgroundColor="#059669"
+                            android:clickable="true"
+                            android:focusable="true">
+
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:orientation="vertical"
+                                android:padding="12dp"
+                                android:gravity="center">
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="📝"
+                                    android:textSize="20sp"
+                                    android:layout_marginBottom="4dp" />
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="NUEVO REPORTE"
+                                    android:textSize="9sp"
+                                    android:textStyle="bold"
+                                    android:textColor="#FFFFFF"
+                                    android:textAlignment="center" />
+
+                            </LinearLayout>
+
+                        </androidx.cardview.widget.CardView>
+
+                    </LinearLayout>
+
+                    <!-- FEED DE NOTIFICACIONES EN TIEMPO REAL -->
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="🔔 FEED DE NOTIFICACIONES:"
+                        android:textSize="12sp"
+                        android:textStyle="bold"
+                        android:textColor="#2D3748"
+                        android:layout_marginBottom="8dp" />
+
+                    <androidx.cardview.widget.CardView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        app:cardCornerRadius="8dp"
+                        app:cardElevation="4dp"
+                        app:cardBackgroundColor="#F8FAFC">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical"
+                            android:padding="12dp">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="🚨 23:47 - Ambulancia A-04 llegó al sitio del accidente"
+                                android:textSize="10sp"
+                                android:textColor="#DC2626"
+                                android:layout_marginBottom="4dp" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="🔥 23:45 - Incendio contenido en piso 3, evaluando daños"
+                                android:textSize="10sp"
+                                android:textColor="#F59E0B"
+                                android:layout_marginBottom="4dp" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="🩹 23:42 - Paciente en parque atendido, herida menor tratada"
+                                android:textSize="10sp"
+                                android:textColor="#10B981"
+                                android:layout_marginBottom="4dp" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="📡 23:40 - Sistema GPS actualizado, todas las unidades localizadas"
+                                android:textSize="10sp"
+                                android:textColor="#2563EB"
+                                android:layout_marginBottom="4dp" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="🚔 23:38 - Patrulla P-12 despachada como apoyo al accidente"
+                                android:textSize="10sp"
+                                android:textColor="#6B7280"
+                                android:layout_marginBottom="4dp" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="⚡ 23:35 - Centro de comando activado, protocolos iniciados"
+                                android:textSize="10sp"
+                                android:textColor="#7C3AED" />
+
+                        </LinearLayout>
+
+                    </androidx.cardview.widget.CardView>
+
+                </LinearLayout>
+
+            </androidx.cardview.widget.CardView>
+
+        </LinearLayout>
+
+    </androidx.core.widget.NestedScrollView>
+
+    <!-- BARRA INFERIOR DE ESTADO Y CONTACTO DIRECTO -->
+    <androidx.cardview.widget.CardView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:cardElevation="20dp"
+        app:cardCornerRadius="0dp"
+        app:cardBackgroundColor="linear-gradient(90deg, #1F2937 0%, #374151 100%)">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:padding="16dp"
+            android:gravity="center_vertical">
+
+            <!-- ESTADO DE CONEXIÓN CON CLAUDE -->
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <androidx.cardview.widget.CardView
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    app:cardCornerRadius="16dp"
+                    app:cardElevation="8dp"
+                    app:cardBackgroundColor="#10B981">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:gravity="center"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="💙"
+                            android:textSize="16sp" />
+
+                    </LinearLayout>
+
+                </androidx.cardview.widget.CardView>
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="12dp"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="💙 CLAUDE HERMANA"
+                        android:textSize="12sp"
+                        android:textStyle="bold"
+                        android:textColor="#FFFFFF" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="🟢 Conectada • IA Asistente Principal"
+                        android:textSize="8sp"
+                        android:textColor="#A7F3D0" />
+
+                </LinearLayout>
+
+            </LinearLayout>
+
+            <!-- COMUNICACIÓN DIRECTA CON CLAUDE -->
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <androidx.cardview.widget.CardView
+                    android:id="@+id/btn_voice_claude"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="8dp"
+                    app:cardCornerRadius="12dp"
+                    app:cardElevation="8dp"
+                    app:cardBackgroundColor="#7C3AED"
+                    android:clickable="true"
+                    android:focusable="true">
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:padding="12dp"
+                        android:gravity="center_vertical">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="🎙️"
+                            android:textSize="16sp"
+                            android:layout_marginEnd="6dp" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="VOZ"
+                            android:textSize="9sp"
+                            android:textStyle="bold"
+                            android:textColor="#FFFFFF" />
+
+                    </LinearLayout>
+
+                </androidx.cardview.widget.CardView>
+
+                <androidx.cardview.widget.CardView
+                    android:id="@+id/btn_chat_claude"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    app:cardCornerRadius="12dp"
+                    app:cardElevation="8dp"
+                    app:cardBackgroundColor="#059669"
+                    android:clickable="true"
+                    android:focusable="true">
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:padding="12dp"
+                        android:gravity="center_vertical">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="💬"
+                            android:textSize="16sp"
+                            android:layout_marginEnd="6dp" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="CHAT"
+                            android:textSize="9sp"
+                            android:textStyle="bold"
+                            android:textColor="#FFFFFF" />
+
+                    </LinearLayout>
+
+                </androidx.cardview.widget.CardView>
+
+            </LinearLayout>
+
+            <!-- ESTADO GENERAL DEL SISTEMA -->
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="16dp"
+                android:orientation="vertical"
+                android:gravity="center">
+
+                <androidx.cardview.widget.CardView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    app:cardCornerRadius="6dp"
+                    app:cardElevation="4dp"
+                    app:cardBackgroundColor="#10B981">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="SISTEMA ACTIVO"
+                        android:textSize="7sp"
+                        android:textStyle="bold"
+                        android:textColor="#FFFFFF"
+                        android:padding="6dp" />
+
+                </androidx.cardview.widget.CardView>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:text="🕐 23:47:12"
+                    android:textColor="#D1D5DB"
+                    android:textSize="8sp" />
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+    </androidx.cardview.widget.CardView>
+
+</LinearLayout>
