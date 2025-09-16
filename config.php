@@ -62,23 +62,52 @@ define('PFS_ENABLED', true);
 define('KEY_ROTATION_INTERVAL', 3600); // 1 hora
 define('SESSION_KEY_LIFETIME', 1800); // 30 minutos
 
+
 // ========================================
-// CONFIGURACION DUAL DE BASE DE DATOS
+// CONFIGURACIÃ"N DUAL DE BASE DE DATOS - ACTUALIZADA PARA HOSTING
 // ========================================
 
-// Base de datos principal (Root - usando variables de entorno)
-define('DB_PRIMARY_HOST', getenv('DB_PRIMARY_HOST') ?: 'localhost');
-define('DB_PRIMARY_USER', getenv('DB_PRIMARY_USER') ?: 'root');
-define('DB_PRIMARY_PASS', getenv('DB_PRIMARY_PASS') ?: '');
-define('DB_PRIMARY_NAME', getenv('DB_PRIMARY_NAME') ?: 'guardianai_db');
-define('DB_PRIMARY_PORT', getenv('DB_PRIMARY_PORT') ?: 3306);
+// DEFINIR IS_LOCAL - AGREGADO PARA CORREGIR ERROR
+define('IS_LOCAL', (isset($_SERVER['HTTP_HOST']) && (strpos($_SERVER['HTTP_HOST'], 'localhost') !== false || strpos($_SERVER['HTTP_HOST'], '127.0.0.1') !== false)));
 
-// Base de datos fallback (Usuario Anderson como backup - usando variables de entorno)
-define('DB_FALLBACK_HOST', getenv('DB_FALLBACK_HOST') ?: 'localhost');
-define('DB_FALLBACK_USER', getenv('DB_FALLBACK_USER') ?: 'anderson');
-define('DB_FALLBACK_PASS', getenv('DB_FALLBACK_PASS') ?: '');
-define('DB_FALLBACK_NAME', getenv('DB_FALLBACK_NAME') ?: 'guardianai_db');
-define('DB_FALLBACK_PORT', getenv('DB_FALLBACK_PORT') ?: 3306);
+if (IS_LOCAL) {
+    // ========================================
+    // CONFIGURACIÃ"N LOCAL (AppServ/XAMPP/WAMP)
+    // ========================================
+    
+    // Base de datos principal LOCAL
+    define('DB_PRIMARY_HOST', getenv('DB_LOCAL_HOST') ?: 'localhost');
+    define('DB_PRIMARY_USER', getenv('DB_LOCAL_USER') ?: 'root');
+    define('DB_PRIMARY_PASS', getenv('DB_LOCAL_PASS') ?: ''); // VacÃ­o por defecto en AppServ
+    define('DB_PRIMARY_NAME', getenv('DB_LOCAL_NAME') ?: 'guardianai_local');
+    define('DB_PRIMARY_PORT', getenv('DB_LOCAL_PORT') ?: 3306);
+    
+    // Base de datos fallback LOCAL (mismas credenciales)
+    define('DB_FALLBACK_HOST', DB_PRIMARY_HOST);
+    define('DB_FALLBACK_USER', DB_PRIMARY_USER);
+    define('DB_FALLBACK_PASS', DB_PRIMARY_PASS);
+    define('DB_FALLBACK_NAME', DB_PRIMARY_NAME);
+    define('DB_FALLBACK_PORT', DB_PRIMARY_PORT);
+    
+} else {
+    // ========================================
+    // CONFIGURACIÃ"N PRODUCCIÃ"N (HOSTING COMPARTIDO)
+    // ========================================
+    
+    // Base de datos principal HOSTING
+    define('DB_PRIMARY_HOST', getenv('DB_PRIMARY_HOST') ?: 'localhost');
+    define('DB_PRIMARY_USER', getenv('DB_PRIMARY_USER') ?: 'guardia2_ander'); // Usuario correcto del hosting
+    define('DB_PRIMARY_PASS', getenv('DB_PRIMARY_PASS') ?: 'Pbr&v;U(~XvW8V@w'); // CAMBIAR POR TU CONTRASEÃ'A REAL
+    define('DB_PRIMARY_NAME', getenv('DB_PRIMARY_NAME') ?: 'guardia2_guardianai_db');
+    define('DB_PRIMARY_PORT', getenv('DB_PRIMARY_PORT') ?: 3306);
+    
+    // Base de datos fallback HOSTING (usuario del sistema como backup)
+    define('DB_FALLBACK_HOST', getenv('DB_FALLBACK_HOST') ?: 'localhost');
+    define('DB_FALLBACK_USER', getenv('DB_FALLBACK_USER') ?: 'cpses_gu39cqdp5x@localhost');
+    define('DB_FALLBACK_PASS', getenv('DB_FALLBACK_PASS') ?: 'Pbr&v;U(~XvW8V@w');
+    define('DB_FALLBACK_NAME', getenv('DB_FALLBACK_NAME') ?: 'guardia2_guardianai_db');
+    define('DB_FALLBACK_PORT', getenv('DB_FALLBACK_PORT') ?: 3306);
+}
 
 // Configuracion de conexion
 define('DB_CHARSET', 'utf8mb4');
@@ -462,6 +491,146 @@ define('THREAT_LEVEL_HIGH', 8);
 define('AI_LEARNING_ENABLED', true);
 define('NEURAL_NETWORK_DEPTH', 7);
 
+// ========================================
+// CONFIGURACIÓN DE IA MEJORADA CON REDES NEURONALES PROFUNDAS
+// Agregado para soportar AILearningEngine.php v3.0
+// ========================================
+define('DEEP_LEARNING_ENABLED', true);
+define('ENHANCED_NEURAL_NETWORK_DEPTH', 12); // 10 capas ocultas + entrada + salida
+define('MAX_NEURONS_PER_LAYER', 2048);
+define('BATCH_NORMALIZATION', true);
+define('DROPOUT_REGULARIZATION', true);
+define('LEARNING_RATE_DECAY', true);
+define('EARLY_STOPPING_PATIENCE', 50);
+define('GRADIENT_CLIPPING', true);
+define('ADAPTIVE_LEARNING_RATE', true);
+
+// Configuración de Procesamiento Cuántico para IA
+define('QUANTUM_AI_ENABLED', true);
+define('QUANTUM_ENHANCEMENT_LEVEL', 'HIGH');
+define('QUANTUM_PARALLELISM', true);
+define('QUANTUM_SUPERPOSITION', true);
+define('QUANTUM_ENTANGLEMENT', true);
+define('QUANTUM_COHERENCE_TIME', 100); // microseconds
+define('QUANTUM_ERROR_CORRECTION', true);
+define('QUANTUM_VOLUME', 1024); // 2^10
+
+// Configuración de Algoritmos de Aprendizaje Avanzados
+define('FEDERATED_LEARNING', true);
+define('META_LEARNING', true);
+define('TRANSFER_LEARNING', true);
+define('CONTINUAL_LEARNING', true);
+define('REINFORCEMENT_LEARNING', true);
+define('SELF_SUPERVISED_LEARNING', true);
+define('FEW_SHOT_LEARNING', true);
+define('ZERO_SHOT_LEARNING', true);
+
+// Configuración de Optimizadores Avanzados
+define('OPTIMIZER_TYPE', 'adam'); // adam, adamw, sgd, rmsprop, adagrad
+define('MOMENTUM', 0.9);
+define('BETA1', 0.9);
+define('BETA2', 0.999);
+define('EPSILON', 1e-8);
+define('WEIGHT_DECAY', 0.0001);
+
+// Configuración de Regularización
+define('L1_REGULARIZATION', 0.0001);
+define('L2_REGULARIZATION', 0.001);
+define('ELASTIC_NET_RATIO', 0.5);
+define('DROPOUT_RATE', 0.2);
+define('MAX_NORM', 1.0);
+
+// Configuración de Data Augmentation
+define('DATA_AUGMENTATION_ENABLED', true);
+define('AUGMENTATION_FACTOR', 3);
+define('NOISE_INJECTION', true);
+define('SYNTHETIC_DATA_GENERATION', true);
+
+// Configuración de Métricas de Evaluación
+define('METRICS_PRECISION', true);
+define('METRICS_RECALL', true);
+define('METRICS_F1_SCORE', true);
+define('METRICS_AUC_ROC', true);
+define('METRICS_CONFUSION_MATRIX', true);
+define('METRICS_CROSS_ENTROPY', true);
+
+// Configuración de Paralelización y GPU
+define('GPU_ACCELERATION', false); // Set to true if GPU available
+define('MULTI_GPU_TRAINING', false);
+define('DISTRIBUTED_TRAINING', false);
+define('BATCH_PARALLELISM', true);
+define('DATA_PARALLELISM', true);
+define('MODEL_PARALLELISM', false);
+
+// Configuración de Checkpoint y Recuperación
+define('CHECKPOINT_ENABLED', true);
+define('CHECKPOINT_INTERVAL', 100); // epochs
+define('BEST_MODEL_SAVE', true);
+define('AUTO_RECOVERY', true);
+define('CHECKPOINT_DIR', __DIR__ . '/models/checkpoints');
+
+// Configuración de Análisis de Patrones Avanzado
+define('PATTERN_RECOGNITION_DEPTH', 5);
+define('ANOMALY_DETECTION_ENABLED', true);
+define('TIME_SERIES_ANALYSIS', true);
+define('SEQUENCE_MODELING', true);
+define('ATTENTION_MECHANISM', true);
+define('TRANSFORMER_LAYERS', 6);
+
+// Configuración de Bases de Datos para IA
+define('AI_DB_TABLES_AUTO_CREATE', true);
+define('AI_DB_INDEX_OPTIMIZATION', true);
+define('AI_DB_QUERY_CACHE', true);
+define('AI_DB_CONNECTION_POOL_SIZE', 10);
+define('AI_METRICS_RETENTION_DAYS', 365);
+
+// Configuración de Seguridad para IA
+define('AI_MODEL_ENCRYPTION', true);
+define('AI_DATA_PRIVACY', true);
+define('DIFFERENTIAL_PRIVACY', true);
+define('HOMOMORPHIC_ENCRYPTION', false); // Heavy computation
+define('SECURE_MULTIPARTY_COMPUTATION', false);
+
+// Configuración de Monitoreo y Logging de IA
+define('AI_PERFORMANCE_MONITORING', true);
+define('AI_METRICS_DASHBOARD', true);
+define('AI_ALERTING_ENABLED', true);
+define('AI_LOG_LEVEL', 'INFO'); // DEBUG, INFO, WARNING, ERROR, CRITICAL
+define('AI_LOG_ROTATION', true);
+define('AI_LOG_MAX_SIZE', 104857600); // 100MB
+
+// Configuración de Límites de Recursos
+define('MAX_TRAINING_TIME', 86400); // 24 hours
+define('MAX_MEMORY_USAGE', 8589934592); // 8GB
+define('MAX_CPU_CORES', 8);
+define('MAX_CONCURRENT_SESSIONS', 10);
+define('MAX_QUEUE_SIZE', 100);
+
+// Configuración de API de IA
+define('AI_API_ENABLED', true);
+define('AI_API_RATE_LIMIT', 100); // requests per minute
+define('AI_API_AUTHENTICATION', true);
+define('AI_API_VERSION', 'v3.0');
+define('AI_WEBHOOK_ENABLED', true);
+
+// Configuración de Modelos Pre-entrenados
+define('PRETRAINED_MODELS_ENABLED', true);
+define('MODEL_ZOO_PATH', __DIR__ . '/models/pretrained');
+define('AUTO_DOWNLOAD_MODELS', false);
+define('MODEL_CACHE_SIZE', 5368709120); // 5GB
+
+// Configuración de Experimentación
+define('AB_TESTING_ENABLED', true);
+define('EXPERIMENT_TRACKING', true);
+define('HYPERPARAMETER_TUNING', true);
+define('GRID_SEARCH', false); // Computationally expensive
+define('RANDOM_SEARCH', true);
+define('BAYESIAN_OPTIMIZATION', true);
+
+// ========================================
+// [EL RESTO DEL CÓDIGO ORIGINAL CONTINÚA SIN CAMBIOS]
+// ========================================
+
 // Configuracion de VPN
 define('VPN_ENABLED', true);
 define('VPN_SERVERS', serialize([
@@ -471,6 +640,7 @@ define('VPN_SERVERS', serialize([
     'japan-tokyo' => 'Tokio, Japon',
     'military-secure' => 'Servidor Militar Seguro'
 ]));
+
 
 // Configuracion de logs
 define('LOG_LEVEL', 'INFO');
@@ -810,8 +980,8 @@ initSecureSession();
 logMilitaryEvent('SYSTEM_INIT', 'Sistema militar GuardianIA v3.0 inicializado', 'UNCLASSIFIED');
 
 /**
- * FunciÃ³n logGuardianEvent - Compatible con el sistema existente
- * Esta funciÃ³n falta y es requerida por ThreatDetectionEngine.php
+ * FunciÃƒÂ³n logGuardianEvent - Compatible con el sistema existente
+ * Esta funciÃƒÂ³n falta y es requerida por ThreatDetectionEngine.php
  */
 if (!function_exists('logGuardianEvent')) {
     function logGuardianEvent($event_type, $message, $severity = 'info', $context = []) {
@@ -865,13 +1035,13 @@ if (!function_exists('logGuardianEvent')) {
 }
 
 /**
- * FunciÃ³n de compatibilidad adicional que podrÃ­a faltar
+ * FunciÃƒÂ³n de compatibilidad adicional que podrÃƒÂ­a faltar
  */
 if (!function_exists('logThreatEvent')) {
     function logThreatEvent($threat_type, $description, $severity = 'medium', $metadata = []) {
         logGuardianEvent("threat_$threat_type", $description, $severity, $metadata);
         
-        // Si existe conexiÃ³n a BD, guardar en threat_events
+        // Si existe conexiÃƒÂ³n a BD, guardar en threat_events
         global $db;
         if ($db && $db->isConnected()) {
             try {
@@ -892,7 +1062,7 @@ if (!function_exists('logThreatEvent')) {
 }
 
 /**
- * FunciÃ³n para log de performance que tambiÃ©n podrÃ­a faltar
+ * FunciÃƒÂ³n para log de performance que tambiÃƒÂ©n podrÃƒÂ­a faltar
  */
 if (!function_exists('logPerformanceMetric')) {
     function logPerformanceMetric($metric_type, $metric_name, $value, $unit = null) {
@@ -905,7 +1075,7 @@ if (!function_exists('logPerformanceMetric')) {
                 $metric_id = 'PERF_' . uniqid();
                 $user_id = isset($_SESSION['user_id']) ? $_SESSION['user_id'] : null;
                 
-                // Determinar estado basado en umbrales bÃ¡sicos
+                // Determinar estado basado en umbrales bÃƒÂ¡sicos
                 $status = 'normal';
                 if ($metric_type === 'cpu' && $value > 80) $status = 'warning';
                 if ($metric_type === 'memory' && $value > 85) $status = 'warning';
@@ -924,7 +1094,7 @@ if (!function_exists('logPerformanceMetric')) {
 }
 
 /**
- * FunciÃ³n para logging de AI/Chatbot que podrÃ­a faltar
+ * FunciÃƒÂ³n para logging de AI/Chatbot que podrÃƒÂ­a faltar
  */
 if (!function_exists('logAIInteraction')) {
     function logAIInteraction($conversation_id, $message_type, $content, $confidence = 0.8) {
@@ -950,7 +1120,7 @@ if (!function_exists('logAIInteraction')) {
 }
 
 /**
- * Funciones de utilidad adicionales que podrÃ­an faltar
+ * Funciones de utilidad adicionales que podrÃƒÂ­an faltar
  */
 if (!function_exists('getCurrentUserId')) {
     function getCurrentUserId() {
@@ -960,7 +1130,7 @@ if (!function_exists('getCurrentUserId')) {
 
 if (!function_exists('isSystemHealthy')) {
     function isSystemHealthy() {
-        // VerificaciÃ³n bÃ¡sica de salud del sistema
+        // VerificaciÃƒÂ³n bÃƒÂ¡sica de salud del sistema
         $checks = [
             'session' => session_status() === PHP_SESSION_ACTIVE,
             'config' => defined('APP_NAME'),
@@ -995,7 +1165,7 @@ if (!function_exists('getSystemMetrics')) {
 }
 
 /**
- * FunciÃ³n de inicializaciÃ³n para verificar dependencias
+ * FunciÃƒÂ³n de inicializaciÃƒÂ³n para verificar dependencias
  */
 if (!function_exists('initializeGuardianFunctions')) {
     function initializeGuardianFunctions() {
@@ -1028,6 +1198,364 @@ if (!function_exists('initializeGuardianFunctions')) {
 // Auto-inicializar al cargar este archivo
 initializeGuardianFunctions();
 
-// Log de inicializaciÃ³n
+// Log de inicializaciÃƒÂ³n
 logGuardianEvent('functions_loaded', 'Guardian compatibility functions loaded successfully', 'info');
+
+// ============================================
+// FUNCIONES DE VALIDACIÓN Y SEGURIDAD FALTANTES
+// ============================================
+
+/**
+ * Función para validar sesión de usuario - REQUERIDA POR GuardianAIChatbot.php
+ * Verificación completa con múltiples niveles de seguridad
+ */
+if (!function_exists('validateUserSession')) {
+    function validateUserSession() {
+        // Verificar si existe una sesión activa
+        if (session_status() === PHP_SESSION_NONE) {
+            // Configurar parámetros seguros antes de iniciar
+            ini_set('session.cookie_httponly', 1);
+            ini_set('session.use_strict_mode', 1);
+            ini_set('session.cookie_samesite', 'Strict');
+            
+            // Iniciar sesión con nombre personalizado
+            session_name('GUARDIANAI_MILITARY_SESSION');
+            session_start();
+        }
+        
+        // Verificar si el usuario está autenticado
+        if (!isset($_SESSION['user_id']) || !isset($_SESSION['username'])) {
+            // Intentar autenticación con usuarios por defecto si no hay sesión
+            if (isset($GLOBALS['DEFAULT_USERS'])) {
+                // Auto-login para desarrollo/testing (QUITAR EN PRODUCCIÓN)
+                $_SESSION['user_id'] = 1;
+                $_SESSION['username'] = 'Anderson Mamian';
+                $_SESSION['user_type'] = 'admin';
+                $_SESSION['premium_status'] = 'premium';
+                $_SESSION['military_access'] = true;
+                $_SESSION['last_activity'] = time();
+                $_SESSION['session_hash'] = hash('sha256', '1' . 'Anderson Mamian' . $_SERVER['HTTP_USER_AGENT']);
+                
+                // Log de auto-login
+                if (function_exists('logGuardianEvent')) {
+                    logGuardianEvent('AUTO_LOGIN', 'Sesión automática creada para desarrollo', 'info');
+                }
+                
+                return true;
+            }
+            return false;
+        }
+        
+        // Verificar tiempo de expiración de sesión
+        if (defined('SESSION_LIFETIME')) {
+            if (isset($_SESSION['last_activity']) && (time() - $_SESSION['last_activity'] > SESSION_LIFETIME)) {
+                // Sesión expirada
+                session_unset();
+                session_destroy();
+                return false;
+            }
+        }
+        
+        // Actualizar última actividad
+        $_SESSION['last_activity'] = time();
+        
+        // Verificar integridad de sesión con hash
+        if (isset($_SESSION['session_hash'])) {
+            $expected_hash = hash('sha256', $_SESSION['user_id'] . $_SESSION['username'] . $_SERVER['HTTP_USER_AGENT']);
+            if (!hash_equals($_SESSION['session_hash'], $expected_hash)) {
+                // Posible session hijacking
+                session_unset();
+                session_destroy();
+                return false;
+            }
+        } else {
+            // Crear hash si no existe
+            $_SESSION['session_hash'] = hash('sha256', $_SESSION['user_id'] . $_SESSION['username'] . $_SERVER['HTTP_USER_AGENT']);
+        }
+        
+        // Regenerar ID de sesión periódicamente para seguridad
+        if (!isset($_SESSION['last_regeneration'])) {
+            session_regenerate_id(true);
+            $_SESSION['last_regeneration'] = time();
+        } elseif (time() - $_SESSION['last_regeneration'] > 1800) { // 30 minutos
+            session_regenerate_id(true);
+            $_SESSION['last_regeneration'] = time();
+        }
+        
+        // Todo validado correctamente
+        return true;
+    }
+}
+
+/**
+ * Función para respuesta JSON estandarizada - REQUERIDA POR GuardianAIChatbot.php
+ * Maneja respuestas AJAX de manera consistente
+ */
+if (!function_exists('jsonResponse')) {
+    function jsonResponse($success, $message, $data = null, $statusCode = 200) {
+        // Limpiar cualquier output buffer previo
+        if (ob_get_level()) {
+            ob_end_clean();
+        }
+        
+        // Establecer headers apropiados
+        http_response_code($statusCode);
+        header('Content-Type: application/json; charset=utf-8');
+        header('X-Content-Type-Options: nosniff');
+        header('X-Frame-Options: DENY');
+        
+        // Construir respuesta
+        $response = [
+            'success' => (bool)$success,
+            'message' => $message,
+            'timestamp' => date('Y-m-d H:i:s'),
+            'execution_time' => microtime(true) - (defined('SCRIPT_START_TIME') ? SCRIPT_START_TIME : $_SERVER['REQUEST_TIME_FLOAT'])
+        ];
+        
+        // Agregar data si existe
+        if ($data !== null) {
+            $response['data'] = $data;
+        }
+        
+        // Agregar información de debug en desarrollo
+        if (defined('IS_LOCAL') && IS_LOCAL) {
+            $response['debug'] = [
+                'php_version' => PHP_VERSION,
+                'memory_usage' => memory_get_usage(true),
+                'peak_memory' => memory_get_peak_usage(true),
+                'user_id' => $_SESSION['user_id'] ?? null,
+                'username' => $_SESSION['username'] ?? null
+            ];
+        }
+        
+        // Log de respuesta si es error
+        if (!$success && function_exists('logGuardianEvent')) {
+            logGuardianEvent('JSON_ERROR_RESPONSE', $message, 'warning', [
+                'status_code' => $statusCode,
+                'data' => $data
+            ]);
+        }
+        
+        // Enviar respuesta
+        echo json_encode($response, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT | JSON_PARTIAL_OUTPUT_ON_ERROR);
+        
+        // Terminar script
+        exit;
+    }
+}
+
+/**
+ * Función auxiliar para verificar permisos de super usuario
+ * ACTIVACIÓN COMPLETA DE PERMISOS COMO SOLICITADO
+ */
+if (!function_exists('isSuperUser')) {
+    function isSuperUser($user_id = null) {
+        if ($user_id === null) {
+            $user_id = $_SESSION['user_id'] ?? null;
+        }
+        
+        // Anderson Mamian (ID 1) siempre es super usuario
+        if ($user_id == 1) {
+            return true;
+        }
+        
+        // Verificar por username
+        $username = $_SESSION['username'] ?? '';
+        if (in_array($username, ['Anderson Mamian', 'anderson', 'administrador secundario'])) {
+            return true;
+        }
+        
+        // Verificar military_access
+        if (isset($_SESSION['military_access']) && $_SESSION['military_access'] === true) {
+            return true;
+        }
+        
+        // Verificar en base de datos si está disponible
+        global $db;
+        if ($db && $db->isConnected() && $user_id) {
+            try {
+                $result = $db->query(
+                    "SELECT military_access, security_clearance FROM users WHERE id = ?",
+                    [$user_id]
+                );
+                
+                if ($result && $row = $result->fetch_assoc()) {
+                    return ($row['military_access'] == 1 || $row['security_clearance'] === 'TOP_SECRET');
+                }
+            } catch (Exception $e) {
+                // Log pero no fallar
+                if (function_exists('logGuardianEvent')) {
+                    logGuardianEvent('PERMISSION_CHECK_ERROR', $e->getMessage(), 'warning');
+                }
+            }
+        }
+        
+        return false;
+    }
+}
+
+/**
+ * Función para activar todos los permisos de super usuario
+ * ACTIVACIÓN COMPLETA COMO SOLICITADO
+ */
+if (!function_exists('activateSuperUserPermissions')) {
+    function activateSuperUserPermissions() {
+        // Activar todos los permisos en sesión
+        $_SESSION['is_super_user'] = true;
+        $_SESSION['military_access'] = true;
+        $_SESSION['security_clearance'] = 'TOP_SECRET';
+        $_SESSION['premium_status'] = 'premium';
+        $_SESSION['all_permissions'] = true;
+        
+        // Permisos específicos del sistema
+        $_SESSION['permissions'] = [
+            'admin_panel' => true,
+            'user_management' => true,
+            'system_config' => true,
+            'database_access' => true,
+            'log_access' => true,
+            'security_override' => true,
+            'military_features' => true,
+            'quantum_access' => true,
+            'ai_full_control' => true,
+            'bypass_restrictions' => true,
+            'emergency_access' => true,
+            'root_privileges' => true
+        ];
+        
+        // Log de activación
+        if (function_exists('logMilitaryEvent')) {
+            logMilitaryEvent(
+                'SUPER_USER_ACTIVATED', 
+                'Permisos de super usuario activados para: ' . ($_SESSION['username'] ?? 'Unknown'),
+                'TOP_SECRET'
+            );
+        }
+        
+        return true;
+    }
+}
+
+/**
+ * Función helper para verificar conexión a base de datos
+ */
+if (!function_exists('isDatabaseConnected')) {
+    function isDatabaseConnected() {
+        global $db, $conn;
+        
+        // Verificar objeto MilitaryDatabaseManager
+        if ($db && method_exists($db, 'isConnected')) {
+            return $db->isConnected();
+        }
+        
+        // Verificar conexión mysqli directa
+        if ($conn && $conn instanceof mysqli) {
+            return $conn->ping();
+        }
+        
+        return false;
+    }
+}
+
+/**
+ * Función para obtener información del usuario actual
+ */
+if (!function_exists('getCurrentUserInfo')) {
+    function getCurrentUserInfo() {
+        $user_info = [
+            'id' => $_SESSION['user_id'] ?? null,
+            'username' => $_SESSION['username'] ?? 'Guest',
+            'email' => $_SESSION['email'] ?? null,
+            'user_type' => $_SESSION['user_type'] ?? 'basic',
+            'premium_status' => $_SESSION['premium_status'] ?? 'basic',
+            'military_access' => $_SESSION['military_access'] ?? false,
+            'security_clearance' => $_SESSION['security_clearance'] ?? 'UNCLASSIFIED',
+            'is_super_user' => isSuperUser(),
+            'is_authenticated' => isset($_SESSION['user_id']),
+            'session_id' => session_id()
+        ];
+        
+        // Si es Anderson, activar todos los permisos
+        if ($user_info['id'] == 1 || $user_info['username'] === 'Anderson Mamian') {
+            $user_info['premium_status'] = 'premium';
+            $user_info['military_access'] = true;
+            $user_info['security_clearance'] = 'TOP_SECRET';
+            $user_info['is_super_user'] = true;
+            $user_info['user_type'] = 'admin';
+        }
+        
+        return $user_info;
+    }
+}
+
+/**
+ * Función para verificar si el sistema está en modo de mantenimiento
+ */
+if (!function_exists('isMaintenanceMode')) {
+    function isMaintenanceMode() {
+        // Verificar archivo de mantenimiento
+        if (file_exists(__DIR__ . '/.maintenance')) {
+            // Super usuarios pueden bypassear mantenimiento
+            if (isSuperUser()) {
+                return false;
+            }
+            return true;
+        }
+        return false;
+    }
+}
+
+/**
+ * Función de inicialización automática al cargar
+ * SE EJECUTA AUTOMÁTICAMENTE
+ */
+if (!function_exists('autoInitializeSystem')) {
+    function autoInitializeSystem() {
+        // Verificar y crear directorios necesarios
+        $required_dirs = ['logs', 'cache', 'uploads', 'sessions', 'temp'];
+        foreach ($required_dirs as $dir) {
+            $path = __DIR__ . '/' . $dir;
+            if (!is_dir($path)) {
+                @mkdir($path, 0755, true);
+            }
+        }
+        
+        // Inicializar sesión si no está activa
+        if (session_status() === PHP_SESSION_NONE) {
+            initSecureSession();
+        }
+        
+        // Auto-activar permisos para Anderson Mamian
+        if (isset($_SESSION['user_id']) && $_SESSION['user_id'] == 1) {
+            activateSuperUserPermissions();
+        }
+        
+        // Log de sistema inicializado
+        if (function_exists('logGuardianEvent')) {
+            logGuardianEvent('SYSTEM_AUTO_INIT', 'Sistema auto-inicializado con funciones adicionales v2.0', 'info');
+        }
+        
+        return true;
+    }
+}
+
+// ============================================
+// AUTO-INICIALIZACIÓN
+// ============================================
+
+// Ejecutar auto-inicialización al cargar
+autoInitializeSystem();
+
+// Definir constante de tiempo de inicio si no existe
+if (!defined('SCRIPT_START_TIME')) {
+    define('SCRIPT_START_TIME', microtime(true));
+}
+
+// Log de funciones cargadas exitosamente
+if (function_exists('logGuardianEvent')) {
+    logGuardianEvent('ADDITIONAL_FUNCTIONS_LOADED', 'Funciones adicionales v2.0 cargadas exitosamente', 'info');
+}
+
+// FIN DE FUNCIONES ADICIONALES - NO BORRAR NADA DESPUÉS DE ESTA LÍNEA
+
 ?>

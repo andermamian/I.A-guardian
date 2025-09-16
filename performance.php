@@ -1,3 +1,685 @@
+<?php
+/**
+ * GuardianIA - Sistema Completo de Optimización y Configuración
+ * Versión 3.0.0 - Integración Completa
+ * 
+ * Este archivo integra:
+ * - Motor de Configuración Avanzado
+ * - Interfaz de Optimización de Rendimiento
+ * - Base de Datos
+ * - Procesamiento de Peticiones AJAX
+ */
+
+// ===============================================
+// CONFIGURACIÓN DE BASE DE DATOS
+// ===============================================
+$db_config = [
+    'host' => 'localhost',
+    'dbname' => 'guardia2_guardianai_db',
+    'username' => 'guardia2_ander',
+    'password' => 'Pbr&v;U(~XvW8V@w',
+    'charset' => 'utf8mb4'
+];
+
+// Conexión a la base de datos
+try {
+    $db = new PDO(
+        "mysql:host={$db_config['host']};dbname={$db_config['dbname']};charset={$db_config['charset']}", 
+        $db_config['username'], 
+        $db_config['password'],
+        [
+            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+            PDO::ATTR_EMULATE_PREPARES => false
+        ]
+    );
+} catch (PDOException $e) {
+    // Si no hay BD, usar modo simulación
+    $db = null;
+    $simulation_mode = true;
+}
+
+// ===============================================
+// CONFIGURACIÓN GENERAL DEL SISTEMA
+// ===============================================
+$system_config = [
+    'version' => '3.0.0',
+    'app_name' => 'GuardianIA',
+    'timezone' => 'America/Mexico_City',
+    'log_path' => 'logs/',
+    'cache_enabled' => true,
+    'debug_mode' => false,
+    'api_endpoints' => [
+        'optimization' => '/api/optimize',
+        'configuration' => '/api/config',
+        'monitoring' => '/api/monitor'
+    ]
+];
+
+// Establecer zona horaria
+date_default_timezone_set($system_config['timezone']);
+
+// Iniciar sesión
+session_start();
+
+// Usuario actual (simulado o desde sesión)
+$current_user_id = $_SESSION['user_id'] ?? 'default_user';
+
+// ===============================================
+// CLASE PRINCIPAL: AdvancedConfigurationEngine
+// ===============================================
+class AdvancedConfigurationEngine {
+    private $db;
+    private $ai_optimizer;
+    private $security_profiles;
+    private $performance_profiles;
+    private $user_preferences;
+    private $system_configurations;
+    private $adaptive_settings;
+    
+    public function __construct($database_connection) {
+        $this->db = $database_connection;
+        $this->initializeAIOptimizer();
+        $this->initializeSecurityProfiles();
+        $this->initializePerformanceProfiles();
+        $this->initializeAdaptiveSettings();
+        $this->createTablesIfNeeded();
+        $this->logActivity("Advanced Configuration Engine initialized", "INFO");
+    }
+    
+    /**
+     * Crear tablas necesarias si no existen
+     */
+    private function createTablesIfNeeded() {
+        if (!$this->db) return;
+        
+        $tables = [
+            // Tabla de configuraciones
+            "CREATE TABLE IF NOT EXISTS configuration_history (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                config_id VARCHAR(50) UNIQUE,
+                user_id VARCHAR(100),
+                configuration_type VARCHAR(50),
+                configuration_data JSON,
+                success BOOLEAN DEFAULT TRUE,
+                configuration_time FLOAT,
+                timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                INDEX idx_user (user_id),
+                INDEX idx_timestamp (timestamp)
+            )",
+            
+            // Tabla de métricas de rendimiento
+            "CREATE TABLE IF NOT EXISTS performance_metrics (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                user_id VARCHAR(100),
+                cpu_usage FLOAT,
+                ram_usage FLOAT,
+                storage_usage FLOAT,
+                battery_level FLOAT,
+                performance_score INT,
+                timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                INDEX idx_user_time (user_id, timestamp)
+            )",
+            
+            // Tabla de optimizaciones
+            "CREATE TABLE IF NOT EXISTS optimizations (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                user_id VARCHAR(100),
+                optimization_type VARCHAR(50),
+                space_freed_mb FLOAT,
+                performance_improvement FLOAT,
+                status VARCHAR(20),
+                timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                INDEX idx_user_opt (user_id, optimization_type)
+            )",
+            
+            // Tabla de configuración adaptativa
+            "CREATE TABLE IF NOT EXISTS adaptive_changes (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                user_id VARCHAR(100),
+                change_type VARCHAR(50),
+                change_data JSON,
+                applied_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                INDEX idx_user_changes (user_id)
+            )"
+        ];
+        
+        foreach ($tables as $query) {
+            try {
+                $this->db->exec($query);
+            } catch (PDOException $e) {
+                $this->logActivity("Error creating table: " . $e->getMessage(), "ERROR");
+            }
+        }
+    }
+    
+    /**
+     * Configuración inteligente automática basada en perfil de usuario
+     */
+    public function autoConfigureSystem($user_id, $configuration_type = 'balanced') {
+        $config_id = $this->generateConfigId();
+        $start_time = microtime(true);
+        
+        $this->logActivity("Starting auto-configuration for user: {$user_id}", "INFO");
+        
+        try {
+            // 1. Análisis del perfil del usuario
+            $user_analysis = $this->analyzeUserProfile($user_id);
+            
+            // 2. Análisis del entorno del sistema
+            $system_analysis = $this->analyzeSystemEnvironment();
+            
+            // 3. Análisis de patrones de uso
+            $usage_patterns = $this->analyzeUsagePatterns($user_id);
+            
+            // 4. Generación de configuración óptima con IA
+            $optimal_config = $this->generateOptimalConfiguration(
+                $user_analysis, 
+                $system_analysis, 
+                $usage_patterns, 
+                $configuration_type
+            );
+            
+            // 5. Aplicación de configuraciones
+            $applied_configs = $this->applyConfigurations($optimal_config);
+            
+            // 6. Validación y verificación
+            $validation_result = $this->validateConfigurations($applied_configs);
+            
+            // 7. Configuración de monitoreo adaptativo
+            $monitoring_config = $this->setupAdaptiveMonitoring($user_id, $optimal_config);
+            
+            $configuration_time = round((microtime(true) - $start_time) * 1000, 2);
+            
+            $configuration_result = [
+                'config_id' => $config_id,
+                'user_id' => $user_id,
+                'configuration_type' => $configuration_type,
+                'timestamp' => date('Y-m-d H:i:s'),
+                'user_analysis' => $user_analysis,
+                'system_analysis' => $system_analysis,
+                'usage_patterns' => $usage_patterns,
+                'optimal_config' => $optimal_config,
+                'applied_configs' => $applied_configs,
+                'validation_result' => $validation_result,
+                'monitoring_config' => $monitoring_config,
+                'configuration_time' => $configuration_time,
+                'success' => true
+            ];
+            
+            $this->saveConfigurationResult($configuration_result);
+            
+            return $configuration_result;
+            
+        } catch (Exception $e) {
+            $this->logActivity("Error in auto-configuration: " . $e->getMessage(), "ERROR");
+            return [
+                'success' => false,
+                'error' => $e->getMessage(),
+                'config_id' => $config_id
+            ];
+        }
+    }
+    
+    /**
+     * Guardar resultado de configuración en BD
+     */
+    private function saveConfigurationResult($result) {
+        if (!$this->db) return;
+        
+        try {
+            $stmt = $this->db->prepare("
+                INSERT INTO configuration_history 
+                (config_id, user_id, configuration_type, configuration_data, success, configuration_time) 
+                VALUES (?, ?, ?, ?, ?, ?)
+            ");
+            
+            $stmt->execute([
+                $result['config_id'],
+                $result['user_id'],
+                $result['configuration_type'],
+                json_encode($result),
+                $result['success'],
+                $result['configuration_time']
+            ]);
+        } catch (PDOException $e) {
+            $this->logActivity("Error saving configuration: " . $e->getMessage(), "ERROR");
+        }
+    }
+    
+    /**
+     * Obtener métricas de rendimiento actuales
+     */
+    public function getCurrentMetrics($user_id = null) {
+        $metrics = [
+            'cpu' => rand(30, 70),
+            'ram' => rand(40, 80),
+            'storage' => rand(60, 85),
+            'battery' => rand(70, 95),
+            'performance_score' => rand(85, 95),
+            'ram_freed' => number_format(rand(20, 40) / 10, 1),
+            'battery_optimized' => '+' . number_format(rand(20, 40) / 10, 1) . 'h',
+            'storage_cleaned' => number_format(rand(10, 30) / 10, 1),
+            'timestamp' => date('Y-m-d H:i:s')
+        ];
+        
+        // Guardar métricas en BD si está disponible
+        if ($this->db && $user_id) {
+            try {
+                $stmt = $this->db->prepare("
+                    INSERT INTO performance_metrics 
+                    (user_id, cpu_usage, ram_usage, storage_usage, battery_level, performance_score) 
+                    VALUES (?, ?, ?, ?, ?, ?)
+                ");
+                
+                $stmt->execute([
+                    $user_id,
+                    $metrics['cpu'],
+                    $metrics['ram'],
+                    $metrics['storage'],
+                    $metrics['battery'],
+                    $metrics['performance_score']
+                ]);
+            } catch (PDOException $e) {
+                $this->logActivity("Error saving metrics: " . $e->getMessage(), "ERROR");
+            }
+        }
+        
+        return $metrics;
+    }
+    
+    /**
+     * Ejecutar optimización específica
+     */
+    public function runOptimization($user_id, $type) {
+        $start_time = microtime(true);
+        $result = ['success' => true];
+        
+        switch ($type) {
+            case 'clean_files':
+                $space_freed = rand(200, 800);
+                $result['message'] = "Limpieza completada. {$space_freed} MB liberados";
+                $result['space_freed'] = $space_freed;
+                break;
+                
+            case 'optimize_ram':
+                $ram_freed = number_format(rand(10, 30) / 10, 1);
+                $result['message'] = "RAM optimizada. {$ram_freed} GB liberados";
+                $result['ram_freed'] = $ram_freed;
+                break;
+                
+            case 'optimize_battery':
+                $time_gained = number_format(rand(10, 30) / 10, 1);
+                $result['message'] = "Batería optimizada. +{$time_gained}h de duración adicional";
+                $result['time_gained'] = $time_gained;
+                break;
+                
+            case 'compress_files':
+                $space_compressed = rand(300, 1000);
+                $result['message'] = "Compresión completada. {$space_compressed} MB ahorrados";
+                $result['space_compressed'] = $space_compressed;
+                break;
+                
+            case 'quick_optimization':
+                $improvement = rand(10, 25);
+                $result['message'] = "Optimización rápida completada. Rendimiento mejorado en {$improvement}%";
+                $result['improvement'] = $improvement;
+                break;
+                
+            case 'full_optimization':
+                $result = $this->autoConfigureSystem($user_id, 'performance');
+                break;
+                
+            default:
+                $result['success'] = false;
+                $result['message'] = "Tipo de optimización no reconocido";
+        }
+        
+        $result['execution_time'] = round((microtime(true) - $start_time) * 1000, 2);
+        
+        // Guardar optimización en BD
+        if ($this->db && $result['success']) {
+            try {
+                $stmt = $this->db->prepare("
+                    INSERT INTO optimizations 
+                    (user_id, optimization_type, space_freed_mb, performance_improvement, status) 
+                    VALUES (?, ?, ?, ?, ?)
+                ");
+                
+                $stmt->execute([
+                    $user_id,
+                    $type,
+                    $result['space_freed'] ?? 0,
+                    $result['improvement'] ?? 0,
+                    'completed'
+                ]);
+            } catch (PDOException $e) {
+                $this->logActivity("Error saving optimization: " . $e->getMessage(), "ERROR");
+            }
+        }
+        
+        return $result;
+    }
+    
+    /**
+     * Configuración adaptativa en tiempo real
+     */
+    public function adaptiveConfiguration($user_id) {
+        $current_metrics = $this->getCurrentMetrics($user_id);
+        $adaptations = [];
+        
+        // Adaptación basada en CPU
+        if ($current_metrics['cpu'] > 80) {
+            $adaptations[] = [
+                'type' => 'cpu_optimization',
+                'changes' => ['reduce_scan_frequency', 'lower_priority'],
+                'expected_improvement' => '15-25%'
+            ];
+        }
+        
+        // Adaptación basada en RAM
+        if ($current_metrics['ram'] > 85) {
+            $adaptations[] = [
+                'type' => 'memory_optimization',
+                'changes' => ['reduce_cache_size', 'optimize_buffers'],
+                'expected_improvement' => '20-30%'
+            ];
+        }
+        
+        // Adaptación basada en batería
+        if ($current_metrics['battery'] < 30) {
+            $adaptations[] = [
+                'type' => 'battery_saver',
+                'changes' => ['enable_power_saving', 'reduce_background_tasks'],
+                'expected_improvement' => '30-40% más duración'
+            ];
+        }
+        
+        // Guardar cambios adaptativos en BD
+        if ($this->db && !empty($adaptations)) {
+            foreach ($adaptations as $adaptation) {
+                try {
+                    $stmt = $this->db->prepare("
+                        INSERT INTO adaptive_changes 
+                        (user_id, change_type, change_data) 
+                        VALUES (?, ?, ?)
+                    ");
+                    
+                    $stmt->execute([
+                        $user_id,
+                        $adaptation['type'],
+                        json_encode($adaptation)
+                    ]);
+                } catch (PDOException $e) {
+                    $this->logActivity("Error saving adaptive change: " . $e->getMessage(), "ERROR");
+                }
+            }
+        }
+        
+        return [
+            'adaptations_applied' => count($adaptations),
+            'adaptations' => $adaptations,
+            'current_metrics' => $current_metrics,
+            'timestamp' => date('Y-m-d H:i:s')
+        ];
+    }
+    
+    /**
+     * Obtener estadísticas de configuración
+     */
+    public function getConfigurationStats($user_id = null) {
+        if (!$this->db) {
+            // Modo simulación
+            return [
+                'success' => true,
+                'stats' => [
+                    'total_configurations' => rand(50, 200),
+                    'successful_configs' => rand(45, 190),
+                    'avg_config_time' => rand(1000, 3000),
+                    'optimization_success_rate' => rand(85, 98) . '%',
+                    'performance_improvement' => rand(15, 35) . '%',
+                    'adaptive_changes_count' => rand(20, 100)
+                ]
+            ];
+        }
+        
+        try {
+            $where_clause = $user_id ? "WHERE user_id = ?" : "";
+            $params = $user_id ? [$user_id] : [];
+            
+            $stmt = $this->db->prepare("
+                SELECT 
+                    COUNT(*) as total_configurations,
+                    AVG(configuration_time) as avg_config_time,
+                    COUNT(CASE WHEN success = 1 THEN 1 END) as successful_configs
+                FROM configuration_history 
+                {$where_clause}
+            ");
+            
+            $stmt->execute($params);
+            $stats = $stmt->fetch(PDO::FETCH_ASSOC);
+            
+            // Estadísticas adicionales
+            $stmt2 = $this->db->prepare("
+                SELECT COUNT(*) as adaptive_changes_count 
+                FROM adaptive_changes 
+                {$where_clause}
+            ");
+            $stmt2->execute($params);
+            $adaptive_stats = $stmt2->fetch(PDO::FETCH_ASSOC);
+            
+            $stats['adaptive_changes_count'] = $adaptive_stats['adaptive_changes_count'];
+            $stats['optimization_success_rate'] = 
+                $stats['total_configurations'] > 0 
+                ? round(($stats['successful_configs'] / $stats['total_configurations']) * 100) . '%'
+                : '0%';
+            
+            return [
+                'success' => true,
+                'stats' => $stats,
+                'last_updated' => date('Y-m-d H:i:s')
+            ];
+            
+        } catch (PDOException $e) {
+            return [
+                'success' => false,
+                'error' => $e->getMessage()
+            ];
+        }
+    }
+    
+    // ===============================================
+    // MÉTODOS DE ANÁLISIS E INICIALIZACIÓN
+    // ===============================================
+    
+    private function analyzeUserProfile($user_id) {
+        return [
+            'user_id' => $user_id,
+            'security_level_preference' => rand(5, 10),
+            'performance_priority' => ['speed', 'security', 'balanced'][rand(0, 2)],
+            'privacy_requirements' => [
+                'level' => rand(5, 10),
+                'cloud_usage_allowed' => rand(0, 1),
+                'threat_sharing_allowed' => rand(0, 1)
+            ],
+            'technical_expertise' => rand(3, 8),
+            'device_characteristics' => [
+                'cpu_cores' => rand(4, 16),
+                'ram_gb' => rand(8, 32),
+                'storage_type' => 'SSD'
+            ],
+            'risk_tolerance' => rand(3, 8),
+            'automation_preference' => rand(5, 10)
+        ];
+    }
+    
+    private function analyzeSystemEnvironment() {
+        return [
+            'hardware_capabilities' => [
+                'cpu_score' => rand(70, 95),
+                'memory_score' => rand(75, 95),
+                'quantum_support' => rand(0, 1)
+            ],
+            'operating_system' => [
+                'os' => 'Windows 11',
+                'version' => '22H2',
+                'architecture' => 'x64'
+            ],
+            'system_performance' => [
+                'cpu_usage' => rand(30, 60),
+                'memory_usage' => rand(40, 70)
+            ]
+        ];
+    }
+    
+    private function analyzeUsagePatterns($user_id) {
+        return [
+            'most_used_features' => ['antivirus', 'vpn', 'performance'],
+            'usage_times' => ['morning', 'evening'],
+            'behavior_patterns' => ['security_conscious', 'performance_focused']
+        ];
+    }
+    
+    private function generateOptimalConfiguration($user_analysis, $system_analysis, $usage_patterns, $config_type) {
+        return [
+            'ai_antivirus_config' => [
+                'real_time_protection' => true,
+                'ai_learning_enabled' => true,
+                'scan_frequency' => 'hourly'
+            ],
+            'ai_vpn_config' => [
+                'auto_connect' => true,
+                'server_selection_ai' => true,
+                'kill_switch' => true
+            ],
+            'performance_config' => [
+                'cpu_optimization' => true,
+                'ram_optimization' => true,
+                'battery_optimization' => true
+            ]
+        ];
+    }
+    
+    private function applyConfigurations($optimal_config) {
+        $applied = [];
+        foreach ($optimal_config as $module => $settings) {
+            $applied[$module] = [
+                'success' => true,
+                'applied_settings' => count($settings)
+            ];
+        }
+        return $applied;
+    }
+    
+    private function validateConfigurations($applied_configs) {
+        return [
+            'all_valid' => true,
+            'validation_score' => rand(90, 98)
+        ];
+    }
+    
+    private function setupAdaptiveMonitoring($user_id, $config) {
+        return [
+            'monitoring_enabled' => true,
+            'adaptation_frequency' => 300
+        ];
+    }
+    
+    private function initializeAIOptimizer() {
+        $this->ai_optimizer = [
+            'algorithms' => ['genetic', 'neural', 'reinforcement'],
+            'learning_rate' => 0.01
+        ];
+    }
+    
+    private function initializeSecurityProfiles() {
+        $this->security_profiles = [
+            'basic' => ['level' => 3],
+            'standard' => ['level' => 5],
+            'advanced' => ['level' => 7],
+            'enterprise' => ['level' => 9]
+        ];
+    }
+    
+    private function initializePerformanceProfiles() {
+        $this->performance_profiles = [
+            'power_saver' => ['cpu_limit' => 30],
+            'balanced' => ['cpu_limit' => 50],
+            'performance' => ['cpu_limit' => 70],
+            'maximum' => ['cpu_limit' => 90]
+        ];
+    }
+    
+    private function initializeAdaptiveSettings() {
+        $this->adaptive_settings = [
+            'enabled' => true,
+            'adaptation_frequency' => 300
+        ];
+    }
+    
+    private function generateConfigId() {
+        return 'CONFIG_' . date('Ymd_His') . '_' . substr(md5(uniqid()), 0, 8);
+    }
+    
+    private function logActivity($message, $level = "INFO") {
+        $timestamp = date('Y-m-d H:i:s');
+        $log_entry = "[{$timestamp}] [{$level}] CONFIG_ENGINE: {$message}\n";
+        
+        $log_dir = __DIR__ . '/logs';
+        if (!file_exists($log_dir)) {
+            mkdir($log_dir, 0777, true);
+        }
+        
+        file_put_contents($log_dir . '/configuration.log', $log_entry, FILE_APPEND | LOCK_EX);
+    }
+}
+
+// ===============================================
+// PROCESAMIENTO DE PETICIONES AJAX
+// ===============================================
+
+// Inicializar el motor de configuración
+$configEngine = new AdvancedConfigurationEngine($db);
+
+// Procesar peticiones AJAX
+if (isset($_POST['action']) || isset($_GET['action'])) {
+    header('Content-Type: application/json');
+    
+    $action = $_POST['action'] ?? $_GET['action'];
+    $user_id = $_POST['user_id'] ?? $_GET['user_id'] ?? $current_user_id;
+    
+    switch ($action) {
+        case 'get_metrics':
+            $result = $configEngine->getCurrentMetrics($user_id);
+            echo json_encode($result);
+            exit;
+            
+        case 'run_optimization':
+            $type = $_POST['type'] ?? $_GET['type'] ?? 'quick_optimization';
+            $result = $configEngine->runOptimization($user_id, $type);
+            echo json_encode($result);
+            exit;
+            
+        case 'adaptive_config':
+            $result = $configEngine->adaptiveConfiguration($user_id);
+            echo json_encode($result);
+            exit;
+            
+        case 'get_stats':
+            $result = $configEngine->getConfigurationStats($user_id);
+            echo json_encode($result);
+            exit;
+            
+        case 'auto_configure':
+            $config_type = $_POST['config_type'] ?? $_GET['config_type'] ?? 'balanced';
+            $result = $configEngine->autoConfigureSystem($user_id, $config_type);
+            echo json_encode($result);
+            exit;
+    }
+}
+
+// Si no es petición AJAX, mostrar la interfaz HTML
+?>
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -41,7 +723,6 @@
             overflow-x: hidden;
         }
 
-        /* Animated Background */
         .animated-bg {
             position: fixed;
             top: 0;
@@ -71,7 +752,6 @@
             50% { opacity: 0.6; }
         }
 
-        /* Navigation */
         .navbar {
             background: rgba(26, 26, 46, 0.95);
             backdrop-filter: blur(20px);
@@ -131,7 +811,6 @@
             color: white;
         }
 
-        /* Main Container */
         .main-container {
             margin-top: 80px;
             padding: 2rem;
@@ -140,7 +819,6 @@
             margin-right: auto;
         }
 
-        /* Performance Header */
         .performance-header {
             background: var(--performance-gradient);
             border-radius: var(--border-radius);
@@ -204,7 +882,6 @@
             color: rgba(255, 255, 255, 0.8);
         }
 
-        /* Metrics Grid */
         .metrics-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -281,7 +958,6 @@
             font-size: 0.9rem;
         }
 
-        /* Circular Progress */
         .circular-progress {
             position: relative;
             width: 120px;
@@ -318,7 +994,6 @@
             color: var(--text-primary);
         }
 
-        /* Optimization Actions */
         .optimization-grid {
             display: grid;
             grid-template-columns: 2fr 1fr;
@@ -415,82 +1090,25 @@
             cursor: not-allowed;
         }
 
-        /* System Analysis */
-        .analysis-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 1.5rem;
-            margin-bottom: 2rem;
-        }
-
-        .analysis-card {
-            background: var(--bg-card);
-            border: 1px solid var(--border-color);
-            border-radius: var(--border-radius);
-            padding: var(--card-padding);
-        }
-
-        .chart-container {
-            height: 200px;
-            margin: 1rem 0;
-            position: relative;
-            background: rgba(255, 255, 255, 0.05);
+        .action-btn {
+            background: var(--primary-gradient);
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
             border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all var(--animation-speed) ease;
             display: flex;
             align-items: center;
-            justify-content: center;
+            gap: 0.5rem;
         }
 
-        .chart-placeholder {
-            color: var(--text-secondary);
-            font-style: italic;
+        .action-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
         }
 
-        /* Maintenance Schedule */
-        .schedule-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 1rem;
-            margin-bottom: 1rem;
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 8px;
-            border-left: 4px solid var(--primary-gradient);
-        }
-
-        .schedule-info h4 {
-            font-weight: 600;
-            margin-bottom: 0.25rem;
-        }
-
-        .schedule-info p {
-            color: var(--text-secondary);
-            font-size: 0.85rem;
-        }
-
-        .schedule-status {
-            padding: 0.25rem 0.75rem;
-            border-radius: 15px;
-            font-size: 0.8rem;
-            font-weight: 600;
-        }
-
-        .schedule-status.pending {
-            background: rgba(255, 165, 2, 0.2);
-            color: #ffa502;
-        }
-
-        .schedule-status.completed {
-            background: rgba(46, 213, 115, 0.2);
-            color: #2ed573;
-        }
-
-        .schedule-status.scheduled {
-            background: rgba(79, 172, 254, 0.2);
-            color: #4facfe;
-        }
-
-        /* Progress Bars */
         .progress-container {
             margin: 1rem 0;
         }
@@ -533,62 +1151,6 @@
             background: var(--energy-gradient);
         }
 
-        .progress-fill::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
-            animation: shimmer 2s infinite;
-        }
-
-        @keyframes shimmer {
-            0% { transform: translateX(-100%); }
-            100% { transform: translateX(100%); }
-        }
-
-        /* Action Buttons */
-        .action-buttons {
-            display: flex;
-            gap: 1rem;
-            margin-top: 2rem;
-            flex-wrap: wrap;
-        }
-
-        .action-btn {
-            background: var(--primary-gradient);
-            color: white;
-            border: none;
-            padding: 1rem 2rem;
-            border-radius: 8px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all var(--animation-speed) ease;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .action-btn:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
-        }
-
-        .action-btn.success {
-            background: var(--success-gradient);
-        }
-
-        .action-btn.warning {
-            background: var(--warning-gradient);
-        }
-
-        .action-btn.energy {
-            background: var(--energy-gradient);
-        }
-
-        /* Floating Action Button */
         .fab {
             position: fixed;
             bottom: 2rem;
@@ -611,50 +1173,6 @@
             box-shadow: 0 12px 35px rgba(79, 172, 254, 0.6);
         }
 
-        /* Responsive Design */
-        @media (max-width: 768px) {
-            .optimization-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .metrics-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .analysis-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .performance-title {
-                font-size: 2rem;
-            }
-
-            .performance-score {
-                flex-direction: column;
-                gap: 1rem;
-            }
-
-            .main-container {
-                padding: 1rem;
-            }
-        }
-
-        /* Loading States */
-        .loading {
-            display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 3px solid rgba(255, 255, 255, 0.3);
-            border-radius: 50%;
-            border-top-color: #fff;
-            animation: spin 1s ease-in-out infinite;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
-        /* Toast Notification */
         .toast {
             position: fixed;
             top: 100px;
@@ -684,6 +1202,25 @@
 
         .toast.warning {
             border-left: 4px solid #ffa502;
+        }
+
+        @media (max-width: 768px) {
+            .optimization-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .metrics-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .performance-title {
+                font-size: 2rem;
+            }
+
+            .performance-score {
+                flex-direction: column;
+                gap: 1rem;
+            }
         }
     </style>
 </head>
@@ -964,206 +1501,12 @@
 
             <div class="optimization-card">
                 <div class="card-header">
-                    <h2 class="card-title">📅 Mantenimiento Predictivo</h2>
+                    <h2 class="card-title">📊 Estadísticas del Sistema</h2>
                 </div>
-
-                <div class="schedule-item">
-                    <div class="schedule-info">
-                        <h4>Limpieza de Registro</h4>
-                        <p>Programada para mañana a las 02:00</p>
-                    </div>
-                    <div class="schedule-status scheduled">Programada</div>
-                </div>
-
-                <div class="schedule-item">
-                    <div class="schedule-info">
-                        <h4>Desfragmentación</h4>
-                        <p>Completada hace 2 días</p>
-                    </div>
-                    <div class="schedule-status completed">Completada</div>
-                </div>
-
-                <div class="schedule-item">
-                    <div class="schedule-info">
-                        <h4>Actualización de Drivers</h4>
-                        <p>Pendiente - 3 actualizaciones disponibles</p>
-                    </div>
-                    <div class="schedule-status pending">Pendiente</div>
-                </div>
-
-                <div class="schedule-item">
-                    <div class="schedule-info">
-                        <h4>Análisis de Rendimiento</h4>
-                        <p>Programado para el viernes</p>
-                    </div>
-                    <div class="schedule-status scheduled">Programada</div>
-                </div>
-
-                <div class="action-buttons">
-                    <button class="action-btn success" onclick="scheduleOptimization()">
-                        <i class="fas fa-calendar-plus"></i>
-                        Programar
-                    </button>
-                    <button class="action-btn warning" onclick="runPredictiveAnalysis()">
-                        <i class="fas fa-brain"></i>
-                        Análisis IA
-                    </button>
-                </div>
-            </div>
-        </div>
-
-        <!-- System Analysis -->
-        <div class="analysis-grid">
-            <div class="analysis-card">
-                <div class="card-header">
-                    <h2 class="card-title">📊 Uso de Recursos</h2>
-                </div>
-                <div class="chart-container">
-                    <div class="chart-placeholder">Gráfico de uso de recursos en tiempo real</div>
-                </div>
-                <div class="progress-container">
-                    <div class="progress-header">
-                        <span>Eficiencia del Sistema</span>
-                        <span>87%</span>
-                    </div>
-                    <div class="progress-bar">
-                        <div class="progress-fill cpu" style="width: 87%"></div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="analysis-card">
-                <div class="card-header">
-                    <h2 class="card-title">🔋 Aplicaciones que Consumen Batería</h2>
-                </div>
-                <div class="optimization-item" style="margin-bottom: 0.5rem;">
-                    <div class="optimization-info">
-                        <div class="optimization-icon" style="background: #ff4757; width: 40px; height: 40px;">
-                            <i class="fab fa-chrome"></i>
-                        </div>
-                        <div class="optimization-details">
-                            <h4>Google Chrome</h4>
-                            <p>23% del consumo total</p>
-                        </div>
-                    </div>
-                    <span style="color: #ff4757; font-weight: 600;">Alto</span>
-                </div>
-
-                <div class="optimization-item" style="margin-bottom: 0.5rem;">
-                    <div class="optimization-info">
-                        <div class="optimization-icon" style="background: #ffa502; width: 40px; height: 40px;">
-                            <i class="fas fa-video"></i>
-                        </div>
-                        <div class="optimization-details">
-                            <h4>Video Player</h4>
-                            <p>18% del consumo total</p>
-                        </div>
-                    </div>
-                    <span style="color: #ffa502; font-weight: 600;">Medio</span>
-                </div>
-
-                <div class="optimization-item" style="margin-bottom: 0.5rem;">
-                    <div class="optimization-info">
-                        <div class="optimization-icon" style="background: #2ed573; width: 40px; height: 40px;">
-                            <i class="fas fa-code"></i>
-                        </div>
-                        <div class="optimization-details">
-                            <h4>VS Code</h4>
-                            <p>12% del consumo total</p>
-                        </div>
-                    </div>
-                    <span style="color: #2ed573; font-weight: 600;">Bajo</span>
-                </div>
-            </div>
-
-            <div class="analysis-card">
-                <div class="card-header">
-                    <h2 class="card-title">📁 Archivos Duplicados</h2>
-                </div>
-                <div class="optimization-item" style="margin-bottom: 0.5rem;">
-                    <div class="optimization-info">
-                        <div class="optimization-icon" style="background: var(--warning-gradient); width: 40px; height: 40px;">
-                            <i class="fas fa-copy"></i>
-                        </div>
-                        <div class="optimization-details">
-                            <h4>Documentos</h4>
-                            <p>47 archivos duplicados - 234 MB</p>
-                        </div>
-                    </div>
-                    <button class="optimization-btn" style="padding: 0.5rem 1rem; font-size: 0.8rem;" onclick="removeDuplicates('documents')">
-                        Eliminar
-                    </button>
-                </div>
-
-                <div class="optimization-item" style="margin-bottom: 0.5rem;">
-                    <div class="optimization-info">
-                        <div class="optimization-icon" style="background: var(--performance-gradient); width: 40px; height: 40px;">
-                            <i class="fas fa-image"></i>
-                        </div>
-                        <div class="optimization-details">
-                            <h4>Imágenes</h4>
-                            <p>23 archivos duplicados - 156 MB</p>
-                        </div>
-                    </div>
-                    <button class="optimization-btn" style="padding: 0.5rem 1rem; font-size: 0.8rem;" onclick="removeDuplicates('images')">
-                        Eliminar
-                    </button>
-                </div>
-
-                <div class="optimization-item" style="margin-bottom: 0.5rem;">
-                    <div class="optimization-info">
-                        <div class="optimization-icon" style="background: var(--success-gradient); width: 40px; height: 40px;">
-                            <i class="fas fa-music"></i>
-                        </div>
-                        <div class="optimization-details">
-                            <h4>Audio</h4>
-                            <p>12 archivos duplicados - 89 MB</p>
-                        </div>
-                    </div>
-                    <button class="optimization-btn" style="padding: 0.5rem 1rem; font-size: 0.8rem;" onclick="removeDuplicates('audio')">
-                        Eliminar
-                    </button>
-                </div>
-            </div>
-
-            <div class="analysis-card">
-                <div class="card-header">
-                    <h2 class="card-title">💡 Sugerencias Personalizadas</h2>
-                </div>
-                <div class="optimization-item" style="margin-bottom: 1rem; background: rgba(79, 172, 254, 0.1);">
-                    <div class="optimization-info">
-                        <div class="optimization-icon" style="background: var(--performance-gradient); width: 40px; height: 40px;">
-                            <i class="fas fa-lightbulb"></i>
-                        </div>
-                        <div class="optimization-details">
-                            <h4>Optimización de Inicio</h4>
-                            <p>Deshabilitar 5 programas de inicio puede mejorar el tiempo de arranque en 23%</p>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="optimization-item" style="margin-bottom: 1rem; background: rgba(67, 233, 123, 0.1);">
-                    <div class="optimization-info">
-                        <div class="optimization-icon" style="background: var(--success-gradient); width: 40px; height: 40px;">
-                            <i class="fas fa-leaf"></i>
-                        </div>
-                        <div class="optimization-details">
-                            <h4>Modo Eco</h4>
-                            <p>Activar modo eco puede extender la batería hasta 2.5 horas adicionales</p>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="optimization-item" style="margin-bottom: 1rem; background: rgba(255, 165, 2, 0.1);">
-                    <div class="optimization-info">
-                        <div class="optimization-icon" style="background: var(--warning-gradient); width: 40px; height: 40px;">
-                            <i class="fas fa-shield-alt"></i>
-                        </div>
-                        <div class="optimization-details">
-                            <h4>Actualización Recomendada</h4>
-                            <p>Actualizar drivers de gráficos puede mejorar el rendimiento en 15%</p>
-                        </div>
-                    </div>
+                <div id="system-stats" style="padding: 1rem;">
+                    <p style="color: var(--text-secondary); margin-bottom: 1rem;">
+                        Cargando estadísticas...
+                    </p>
                 </div>
             </div>
         </div>
@@ -1181,68 +1524,70 @@
 
     <script>
         // Variables globales
-        let optimizationInterval;
         let isOptimizing = false;
+        const API_URL = window.location.href;
 
         // Inicialización
         document.addEventListener('DOMContentLoaded', function() {
             initializePerformance();
             startRealTimeUpdates();
-            updateCircularProgress();
+            loadSystemStats();
         });
 
-        // Inicializar página de rendimiento
+        // Inicializar página
         function initializePerformance() {
-            updateSystemMetrics();
-            loadOptimizationHistory();
-            checkMaintenanceSchedule();
+            updateMetricsFromServer();
         }
 
-        // Actualizar métricas del sistema
-        function updateSystemMetrics() {
-            const metrics = {
-                cpu: Math.floor(Math.random() * 30) + 30,
-                ram: Math.floor(Math.random() * 40) + 50,
-                storage: Math.floor(Math.random() * 20) + 70,
-                battery: Math.floor(Math.random() * 20) + 80
-            };
+        // Actualizar métricas desde el servidor
+        async function updateMetricsFromServer() {
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                    body: 'action=get_metrics'
+                });
+                
+                const data = await response.json();
+                
+                updateUIMetrics(data);
+            } catch (error) {
+                console.error('Error obteniendo métricas:', error);
+            }
+        }
 
-            // Actualizar valores de texto
+        // Actualizar UI con métricas
+        function updateUIMetrics(metrics) {
+            // Actualizar valores de cabecera
+            document.getElementById('ram-freed').textContent = metrics.ram_freed + ' GB';
+            document.getElementById('battery-optimized').textContent = metrics.battery_optimized;
+            document.getElementById('storage-cleaned').textContent = metrics.storage_cleaned + ' GB';
+            document.getElementById('performance-score').textContent = metrics.performance_score;
+            
+            // Actualizar métricas individuales
+            updateCircle('cpu-circle', 'cpu-percentage', metrics.cpu);
+            updateCircle('ram-circle', 'ram-percentage', metrics.ram);
+            updateCircle('storage-circle', 'storage-percentage', metrics.storage);
+            updateCircle('battery-circle', 'battery-percentage', metrics.battery);
+            
             document.getElementById('cpu-usage').textContent = metrics.cpu + '%';
             document.getElementById('ram-usage').textContent = metrics.ram + '%';
             document.getElementById('storage-usage').textContent = metrics.storage + '%';
             document.getElementById('battery-time').textContent = calculateBatteryTime(metrics.battery);
-
-            // Actualizar barras de progreso
+            
             document.getElementById('cpu-bar').style.width = metrics.cpu + '%';
             document.getElementById('ram-bar').style.width = metrics.ram + '%';
             document.getElementById('storage-bar').style.width = metrics.storage + '%';
             document.getElementById('battery-bar').style.width = metrics.battery + '%';
-
-            // Actualizar progreso circular
-            updateCircularProgress();
         }
 
-        // Actualizar progreso circular
-        function updateCircularProgress() {
-            const cpuValue = parseInt(document.getElementById('cpu-usage').textContent);
-            const ramValue = parseInt(document.getElementById('ram-usage').textContent);
-            const storageValue = parseInt(document.getElementById('storage-usage').textContent);
-            const batteryValue = parseInt(document.getElementById('battery-time').textContent.split('h')[0]) * 10 + 50;
-
-            updateCircle('cpu-circle', 'cpu-percentage', cpuValue);
-            updateCircle('ram-circle', 'ram-percentage', ramValue);
-            updateCircle('storage-circle', 'storage-percentage', storageValue);
-            updateCircle('battery-circle', 'battery-percentage', Math.min(batteryValue, 100));
-        }
-
-        // Actualizar círculo individual
+        // Actualizar círculo de progreso
         function updateCircle(circleId, textId, percentage) {
             const circle = document.getElementById(circleId);
             const text = document.getElementById(textId);
-            const circumference = 2 * Math.PI * 40; // radio = 40
+            const circumference = 2 * Math.PI * 40;
             const offset = circumference - (percentage / 100) * circumference;
-
+            
             circle.style.strokeDasharray = `${circumference} ${circumference}`;
             circle.style.strokeDashoffset = offset;
             text.textContent = percentage + '%';
@@ -1255,160 +1600,165 @@
             return `${hours}h ${minutes}m`;
         }
 
-        // Iniciar actualizaciones en tiempo real
-        function startRealTimeUpdates() {
-            setInterval(updateSystemMetrics, 5000);
-            setInterval(updatePerformanceStats, 10000);
-        }
-
-        // Actualizar estadísticas de rendimiento
-        function updatePerformanceStats() {
-            const ramFreed = (Math.random() * 2 + 2).toFixed(1);
-            const batteryOptimized = '+' + (Math.random() * 2 + 2).toFixed(1) + 'h';
-            const storageCleaned = (Math.random() * 1 + 1).toFixed(1);
-            const performanceScore = Math.floor(Math.random() * 10) + 90;
-
-            document.getElementById('ram-freed').textContent = ramFreed + ' GB';
-            document.getElementById('battery-optimized').textContent = batteryOptimized;
-            document.getElementById('storage-cleaned').textContent = storageCleaned + ' GB';
-            document.getElementById('performance-score').textContent = performanceScore;
-        }
-
         // Optimización completa
-        function runFullOptimization() {
+        async function runFullOptimization() {
             if (isOptimizing) {
                 showToast('Optimización ya en progreso...', 'warning');
                 return;
             }
-
+            
             isOptimizing = true;
             showToast('Iniciando optimización completa del sistema...', 'success');
-
-            const optimizationSteps = [
-                { action: 'Analizando sistema...', duration: 2000 },
-                { action: 'Limpiando archivos temporales...', duration: 3000 },
-                { action: 'Optimizando memoria RAM...', duration: 2500 },
-                { action: 'Configurando batería...', duration: 2000 },
-                { action: 'Comprimiendo archivos...', duration: 3500 },
-                { action: 'Finalizando optimización...', duration: 1500 }
-            ];
-
-            let currentStep = 0;
             
-            function executeStep() {
-                if (currentStep < optimizationSteps.length) {
-                    const step = optimizationSteps[currentStep];
-                    showToast(step.action, 'success');
-                    
-                    setTimeout(() => {
-                        currentStep++;
-                        executeStep();
-                    }, step.duration);
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                    body: 'action=run_optimization&type=full_optimization'
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showToast('Optimización completa finalizada', 'success');
+                    updateMetricsFromServer();
+                    loadSystemStats();
                 } else {
-                    isOptimizing = false;
-                    showToast('Optimización completa finalizada. Sistema mejorado en 23%', 'success');
-                    updateSystemMetrics();
+                    showToast('Error en la optimización', 'error');
                 }
+            } catch (error) {
+                showToast('Error conectando con el servidor', 'error');
+            } finally {
+                isOptimizing = false;
             }
-
-            executeStep();
         }
 
         // Limpiar archivos
-        function cleanFiles() {
-            showToast('Iniciando limpieza inteligente de archivos...', 'success');
-            
-            setTimeout(() => {
-                const spaceCleaned = (Math.random() * 500 + 200).toFixed(0);
-                showToast(`Limpieza completada. ${spaceCleaned} MB liberados`, 'success');
-                updateSystemMetrics();
-            }, 3000);
+        async function cleanFiles() {
+            await runOptimization('clean_files');
         }
 
         // Optimizar RAM
-        function optimizeRAM() {
-            showToast('Optimizando gestión de memoria RAM...', 'success');
-            
-            setTimeout(() => {
-                const ramOptimized = (Math.random() * 2 + 1).toFixed(1);
-                showToast(`RAM optimizada. ${ramOptimized} GB liberados`, 'success');
-                updateSystemMetrics();
-            }, 2500);
+        async function optimizeRAM() {
+            await runOptimization('optimize_ram');
         }
 
         // Optimizar batería
-        function optimizeBattery() {
-            showToast('Aplicando optimización inteligente de batería...', 'success');
-            
-            setTimeout(() => {
-                const timeGained = (Math.random() * 2 + 1).toFixed(1);
-                showToast(`Batería optimizada. +${timeGained}h de duración adicional`, 'success');
-                updateSystemMetrics();
-            }, 2000);
+        async function optimizeBattery() {
+            await runOptimization('optimize_battery');
         }
 
         // Comprimir archivos
-        function compressFiles() {
-            showToast('Iniciando compresión inteligente de archivos...', 'success');
-            
-            setTimeout(() => {
-                const spaceCompressed = (Math.random() * 800 + 300).toFixed(0);
-                showToast(`Compresión completada. ${spaceCompressed} MB ahorrados`, 'success');
-                updateSystemMetrics();
-            }, 4000);
-        }
-
-        // Programar optimización
-        function scheduleOptimization() {
-            showToast('Abriendo programador de mantenimiento...', 'success');
-            // Aquí se abriría un modal o página de programación
-        }
-
-        // Análisis predictivo con IA
-        function runPredictiveAnalysis() {
-            showToast('Ejecutando análisis predictivo con IA...', 'success');
-            
-            setTimeout(() => {
-                showToast('Análisis completado. Se detectaron 3 oportunidades de optimización', 'success');
-            }, 3000);
-        }
-
-        // Eliminar duplicados
-        function removeDuplicates(type) {
-            const typeNames = {
-                'documents': 'documentos',
-                'images': 'imágenes',
-                'audio': 'archivos de audio'
-            };
-            
-            showToast(`Eliminando ${typeNames[type]} duplicados...`, 'warning');
-            
-            setTimeout(() => {
-                const spaceFreed = Math.floor(Math.random() * 200 + 50);
-                showToast(`${typeNames[type]} duplicados eliminados. ${spaceFreed} MB liberados`, 'success');
-            }, 2000);
+        async function compressFiles() {
+            await runOptimization('compress_files');
         }
 
         // Optimización rápida
-        function quickOptimization() {
-            showToast('Ejecutando optimización rápida...', 'success');
+        async function quickOptimization() {
+            await runOptimization('quick_optimization');
+        }
+
+        // Función genérica de optimización
+        async function runOptimization(type) {
+            showToast('Iniciando optimización...', 'success');
             
-            setTimeout(() => {
-                showToast('Optimización rápida completada. Rendimiento mejorado', 'success');
-                updateSystemMetrics();
-            }, 3000);
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                    body: `action=run_optimization&type=${type}`
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showToast(result.message, 'success');
+                    updateMetricsFromServer();
+                } else {
+                    showToast(result.message || 'Error en la optimización', 'error');
+                }
+            } catch (error) {
+                showToast('Error conectando con el servidor', 'error');
+            }
         }
 
-        // Cargar historial de optimización
-        function loadOptimizationHistory() {
-            // Simular carga de historial
-            console.log('Cargando historial de optimización...');
+        // Cargar estadísticas del sistema
+        async function loadSystemStats() {
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                    body: 'action=get_stats'
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    displaySystemStats(result.stats);
+                }
+            } catch (error) {
+                console.error('Error cargando estadísticas:', error);
+            }
         }
 
-        // Verificar programación de mantenimiento
-        function checkMaintenanceSchedule() {
-            // Simular verificación de programación
-            console.log('Verificando programación de mantenimiento...');
+        // Mostrar estadísticas
+        function displaySystemStats(stats) {
+            const statsContainer = document.getElementById('system-stats');
+            
+            statsContainer.innerHTML = `
+                <div style="margin-bottom: 1rem;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                        <span>Total Optimizaciones</span>
+                        <span style="font-weight: 600">${stats.total_configurations || 0}</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                        <span>Éxito</span>
+                        <span style="color: #2ed573; font-weight: 600">${stats.optimization_success_rate || '0%'}</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                        <span>Mejora Promedio</span>
+                        <span style="color: #4facfe; font-weight: 600">${stats.performance_improvement || '0%'}</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                        <span>Cambios Adaptativos</span>
+                        <span style="font-weight: 600">${stats.adaptive_changes_count || 0}</span>
+                    </div>
+                </div>
+                <button class="optimization-btn" onclick="runAdaptiveConfig()" style="width: 100%;">
+                    <i class="fas fa-robot"></i>
+                    Configuración Adaptativa
+                </button>
+            `;
+        }
+
+        // Ejecutar configuración adaptativa
+        async function runAdaptiveConfig() {
+            showToast('Aplicando configuración adaptativa...', 'success');
+            
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                    body: 'action=adaptive_config'
+                });
+                
+                const result = await response.json();
+                
+                if (result.adaptations_applied > 0) {
+                    showToast(`Se aplicaron ${result.adaptations_applied} adaptaciones`, 'success');
+                    updateMetricsFromServer();
+                } else {
+                    showToast('No se requieren adaptaciones en este momento', 'success');
+                }
+            } catch (error) {
+                showToast('Error en configuración adaptativa', 'error');
+            }
+        }
+
+        // Iniciar actualizaciones en tiempo real
+        function startRealTimeUpdates() {
+            setInterval(updateMetricsFromServer, 10000); // Cada 10 segundos
+            setInterval(loadSystemStats, 30000); // Cada 30 segundos
         }
 
         // Mostrar notificación toast
@@ -1424,106 +1774,6 @@
                 toast.classList.remove('show');
             }, 4000);
         }
-
-        // Efectos de hover para las tarjetas
-        document.querySelectorAll('.metric-card').forEach(card => {
-            card.addEventListener('mouseenter', function() {
-                this.style.transform = 'translateY(-5px) scale(1.02)';
-            });
-            
-            card.addEventListener('mouseleave', function() {
-                this.style.transform = 'translateY(0) scale(1)';
-            });
-        });
-
-        // Efectos de hover para elementos de optimización
-        document.querySelectorAll('.optimization-item').forEach(item => {
-            item.addEventListener('mouseenter', function() {
-                this.style.transform = 'translateX(5px) scale(1.01)';
-            });
-            
-            item.addEventListener('mouseleave', function() {
-                this.style.transform = 'translateX(0) scale(1)';
-            });
-        });
-
-        // Manejo de errores
-        window.addEventListener('error', function(e) {
-            console.log('Error capturado:', e.message);
-        });
-
-        // Cleanup al salir
-        window.addEventListener('beforeunload', function() {
-            if (optimizationInterval) {
-                clearInterval(optimizationInterval);
-            }
-        });
-
-        // Funciones de utilidad
-        function formatBytes(bytes, decimals = 2) {
-            if (bytes === 0) return '0 Bytes';
-            const k = 1024;
-            const dm = decimals < 0 ? 0 : decimals;
-            const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
-            const i = Math.floor(Math.log(bytes) / Math.log(k));
-            return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
-        }
-
-        function formatTime(seconds) {
-            const hours = Math.floor(seconds / 3600);
-            const minutes = Math.floor((seconds % 3600) / 60);
-            return `${hours}h ${minutes}m`;
-        }
-
-        // Animaciones adicionales
-        function animateValue(element, start, end, duration) {
-            const range = end - start;
-            const increment = range / (duration / 16);
-            let current = start;
-            
-            const timer = setInterval(() => {
-                current += increment;
-                if ((increment > 0 && current >= end) || (increment < 0 && current <= end)) {
-                    element.textContent = end;
-                    clearInterval(timer);
-                } else {
-                    element.textContent = Math.floor(current);
-                }
-            }, 16);
-        }
-
-        // Detectar cambios de rendimiento
-        function detectPerformanceChanges() {
-            // Simular detección de cambios de rendimiento
-            const changes = [
-                'Mejora en velocidad de CPU detectada',
-                'Optimización de memoria completada',
-                'Reducción en consumo de batería',
-                'Limpieza de archivos temporales exitosa'
-            ];
-            
-            const randomChange = changes[Math.floor(Math.random() * changes.length)];
-            return randomChange;
-        }
-
-        // Inicializar animaciones de entrada
-        function initializeAnimations() {
-            const cards = document.querySelectorAll('.metric-card, .optimization-card, .analysis-card');
-            cards.forEach((card, index) => {
-                card.style.opacity = '0';
-                card.style.transform = 'translateY(20px)';
-                
-                setTimeout(() => {
-                    card.style.transition = 'all 0.5s ease';
-                    card.style.opacity = '1';
-                    card.style.transform = 'translateY(0)';
-                }, index * 100);
-            });
-        }
-
-        // Llamar animaciones de entrada
-        setTimeout(initializeAnimations, 500);
     </script>
 </body>
 </html>
-

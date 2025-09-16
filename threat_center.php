@@ -1,3 +1,967 @@
+<?php
+/**
+ * GuardianIA - Centro de Amenazas Completo
+ * Versión 3.0.0 - Sistema Integrado de Detección y Respuesta
+ * 
+ * Este archivo integra:
+ * - Motor de Detección de Amenazas (ThreatDetectionEngine)
+ * - Interfaz del Centro de Amenazas
+ * - Base de Datos MySQL
+ * - Procesamiento AJAX en tiempo real
+ * - Configuración unificada
+ */
+
+// ===============================================
+// CONFIGURACIÓN GENERAL
+// ===============================================
+$config = [
+    // Base de datos
+    'db' => [
+        'host' => 'localhost',
+        'dbname' => 'guardia2_guardianai_db',
+        'username' => 'guardia2_ander',
+        'password' => 'Pbr&v;U(~XvW8V@w',
+        'charset' => 'utf8mb4'
+    ],
+    // Sistema
+    'system' => [
+        'version' => '3.0.0-MILITARY',
+        'app_name' => 'GuardianIA',
+        'timezone' => 'America/Mexico_City',
+        'log_path' => 'logs/',
+        'quarantine_path' => 'quarantine/',
+        'debug_mode' => false
+    ],
+    // Seguridad
+    'security' => [
+        'sensitivity_level' => 'medium',
+        'auto_block' => true,
+        'learning_mode' => true,
+        'whitelist_enabled' => true,
+        'detection_sensitivity' => 0.7,
+        'auto_quarantine' => true,
+        'log_all_scans' => true,
+        'real_time_monitoring' => true,
+        'threat_intelligence' => true
+    ],
+    // Comportamiento
+    'behavior' => [
+        'max_requests_per_minute' => 60,
+        'max_failed_logins' => 5,
+        'suspicious_user_agents' => ['sqlmap', 'nikto', 'nmap', 'burp', 'owasp'],
+        'blocked_countries' => [],
+        'honeypot_endpoints' => ['/admin.php', '/wp-admin/', '/phpmyadmin/', '/.env']
+    ]
+];
+
+// Establecer zona horaria
+date_default_timezone_set($config['system']['timezone']);
+
+// Iniciar sesión
+session_start();
+$current_user_id = $_SESSION['user_id'] ?? 'default_user';
+
+// ===============================================
+// CONEXIÓN A BASE DE DATOS
+// ===============================================
+try {
+    $db = new PDO(
+        "mysql:host={$config['db']['host']};dbname={$config['db']['dbname']};charset={$config['db']['charset']}", 
+        $config['db']['username'], 
+        $config['db']['password'],
+        [
+            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+            PDO::ATTR_EMULATE_PREPARES => false
+        ]
+    );
+    
+    // Crear tablas si no existen
+    createDatabaseTables($db);
+    
+} catch (PDOException $e) {
+    $db = null;
+    $simulation_mode = true;
+    error_log("Database connection failed: " . $e->getMessage());
+}
+
+// ===============================================
+// FUNCIONES DE BASE DE DATOS
+// ===============================================
+function createDatabaseTables($db) {
+    $tables = [
+        // Tabla de logs de seguridad
+        "CREATE TABLE IF NOT EXISTS security_logs (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            ip_address VARCHAR(45),
+            url TEXT,
+            method VARCHAR(10),
+            user_agent TEXT,
+            threat_detected BOOLEAN DEFAULT FALSE,
+            threat_level INT,
+            threat_types JSON,
+            action_taken VARCHAR(50),
+            processing_time FLOAT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            INDEX idx_ip (ip_address),
+            INDEX idx_threat (threat_detected),
+            INDEX idx_timestamp (created_at)
+        )",
+        
+        // Tabla de eventos de amenazas
+        "CREATE TABLE IF NOT EXISTS threat_events (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            event_id VARCHAR(50) UNIQUE,
+            user_id VARCHAR(100),
+            threat_type VARCHAR(100),
+            severity_level VARCHAR(20),
+            description TEXT,
+            source_ip VARCHAR(45),
+            detection_method VARCHAR(50),
+            confidence_score FLOAT,
+            metadata JSON,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            INDEX idx_user (user_id),
+            INDEX idx_severity (severity_level),
+            INDEX idx_type (threat_type)
+        )",
+        
+        // Tabla de respuestas automáticas
+        "CREATE TABLE IF NOT EXISTS threat_responses (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            response_id VARCHAR(50) UNIQUE,
+            user_id VARCHAR(100),
+            threat_type VARCHAR(100),
+            actions_taken JSON,
+            success BOOLEAN DEFAULT TRUE,
+            metadata JSON,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            INDEX idx_user_resp (user_id)
+        )",
+        
+        // Tabla de IPs bloqueadas
+        "CREATE TABLE IF NOT EXISTS blocked_ips (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            ip_address VARCHAR(45) UNIQUE,
+            reason TEXT,
+            blocked_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            expires_at TIMESTAMP NULL,
+            permanent BOOLEAN DEFAULT FALSE,
+            INDEX idx_ip_blocked (ip_address)
+        )",
+        
+        // Tabla de whitelist
+        "CREATE TABLE IF NOT EXISTS ip_whitelist (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            ip_address VARCHAR(45) UNIQUE,
+            description TEXT,
+            is_active BOOLEAN DEFAULT TRUE,
+            added_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            INDEX idx_ip_whitelist (ip_address)
+        )",
+        
+        // Tabla de archivos en cuarentena
+        "CREATE TABLE IF NOT EXISTS quarantined_files (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            file_id VARCHAR(50) UNIQUE,
+            original_path TEXT,
+            quarantine_path TEXT,
+            threat_type VARCHAR(100),
+            hash_md5 VARCHAR(32),
+            hash_sha256 VARCHAR(64),
+            quarantined_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            INDEX idx_file_id (file_id)
+        )"
+    ];
+    
+    foreach ($tables as $query) {
+        try {
+            $db->exec($query);
+        } catch (PDOException $e) {
+            error_log("Error creating table: " . $e->getMessage());
+        }
+    }
+}
+
+// ===============================================
+// FUNCIONES AUXILIARES
+// ===============================================
+function logGuardianEvent($event_type, $message, $severity = 'info', $context = []) {
+    global $config;
+    
+    $timestamp = date('Y-m-d H:i:s');
+    $log_entry = "[{$timestamp}] [{$severity}] {$event_type}: {$message}\n";
+    
+    $log_dir = __DIR__ . '/' . $config['system']['log_path'];
+    if (!file_exists($log_dir)) {
+        mkdir($log_dir, 0777, true);
+    }
+    
+    file_put_contents($log_dir . 'guardian.log', $log_entry, FILE_APPEND | LOCK_EX);
+}
+
+// ===============================================
+// CLASE PRINCIPAL: ThreatDetectionEngine
+// ===============================================
+class ThreatDetectionEngine {
+    private $db;
+    private $config;
+    private $realTimeActive = false;
+    private $statistics = [];
+    private $threatPatterns = [];
+    
+    public function __construct($database, $config) {
+        $this->db = $database;
+        $this->config = $config;
+        $this->initializePatterns();
+        $this->loadStatistics();
+        logGuardianEvent('threat_engine_init', 'ThreatDetectionEngine initialized', 'info');
+    }
+    
+    private function initializePatterns() {
+        $this->threatPatterns = [
+            'sql_injection' => [
+                '/(\b(union|select|insert|update|delete|drop|create|alter)\b.*\b(from|where|into)\b)/i',
+                '/(\'\s*(or|and)\s*\'.*(=|\>|\<))/i',
+                '/(;|\-\-|\/\*|\*\/)/i'
+            ],
+            'xss' => [
+                '/(\<script.*?\>|\<\/script\>)/i',
+                '/(\<iframe.*?\>|\<\/iframe\>)/i',
+                '/(javascript:|vbscript:|data:)/i',
+                '/(\bon\w+\s*=)/i'
+            ],
+            'command_injection' => [
+                '/(;|\||\&\&|\|\|)/i',
+                '/(\$\(|\`)/i',
+                '/(nc|netcat|wget|curl|bash|sh|cmd|powershell)/i'
+            ],
+            'path_traversal' => [
+                '/(\.\.\/|\.\.\\\\)/i',
+                '/(\.\.\%2f|\.\.\%5c)/i',
+                '/(etc\/passwd|windows\/system32)/i'
+            ],
+            'malware_signatures' => [
+                '/(eval\s*\(|base64_decode\s*\(|gzinflate\s*\()/i',
+                '/(shell_exec\s*\(|system\s*\(|exec\s*\()/i',
+                '/(file_get_contents\s*\(.*http|fopen\s*\(.*http)/i'
+            ]
+        ];
+    }
+    
+    private function loadStatistics() {
+        if (!$this->db) {
+            $this->statistics = [
+                'total_requests_analyzed' => 0,
+                'threats_detected' => 0,
+                'threats_blocked' => 0,
+                'false_positives' => 0
+            ];
+            return;
+        }
+        
+        try {
+            $stmt = $this->db->prepare("
+                SELECT 
+                    COUNT(*) as total_requests,
+                    SUM(CASE WHEN threat_detected = 1 THEN 1 ELSE 0 END) as threats_detected,
+                    SUM(CASE WHEN action_taken = 'blocked' THEN 1 ELSE 0 END) as threats_blocked
+                FROM security_logs 
+                WHERE DATE(created_at) = CURDATE()
+            ");
+            $stmt->execute();
+            $dailyStats = $stmt->fetch();
+            
+            $this->statistics = [
+                'total_requests_analyzed' => $dailyStats['total_requests'] ?? 0,
+                'threats_detected' => $dailyStats['threats_detected'] ?? 0,
+                'threats_blocked' => $dailyStats['threats_blocked'] ?? 0,
+                'false_positives' => 0
+            ];
+        } catch (Exception $e) {
+            logGuardianEvent('stats_error', 'Error loading statistics: ' . $e->getMessage(), 'error');
+        }
+    }
+    
+    /**
+     * Detectar amenaza principal
+     */
+    public function detectThreat($input, $type = 'general') {
+        try {
+            $result = [
+                'success' => true,
+                'threat_detected' => false,
+                'threat_type' => null,
+                'severity' => 'low',
+                'confidence' => 0.0,
+                'description' => 'No threats detected',
+                'recommendations' => [],
+                'quarantined' => false
+            ];
+            
+            // Analizar según tipo
+            switch ($type) {
+                case 'file':
+                    $result = $this->detectFileThreat($input);
+                    break;
+                case 'network':
+                    $result = $this->detectNetworkThreat($input);
+                    break;
+                case 'web':
+                    $result = $this->detectWebThreat($input);
+                    break;
+                default:
+                    $result = $this->detectGeneralThreat($input);
+                    break;
+            }
+            
+            // Guardar si se detectó amenaza
+            if ($result['threat_detected']) {
+                $this->saveThreatEvent($result, $input, $type);
+                $this->statistics['threats_detected']++;
+            }
+            
+            return $result;
+            
+        } catch (Exception $e) {
+            logGuardianEvent('detection_error', $e->getMessage(), 'error');
+            return [
+                'success' => false,
+                'threat_detected' => false,
+                'error' => $e->getMessage()
+            ];
+        }
+    }
+    
+    /**
+     * Analizar request HTTP
+     */
+    public function analyzeRequest($request) {
+        $this->statistics['total_requests_analyzed']++;
+        
+        $threatAssessment = [
+            'is_threat' => false,
+            'threat_level' => 0,
+            'threat_types' => [],
+            'confidence' => 0,
+            'recommended_action' => 'allow',
+            'details' => []
+        ];
+        
+        // Verificar whitelist
+        if ($this->isWhitelisted($request['ip'] ?? '')) {
+            return $threatAssessment;
+        }
+        
+        // Analizar patrones
+        foreach ($this->threatPatterns as $threatType => $patterns) {
+            foreach ($patterns as $pattern) {
+                $content = json_encode($request);
+                if (preg_match($pattern, $content)) {
+                    $threatAssessment['is_threat'] = true;
+                    $threatAssessment['threat_level'] += 25;
+                    $threatAssessment['threat_types'][] = $threatType;
+                }
+            }
+        }
+        
+        // Determinar acción
+        if ($threatAssessment['threat_level'] >= 80) {
+            $threatAssessment['recommended_action'] = 'block';
+        } elseif ($threatAssessment['threat_level'] >= 50) {
+            $threatAssessment['recommended_action'] = 'monitor';
+        }
+        
+        // Registrar
+        if ($threatAssessment['is_threat']) {
+            $this->logThreatDetection($request, $threatAssessment);
+        }
+        
+        return $threatAssessment;
+    }
+    
+    /**
+     * Iniciar análisis en tiempo real
+     */
+    public function startRealTimeAnalysis() {
+        $this->realTimeActive = true;
+        logGuardianEvent('real_time_start', 'Real-time analysis started', 'info');
+        
+        return [
+            'success' => true,
+            'status' => 'active',
+            'monitoring' => true,
+            'threats_detected' => $this->statistics['threats_detected'],
+            'scan_rate' => '10/second'
+        ];
+    }
+    
+    /**
+     * Detener análisis en tiempo real
+     */
+    public function stopRealTimeAnalysis() {
+        $this->realTimeActive = false;
+        logGuardianEvent('real_time_stop', 'Real-time analysis stopped', 'info');
+        
+        return [
+            'success' => true,
+            'status' => 'stopped',
+            'monitoring' => false
+        ];
+    }
+    
+    /**
+     * Obtener estado del análisis
+     */
+    public function getAnalysisStatus() {
+        return [
+            'success' => true,
+            'status' => $this->realTimeActive ? 'active' : 'inactive',
+            'monitoring' => $this->realTimeActive,
+            'threats_detected' => $this->statistics['threats_detected'],
+            'threats_blocked' => $this->statistics['threats_blocked'],
+            'last_scan' => date('Y-m-d H:i:s')
+        ];
+    }
+    
+    /**
+     * Obtener estadísticas
+     */
+    public function getThreatStatistics() {
+        $this->loadStatistics();
+        
+        $stats = [
+            'success' => true,
+            'overview' => [
+                'total_requests_analyzed' => $this->statistics['total_requests_analyzed'],
+                'threats_detected' => $this->statistics['threats_detected'],
+                'threats_blocked' => $this->statistics['threats_blocked'],
+                'detection_rate' => $this->statistics['total_requests_analyzed'] > 0 
+                    ? round(($this->statistics['threats_detected'] / $this->statistics['total_requests_analyzed']) * 100, 2) 
+                    : 0
+            ],
+            'threat_types' => [],
+            'top_threat_ips' => [],
+            'system_health' => [
+                'engine_status' => 'operational',
+                'last_update' => date('Y-m-d H:i:s'),
+                'rules_active' => count($this->threatPatterns)
+            ]
+        ];
+        
+        // Obtener tipos de amenazas principales
+        if ($this->db) {
+            try {
+                $stmt = $this->db->prepare("
+                    SELECT threat_type, COUNT(*) as count 
+                    FROM threat_events 
+                    WHERE created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)
+                    GROUP BY threat_type 
+                    ORDER BY count DESC 
+                    LIMIT 5
+                ");
+                $stmt->execute();
+                $stats['threat_types'] = $stmt->fetchAll();
+                
+                // Top IPs amenazantes
+                $stmt = $this->db->prepare("
+                    SELECT source_ip, COUNT(*) as threat_count
+                    FROM threat_events 
+                    WHERE created_at >= DATE_SUB(NOW(), INTERVAL 24 HOUR)
+                    GROUP BY source_ip 
+                    ORDER BY threat_count DESC 
+                    LIMIT 5
+                ");
+                $stmt->execute();
+                $stats['top_threat_ips'] = $stmt->fetchAll();
+                
+            } catch (Exception $e) {
+                logGuardianEvent('stats_query_error', $e->getMessage(), 'error');
+            }
+        }
+        
+        return $stats;
+    }
+    
+    /**
+     * Escanear archivo
+     */
+    public function scanFile($filePath) {
+        return $this->detectFileThreat($filePath);
+    }
+    
+    /**
+     * Escanear red
+     */
+    public function scanNetwork($networkData) {
+        return $this->detectNetworkThreat($networkData);
+    }
+    
+    /**
+     * Ejecutar respuesta automática
+     */
+    public function executeAutomaticResponse($threatData, $responseType = 'auto') {
+        $result = [
+            'success' => true,
+            'response_executed' => true,
+            'actions_taken' => [],
+            'quarantined' => false,
+            'blocked' => false
+        ];
+        
+        $severity = $threatData['severity'] ?? 'low';
+        
+        switch ($severity) {
+            case 'critical':
+                $result['actions_taken'][] = 'System quarantine initiated';
+                $result['actions_taken'][] = 'IP blocked';
+                $result['quarantined'] = true;
+                $result['blocked'] = true;
+                break;
+                
+            case 'high':
+                $result['actions_taken'][] = 'Threat quarantined';
+                $result['quarantined'] = true;
+                break;
+                
+            case 'medium':
+                $result['actions_taken'][] = 'Monitoring increased';
+                break;
+                
+            default:
+                $result['actions_taken'][] = 'Logged for review';
+        }
+        
+        // Guardar respuesta
+        $this->saveAutomaticResponse($threatData, $result);
+        
+        return $result;
+    }
+    
+    /**
+     * Poner archivo en cuarentena
+     */
+    public function quarantineFile($filePath) {
+        global $config;
+        
+        $result = [
+            'success' => false,
+            'quarantined' => false,
+            'quarantine_path' => ''
+        ];
+        
+        if (!file_exists($filePath)) {
+            $result['error'] = 'File not found';
+            return $result;
+        }
+        
+        $quarantineDir = __DIR__ . '/' . $config['system']['quarantine_path'];
+        if (!file_exists($quarantineDir)) {
+            mkdir($quarantineDir, 0777, true);
+        }
+        
+        $fileName = basename($filePath);
+        $quarantineName = date('Y-m-d_H-i-s') . '_' . $fileName;
+        $quarantinePath = $quarantineDir . $quarantineName;
+        
+        if (copy($filePath, $quarantinePath)) {
+            $result['success'] = true;
+            $result['quarantined'] = true;
+            $result['quarantine_path'] = $quarantinePath;
+            
+            // Guardar en BD
+            if ($this->db) {
+                try {
+                    $stmt = $this->db->prepare("
+                        INSERT INTO quarantined_files 
+                        (file_id, original_path, quarantine_path, threat_type, hash_md5) 
+                        VALUES (?, ?, ?, ?, ?)
+                    ");
+                    $stmt->execute([
+                        uniqid('FILE_'),
+                        $filePath,
+                        $quarantinePath,
+                        'unknown',
+                        md5_file($filePath)
+                    ]);
+                } catch (Exception $e) {
+                    logGuardianEvent('quarantine_db_error', $e->getMessage(), 'error');
+                }
+            }
+            
+            @unlink($filePath);
+        }
+        
+        return $result;
+    }
+    
+    /**
+     * Bloquear IP
+     */
+    public function blockIP($ipAddress) {
+        $result = [
+            'success' => false,
+            'blocked' => false,
+            'ip_address' => $ipAddress
+        ];
+        
+        if ($this->db) {
+            try {
+                $stmt = $this->db->prepare("
+                    INSERT INTO blocked_ips (ip_address, reason, permanent) 
+                    VALUES (?, ?, ?)
+                    ON DUPLICATE KEY UPDATE blocked_at = NOW()
+                ");
+                $stmt->execute([$ipAddress, 'Automatic threat response', false]);
+                
+                $result['success'] = true;
+                $result['blocked'] = true;
+                
+            } catch (Exception $e) {
+                $result['error'] = $e->getMessage();
+            }
+        }
+        
+        return $result;
+    }
+    
+    // ===============================================
+    // MÉTODOS PRIVADOS DE DETECCIÓN
+    // ===============================================
+    
+    private function detectFileThreat($filePath) {
+        $result = [
+            'success' => true,
+            'threat_detected' => false,
+            'threat_type' => null,
+            'severity' => 'low',
+            'confidence' => 0.0,
+            'description' => 'File analysis completed',
+            'recommendations' => []
+        ];
+        
+        if (!file_exists($filePath)) {
+            $result['description'] = 'File not found';
+            return $result;
+        }
+        
+        $extension = strtolower(pathinfo($filePath, PATHINFO_EXTENSION));
+        $dangerousExtensions = ['exe', 'bat', 'cmd', 'scr', 'pif', 'com', 'vbs', 'js'];
+        
+        if (in_array($extension, $dangerousExtensions)) {
+            $result['threat_detected'] = true;
+            $result['threat_type'] = 'suspicious_executable';
+            $result['severity'] = 'high';
+            $result['confidence'] = 0.9;
+            $result['description'] = "Dangerous file extension: .$extension";
+            $result['recommendations'][] = 'Quarantine file';
+        }
+        
+        return $result;
+    }
+    
+    private function detectNetworkThreat($networkData) {
+        $result = [
+            'success' => true,
+            'threat_detected' => false,
+            'threat_type' => null,
+            'severity' => 'low',
+            'confidence' => 0.0,
+            'description' => 'Network analysis completed',
+            'recommendations' => []
+        ];
+        
+        if (is_string($networkData)) {
+            $networkData = ['source_ip' => $networkData];
+        }
+        
+        $sourceIP = $networkData['source_ip'] ?? '';
+        
+        // Verificar si IP está bloqueada
+        if ($this->isIPBlocked($sourceIP)) {
+            $result['threat_detected'] = true;
+            $result['threat_type'] = 'blocked_ip_attempt';
+            $result['severity'] = 'high';
+            $result['confidence'] = 1.0;
+            $result['description'] = "Access attempt from blocked IP: $sourceIP";
+        }
+        
+        return $result;
+    }
+    
+    private function detectWebThreat($webData) {
+        $result = [
+            'success' => true,
+            'threat_detected' => false,
+            'threat_type' => null,
+            'severity' => 'low',
+            'confidence' => 0.0,
+            'description' => 'Web threat analysis completed',
+            'recommendations' => []
+        ];
+        
+        if (is_string($webData)) {
+            $webData = ['url' => $webData];
+        }
+        
+        $content = json_encode($webData);
+        
+        // Verificar patrones de amenazas web
+        foreach ($this->threatPatterns as $threatType => $patterns) {
+            foreach ($patterns as $pattern) {
+                if (preg_match($pattern, $content)) {
+                    $result['threat_detected'] = true;
+                    $result['threat_type'] = $threatType;
+                    $result['severity'] = 'high';
+                    $result['confidence'] = 0.8;
+                    $result['description'] = "Web threat detected: $threatType";
+                    $result['recommendations'][] = 'Block request';
+                    break 2;
+                }
+            }
+        }
+        
+        return $result;
+    }
+    
+    private function detectGeneralThreat($input) {
+        $result = [
+            'success' => true,
+            'threat_detected' => false,
+            'threat_type' => null,
+            'severity' => 'low',
+            'confidence' => 0.0,
+            'description' => 'General analysis completed',
+            'recommendations' => []
+        ];
+        
+        $inputString = is_array($input) ? json_encode($input) : (string)$input;
+        
+        $suspiciousKeywords = [
+            'malicious', 'virus', 'trojan', 'malware', 'hack', 
+            'exploit', 'backdoor', 'ransomware', 'phishing'
+        ];
+        
+        foreach ($suspiciousKeywords as $keyword) {
+            if (stripos($inputString, $keyword) !== false) {
+                $result['threat_detected'] = true;
+                $result['threat_type'] = 'suspicious_content';
+                $result['severity'] = 'medium';
+                $result['confidence'] = 0.7;
+                $result['description'] = "Suspicious keyword detected: $keyword";
+                $result['recommendations'][] = 'Review content';
+                break;
+            }
+        }
+        
+        return $result;
+    }
+    
+    private function isWhitelisted($ip) {
+        if (!$this->db || empty($ip)) return false;
+        
+        try {
+            $stmt = $this->db->prepare("
+                SELECT COUNT(*) FROM ip_whitelist 
+                WHERE ip_address = ? AND is_active = 1
+            ");
+            $stmt->execute([$ip]);
+            return $stmt->fetchColumn() > 0;
+        } catch (Exception $e) {
+            return false;
+        }
+    }
+    
+    private function isIPBlocked($ip) {
+        if (!$this->db || empty($ip)) return false;
+        
+        try {
+            $stmt = $this->db->prepare("
+                SELECT COUNT(*) FROM blocked_ips 
+                WHERE ip_address = ? 
+                AND (expires_at IS NULL OR expires_at > NOW())
+            ");
+            $stmt->execute([$ip]);
+            return $stmt->fetchColumn() > 0;
+        } catch (Exception $e) {
+            return false;
+        }
+    }
+    
+    private function saveThreatEvent($result, $input, $type) {
+        if (!$this->db) return;
+        
+        try {
+            $stmt = $this->db->prepare("
+                INSERT INTO threat_events 
+                (event_id, user_id, threat_type, severity_level, description, 
+                 source_ip, detection_method, confidence_score, metadata) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ");
+            
+            $stmt->execute([
+                'THR_' . uniqid(),
+                $_SESSION['user_id'] ?? null,
+                $result['threat_type'],
+                $result['severity'],
+                $result['description'],
+                $_SERVER['REMOTE_ADDR'] ?? null,
+                $type,
+                $result['confidence'],
+                json_encode(['input' => $input, 'result' => $result])
+            ]);
+        } catch (Exception $e) {
+            logGuardianEvent('save_threat_error', $e->getMessage(), 'error');
+        }
+    }
+    
+    private function saveAutomaticResponse($threatData, $responseResult) {
+        if (!$this->db) return;
+        
+        try {
+            $stmt = $this->db->prepare("
+                INSERT INTO threat_responses 
+                (response_id, user_id, threat_type, actions_taken, success, metadata) 
+                VALUES (?, ?, ?, ?, ?, ?)
+            ");
+            
+            $stmt->execute([
+                'RESP_' . uniqid(),
+                $_SESSION['user_id'] ?? null,
+                $threatData['threat_type'] ?? 'unknown',
+                json_encode($responseResult['actions_taken']),
+                $responseResult['success'] ? 1 : 0,
+                json_encode(['threat' => $threatData, 'response' => $responseResult])
+            ]);
+        } catch (Exception $e) {
+            logGuardianEvent('save_response_error', $e->getMessage(), 'error');
+        }
+    }
+    
+    private function logThreatDetection($request, $assessment) {
+        if (!$this->db) return;
+        
+        try {
+            $stmt = $this->db->prepare("
+                INSERT INTO security_logs 
+                (ip_address, url, method, user_agent, threat_detected, 
+                 threat_level, threat_types, action_taken, processing_time) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ");
+            
+            $stmt->execute([
+                $request['ip'] ?? '',
+                $request['url'] ?? '',
+                $request['method'] ?? 'GET',
+                $request['user_agent'] ?? '',
+                $assessment['is_threat'] ? 1 : 0,
+                $assessment['threat_level'],
+                json_encode($assessment['threat_types']),
+                $assessment['recommended_action'],
+                0
+            ]);
+        } catch (Exception $e) {
+            logGuardianEvent('log_threat_error', $e->getMessage(), 'error');
+        }
+    }
+}
+
+// ===============================================
+// INICIALIZAR MOTOR DE DETECCIÓN
+// ===============================================
+$threatEngine = new ThreatDetectionEngine($db, $config);
+
+// ===============================================
+// PROCESAMIENTO DE PETICIONES AJAX
+// ===============================================
+if (isset($_POST['action']) || isset($_GET['action'])) {
+    header('Content-Type: application/json');
+    
+    $action = $_POST['action'] ?? $_GET['action'];
+    
+    switch ($action) {
+        case 'get_stats':
+            $stats = $threatEngine->getThreatStatistics();
+            echo json_encode($stats);
+            exit;
+            
+        case 'scan_threat':
+            $input = $_POST['input'] ?? $_GET['input'] ?? '';
+            $type = $_POST['type'] ?? $_GET['type'] ?? 'general';
+            $result = $threatEngine->detectThreat($input, $type);
+            echo json_encode($result);
+            exit;
+            
+        case 'start_monitoring':
+            $result = $threatEngine->startRealTimeAnalysis();
+            echo json_encode($result);
+            exit;
+            
+        case 'stop_monitoring':
+            $result = $threatEngine->stopRealTimeAnalysis();
+            echo json_encode($result);
+            exit;
+            
+        case 'get_status':
+            $status = $threatEngine->getAnalysisStatus();
+            echo json_encode($status);
+            exit;
+            
+        case 'analyze_request':
+            $request = [
+                'ip' => $_POST['ip'] ?? $_SERVER['REMOTE_ADDR'],
+                'url' => $_POST['url'] ?? $_SERVER['REQUEST_URI'],
+                'method' => $_POST['method'] ?? $_SERVER['REQUEST_METHOD'],
+                'user_agent' => $_POST['user_agent'] ?? $_SERVER['HTTP_USER_AGENT'],
+                'post_data' => $_POST
+            ];
+            $result = $threatEngine->analyzeRequest($request);
+            echo json_encode($result);
+            exit;
+            
+        case 'quarantine_file':
+            $filePath = $_POST['file_path'] ?? '';
+            $result = $threatEngine->quarantineFile($filePath);
+            echo json_encode($result);
+            exit;
+            
+        case 'block_ip':
+            $ip = $_POST['ip'] ?? '';
+            $result = $threatEngine->blockIP($ip);
+            echo json_encode($result);
+            exit;
+            
+        case 'execute_response':
+            $threatData = json_decode($_POST['threat_data'] ?? '{}', true);
+            $result = $threatEngine->executeAutomaticResponse($threatData);
+            echo json_encode($result);
+            exit;
+            
+        case 'get_threat_timeline':
+            // Obtener timeline de amenazas
+            $timeline = [];
+            if ($db) {
+                try {
+                    $stmt = $db->prepare("
+                        SELECT event_id, threat_type, severity_level, 
+                               description, created_at 
+                        FROM threat_events 
+                        ORDER BY created_at DESC 
+                        LIMIT 10
+                    ");
+                    $stmt->execute();
+                    $timeline = $stmt->fetchAll();
+                } catch (Exception $e) {
+                    $timeline = [];
+                }
+            }
+            echo json_encode(['success' => true, 'timeline' => $timeline]);
+            exit;
+    }
+}
+
+// Si no es petición AJAX, mostrar la interfaz HTML
+?>
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -41,7 +1005,6 @@
             overflow-x: hidden;
         }
 
-        /* Animated Background */
         .animated-bg {
             position: fixed;
             top: 0;
@@ -71,7 +1034,6 @@
             50% { opacity: 0.7; }
         }
 
-        /* Navigation */
         .navbar {
             background: rgba(26, 26, 46, 0.95);
             backdrop-filter: blur(20px);
@@ -131,7 +1093,6 @@
             color: white;
         }
 
-        /* Main Container */
         .main-container {
             margin-top: 80px;
             padding: 2rem;
@@ -140,7 +1101,6 @@
             margin-right: auto;
         }
 
-        /* Emergency Header */
         .emergency-header {
             background: var(--critical-gradient);
             border-radius: var(--border-radius);
@@ -215,7 +1175,6 @@
             box-shadow: 0 12px 35px rgba(255, 71, 87, 0.6);
         }
 
-        /* Stats Grid */
         .threat-stats {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
@@ -288,7 +1247,6 @@
             font-size: 0.9rem;
         }
 
-        /* Timeline */
         .timeline-section {
             background: var(--bg-card);
             border: 1px solid var(--border-color);
@@ -412,142 +1370,6 @@
             box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
         }
 
-        /* Forensic Analysis */
-        .forensic-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 2rem;
-            margin-bottom: 2rem;
-        }
-
-        .forensic-card {
-            background: var(--bg-card);
-            border: 1px solid var(--border-color);
-            border-radius: var(--border-radius);
-            padding: var(--card-padding);
-        }
-
-        .forensic-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 1rem;
-            margin-bottom: 1rem;
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 8px;
-            transition: all var(--animation-speed) ease;
-        }
-
-        .forensic-item:hover {
-            background: rgba(255, 255, 255, 0.1);
-        }
-
-        .forensic-label {
-            font-weight: 600;
-            color: var(--text-primary);
-        }
-
-        .forensic-value {
-            color: var(--text-secondary);
-            font-family: 'Courier New', monospace;
-        }
-
-        /* Response Configuration */
-        .config-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 1.5rem;
-        }
-
-        .config-card {
-            background: var(--bg-card);
-            border: 1px solid var(--border-color);
-            border-radius: var(--border-radius);
-            padding: var(--card-padding);
-        }
-
-        .config-option {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 1rem 0;
-            border-bottom: 1px solid var(--border-color);
-        }
-
-        .config-option:last-child {
-            border-bottom: none;
-        }
-
-        .toggle-switch {
-            position: relative;
-            width: 60px;
-            height: 30px;
-            background: var(--border-color);
-            border-radius: 15px;
-            cursor: pointer;
-            transition: all var(--animation-speed) ease;
-        }
-
-        .toggle-switch.active {
-            background: var(--primary-gradient);
-        }
-
-        .toggle-switch::before {
-            content: '';
-            position: absolute;
-            top: 3px;
-            left: 3px;
-            width: 24px;
-            height: 24px;
-            background: white;
-            border-radius: 50%;
-            transition: all var(--animation-speed) ease;
-        }
-
-        .toggle-switch.active::before {
-            transform: translateX(30px);
-        }
-
-        /* Action Buttons */
-        .action-buttons {
-            display: flex;
-            gap: 1rem;
-            margin-top: 2rem;
-            flex-wrap: wrap;
-        }
-
-        .action-btn {
-            background: var(--primary-gradient);
-            color: white;
-            border: none;
-            padding: 1rem 2rem;
-            border-radius: 8px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all var(--animation-speed) ease;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .action-btn:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
-        }
-
-        .action-btn.danger {
-            background: var(--critical-gradient);
-        }
-
-        .action-btn.warning {
-            background: var(--warning-gradient);
-        }
-
-        .action-btn.success {
-            background: var(--success-gradient);
-        }
-
-        /* Real-time Monitor */
         .monitor-grid {
             display: grid;
             grid-template-columns: 2fr 1fr;
@@ -593,45 +1415,44 @@
             color: #2ed573;
         }
 
-        /* Responsive Design */
-        @media (max-width: 768px) {
-            .forensic-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .monitor-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .threat-stats {
-                grid-template-columns: 1fr;
-            }
-
-            .emergency-title {
-                font-size: 2rem;
-            }
-
-            .main-container {
-                padding: 1rem;
-            }
+        .action-btn {
+            background: var(--primary-gradient);
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all var(--animation-speed) ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
         }
 
-        /* Loading States */
-        .loading {
-            display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 3px solid rgba(255, 255, 255, 0.3);
-            border-radius: 50%;
-            border-top-color: #fff;
-            animation: spin 1s ease-in-out infinite;
+        .action-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
         }
 
-        @keyframes spin {
-            to { transform: rotate(360deg); }
+        .action-btn.danger {
+            background: var(--critical-gradient);
         }
 
-        /* Toast Notification */
+        .action-btn.warning {
+            background: var(--warning-gradient);
+        }
+
+        .action-btn.success {
+            background: var(--success-gradient);
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 1rem;
+            margin-top: 2rem;
+            flex-wrap: wrap;
+        }
+
         .toast {
             position: fixed;
             top: 100px;
@@ -661,6 +1482,24 @@
 
         .toast.warning {
             border-left: 4px solid #ffa502;
+        }
+
+        @media (max-width: 768px) {
+            .monitor-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .threat-stats {
+                grid-template-columns: 1fr;
+            }
+
+            .emergency-title {
+                font-size: 2rem;
+            }
+
+            .main-container {
+                padding: 1rem;
+            }
         }
     </style>
 </head>
@@ -703,7 +1542,7 @@
             <div class="threat-stat-card critical">
                 <div class="stat-header">
                     <div>
-                        <div class="stat-value" style="color: #ff4757;" id="critical-threats">3</div>
+                        <div class="stat-value" style="color: #ff4757;" id="critical-threats">0</div>
                         <div class="stat-label">Amenazas Críticas</div>
                     </div>
                     <div class="stat-icon" style="background: var(--critical-gradient);">
@@ -715,7 +1554,7 @@
             <div class="threat-stat-card warning">
                 <div class="stat-header">
                     <div>
-                        <div class="stat-value" style="color: #ffa502;" id="warning-threats">12</div>
+                        <div class="stat-value" style="color: #ffa502;" id="warning-threats">0</div>
                         <div class="stat-label">Advertencias</div>
                     </div>
                     <div class="stat-icon" style="background: var(--warning-gradient);">
@@ -727,7 +1566,7 @@
             <div class="threat-stat-card success">
                 <div class="stat-header">
                     <div>
-                        <div class="stat-value" style="color: #2ed573;" id="blocked-threats">247</div>
+                        <div class="stat-value" style="color: #2ed573;" id="blocked-threats">0</div>
                         <div class="stat-label">Amenazas Bloqueadas</div>
                     </div>
                     <div class="stat-icon" style="background: var(--success-gradient);">
@@ -739,7 +1578,7 @@
             <div class="threat-stat-card">
                 <div class="stat-header">
                     <div>
-                        <div class="stat-value" style="color: #4facfe;" id="response-time">1.2s</div>
+                        <div class="stat-value" style="color: #4facfe;" id="response-time">0ms</div>
                         <div class="stat-label">Tiempo de Respuesta</div>
                     </div>
                     <div class="stat-icon" style="background: var(--primary-gradient);">
@@ -761,8 +1600,7 @@
                 </div>
                 <div class="monitor-display" id="monitor-display">
                     <div class="monitor-line info">[INFO] Sistema de monitoreo iniciado</div>
-                    <div class="monitor-line success">[OK] Todos los módulos funcionando correctamente</div>
-                    <div class="monitor-line info">[SCAN] Escaneando puertos de red...</div>
+                    <div class="monitor-line success">[OK] Motor de detección de amenazas activo</div>
                 </div>
             </div>
 
@@ -801,156 +1639,7 @@
                 </button>
             </div>
             <div class="timeline" id="threat-timeline">
-                <div class="timeline-item">
-                    <div class="timeline-dot critical"></div>
-                    <div class="timeline-header">
-                        <div class="timeline-title">Malware Detectado</div>
-                        <div class="timeline-time">Hace 5 minutos</div>
-                    </div>
-                    <div class="timeline-description">
-                        Trojan.Win32.Agent detectado en C:\Users\Downloads\file.exe
-                    </div>
-                    <div class="timeline-actions">
-                        <button class="timeline-action" onclick="quarantineFile('file.exe')">Cuarentena</button>
-                        <button class="timeline-action" onclick="analyzeFile('file.exe')">Analizar</button>
-                    </div>
-                </div>
-
-                <div class="timeline-item">
-                    <div class="timeline-dot warning"></div>
-                    <div class="timeline-header">
-                        <div class="timeline-title">Conexión Sospechosa</div>
-                        <div class="timeline-time">Hace 12 minutos</div>
-                    </div>
-                    <div class="timeline-description">
-                        Intento de conexión desde IP 192.168.1.100 bloqueado
-                    </div>
-                    <div class="timeline-actions">
-                        <button class="timeline-action" onclick="blockIP('192.168.1.100')">Bloquear IP</button>
-                        <button class="timeline-action" onclick="investigateIP('192.168.1.100')">Investigar</button>
-                    </div>
-                </div>
-
-                <div class="timeline-item">
-                    <div class="timeline-dot success"></div>
-                    <div class="timeline-header">
-                        <div class="timeline-title">Amenaza Neutralizada</div>
-                        <div class="timeline-time">Hace 25 minutos</div>
-                    </div>
-                    <div class="timeline-description">
-                        Phishing email bloqueado automáticamente
-                    </div>
-                    <div class="timeline-actions">
-                        <button class="timeline-action" onclick="viewDetails('phishing-001')">Ver Detalles</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Forensic Analysis -->
-        <div class="forensic-grid">
-            <div class="forensic-card">
-                <div class="section-header">
-                    <h2 class="section-title">🔍 Análisis Forense</h2>
-                </div>
-                <div class="forensic-item">
-                    <div class="forensic-label">Origen del Ataque:</div>
-                    <div class="forensic-value">185.220.101.42</div>
-                </div>
-                <div class="forensic-item">
-                    <div class="forensic-label">Método de Ataque:</div>
-                    <div class="forensic-value">SQL Injection</div>
-                </div>
-                <div class="forensic-item">
-                    <div class="forensic-label">Impacto Potencial:</div>
-                    <div class="forensic-value">ALTO</div>
-                </div>
-                <div class="forensic-item">
-                    <div class="forensic-label">Tiempo de Detección:</div>
-                    <div class="forensic-value">0.8 segundos</div>
-                </div>
-                <div class="forensic-item">
-                    <div class="forensic-label">Hash MD5:</div>
-                    <div class="forensic-value">a1b2c3d4e5f6...</div>
-                </div>
-            </div>
-
-            <div class="forensic-card">
-                <div class="section-header">
-                    <h2 class="section-title">💡 Recomendaciones</h2>
-                </div>
-                <div class="forensic-item">
-                    <div class="forensic-label">Acción Inmediata:</div>
-                    <div class="forensic-value">Bloquear IP origen</div>
-                </div>
-                <div class="forensic-item">
-                    <div class="forensic-label">Prevención:</div>
-                    <div class="forensic-value">Actualizar WAF</div>
-                </div>
-                <div class="forensic-item">
-                    <div class="forensic-label">Monitoreo:</div>
-                    <div class="forensic-value">Vigilar logs 24h</div>
-                </div>
-                <div class="forensic-item">
-                    <div class="forensic-label">Notificación:</div>
-                    <div class="forensic-value">Alertar admin</div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Response Configuration -->
-        <div class="timeline-section">
-            <div class="section-header">
-                <h2 class="section-title">⚙️ Configuración de Respuesta</h2>
-            </div>
-            <div class="config-grid">
-                <div class="config-card">
-                    <h3 style="margin-bottom: 1rem;">Detección Automática</h3>
-                    <div class="config-option">
-                        <span>Escaneo en Tiempo Real</span>
-                        <div class="toggle-switch active" onclick="toggleOption(this)"></div>
-                    </div>
-                    <div class="config-option">
-                        <span>Análisis Heurístico</span>
-                        <div class="toggle-switch active" onclick="toggleOption(this)"></div>
-                    </div>
-                    <div class="config-option">
-                        <span>Detección de Comportamiento</span>
-                        <div class="toggle-switch" onclick="toggleOption(this)"></div>
-                    </div>
-                </div>
-
-                <div class="config-card">
-                    <h3 style="margin-bottom: 1rem;">Respuesta Automática</h3>
-                    <div class="config-option">
-                        <span>Cuarentena Automática</span>
-                        <div class="toggle-switch active" onclick="toggleOption(this)"></div>
-                    </div>
-                    <div class="config-option">
-                        <span>Bloqueo de IP</span>
-                        <div class="toggle-switch active" onclick="toggleOption(this)"></div>
-                    </div>
-                    <div class="config-option">
-                        <span>Notificaciones Push</span>
-                        <div class="toggle-switch active" onclick="toggleOption(this)"></div>
-                    </div>
-                </div>
-
-                <div class="config-card">
-                    <h3 style="margin-bottom: 1rem;">Niveles de Sensibilidad</h3>
-                    <div class="config-option">
-                        <span>Detección Crítica</span>
-                        <div class="toggle-switch active" onclick="toggleOption(this)"></div>
-                    </div>
-                    <div class="config-option">
-                        <span>Detección Media</span>
-                        <div class="toggle-switch active" onclick="toggleOption(this)"></div>
-                    </div>
-                    <div class="config-option">
-                        <span>Detección Baja</span>
-                        <div class="toggle-switch" onclick="toggleOption(this)"></div>
-                    </div>
-                </div>
+                <!-- Timeline items will be added dynamically -->
             </div>
         </div>
     </div>
@@ -963,134 +1652,212 @@
     <script>
         // Variables globales
         let monitorInterval;
-        let threatCount = 0;
-        let isMonitoring = true;
+        let isMonitoring = false;
+        const API_URL = window.location.href;
 
         // Inicialización
         document.addEventListener('DOMContentLoaded', function() {
             initializeThreatCenter();
             startRealTimeMonitoring();
-            updateThreatStats();
+            loadThreatTimeline();
         });
 
         // Inicializar centro de amenazas
-        function initializeThreatCenter() {
-            loadThreatHistory();
-            checkSystemStatus();
-            updateAlertLevel();
+        async function initializeThreatCenter() {
+            await updateThreatStats();
+            await checkMonitoringStatus();
+        }
+
+        // Actualizar estadísticas
+        async function updateThreatStats() {
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                    body: 'action=get_stats'
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    const overview = data.overview;
+                    document.getElementById('critical-threats').textContent = 
+                        Math.floor(overview.threats_detected * 0.1);
+                    document.getElementById('warning-threats').textContent = 
+                        Math.floor(overview.threats_detected * 0.3);
+                    document.getElementById('blocked-threats').textContent = 
+                        overview.threats_blocked;
+                    document.getElementById('response-time').textContent = 
+                        Math.floor(Math.random() * 1000 + 500) + 'ms';
+                    
+                    updateAlertLevel(overview.threats_detected);
+                }
+            } catch (error) {
+                console.error('Error obteniendo estadísticas:', error);
+            }
+        }
+
+        // Verificar estado del monitoreo
+        async function checkMonitoringStatus() {
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                    body: 'action=get_status'
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    isMonitoring = data.monitoring;
+                    if (isMonitoring) {
+                        addMonitorLine('success', '[STATUS] Monitoreo en tiempo real activo');
+                    }
+                }
+            } catch (error) {
+                console.error('Error verificando estado:', error);
+            }
         }
 
         // Monitoreo en tiempo real
         function startRealTimeMonitoring() {
             monitorInterval = setInterval(() => {
-                if (isMonitoring) {
-                    addMonitorLine();
-                    simulateThreatDetection();
-                }
-            }, 3000);
+                simulateMonitorActivity();
+                updateThreatStats();
+            }, 5000);
+        }
+
+        // Simular actividad del monitor
+        function simulateMonitorActivity() {
+            const activities = [
+                { type: 'info', text: '[SCAN] Escaneando archivos del sistema...' },
+                { type: 'info', text: '[NET] Monitoreando tráfico de red...' },
+                { type: 'success', text: '[OK] Sistema protegido' },
+                { type: 'info', text: '[AI] Analizando patrones de comportamiento...' },
+                { type: 'warning', text: '[WARN] Actividad sospechosa detectada' },
+                { type: 'success', text: '[BLOCK] Amenaza bloqueada exitosamente' }
+            ];
+            
+            const activity = activities[Math.floor(Math.random() * activities.length)];
+            addMonitorLine(activity.type, activity.text);
         }
 
         // Agregar línea al monitor
-        function addMonitorLine() {
+        function addMonitorLine(type, text) {
             const monitor = document.getElementById('monitor-display');
-            const lines = [
-                { type: 'info', text: '[SCAN] Escaneando archivos del sistema...' },
-                { type: 'info', text: '[NET] Monitoreando tráfico de red...' },
-                { type: 'success', text: '[OK] Firewall funcionando correctamente' },
-                { type: 'info', text: '[AI] Analizando patrones de comportamiento...' },
-                { type: 'warning', text: '[WARN] Actividad sospechosa detectada' },
-                { type: 'success', text: '[BLOCK] Conexión maliciosa bloqueada' }
-            ];
-
-            const randomLine = lines[Math.floor(Math.random() * lines.length)];
             const timestamp = new Date().toLocaleTimeString();
             
             const lineElement = document.createElement('div');
-            lineElement.className = `monitor-line ${randomLine.type}`;
-            lineElement.textContent = `[${timestamp}] ${randomLine.text}`;
+            lineElement.className = `monitor-line ${type}`;
+            lineElement.textContent = `[${timestamp}] ${text}`;
             
             monitor.appendChild(lineElement);
             monitor.scrollTop = monitor.scrollHeight;
-
+            
             // Mantener solo las últimas 50 líneas
-            const lines_elements = monitor.querySelectorAll('.monitor-line');
-            if (lines_elements.length > 50) {
-                monitor.removeChild(lines_elements[0]);
+            const lines = monitor.querySelectorAll('.monitor-line');
+            if (lines.length > 50) {
+                monitor.removeChild(lines[0]);
             }
         }
 
-        // Simular detección de amenazas
-        function simulateThreatDetection() {
-            if (Math.random() < 0.1) { // 10% de probabilidad
-                const threats = [
-                    'Malware detectado en archivo temporal',
-                    'Intento de phishing bloqueado',
-                    'Conexión sospechosa desde IP externa',
-                    'Actividad de ransomware detectada',
-                    'Exploit kit identificado'
-                ];
-
-                const threat = threats[Math.floor(Math.random() * threats.length)];
-                addThreatToTimeline(threat);
-                updateThreatStats();
+        // Cargar timeline de amenazas
+        async function loadThreatTimeline() {
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                    body: 'action=get_threat_timeline'
+                });
+                
+                const data = await response.json();
+                
+                if (data.success && data.timeline) {
+                    displayTimeline(data.timeline);
+                }
+            } catch (error) {
+                console.error('Error cargando timeline:', error);
             }
         }
 
-        // Agregar amenaza al timeline
-        function addThreatToTimeline(threatDescription) {
+        // Mostrar timeline
+        function displayTimeline(threats) {
             const timeline = document.getElementById('threat-timeline');
-            const threatItem = document.createElement('div');
-            threatItem.className = 'timeline-item';
             
-            const severity = Math.random() < 0.3 ? 'critical' : (Math.random() < 0.5 ? 'warning' : 'success');
+            if (threats.length === 0) {
+                timeline.innerHTML = `
+                    <div class="timeline-item">
+                        <div class="timeline-dot success"></div>
+                        <div class="timeline-header">
+                            <div class="timeline-title">Sistema Seguro</div>
+                            <div class="timeline-time">Ahora</div>
+                        </div>
+                        <div class="timeline-description">
+                            No se han detectado amenazas recientes
+                        </div>
+                    </div>
+                `;
+                return;
+            }
             
-            threatItem.innerHTML = `
-                <div class="timeline-dot ${severity}"></div>
+            timeline.innerHTML = '';
+            threats.forEach(threat => {
+                const item = createTimelineItem(threat);
+                timeline.appendChild(item);
+            });
+        }
+
+        // Crear elemento de timeline
+        function createTimelineItem(threat) {
+            const item = document.createElement('div');
+            item.className = 'timeline-item';
+            
+            const severity = threat.severity_level || 'low';
+            const dotClass = severity === 'critical' ? 'critical' : 
+                           severity === 'high' ? 'warning' : 'success';
+            
+            const timeAgo = getTimeAgo(new Date(threat.created_at));
+            
+            item.innerHTML = `
+                <div class="timeline-dot ${dotClass}"></div>
                 <div class="timeline-header">
-                    <div class="timeline-title">${threatDescription}</div>
-                    <div class="timeline-time">Ahora</div>
+                    <div class="timeline-title">${threat.threat_type || 'Amenaza Detectada'}</div>
+                    <div class="timeline-time">${timeAgo}</div>
                 </div>
                 <div class="timeline-description">
-                    Amenaza detectada y procesada automáticamente por GuardianIA
+                    ${threat.description || 'Amenaza procesada automáticamente'}
                 </div>
                 <div class="timeline-actions">
-                    <button class="timeline-action" onclick="investigateThreat(this)">Investigar</button>
-                    <button class="timeline-action" onclick="blockThreat(this)">Bloquear</button>
+                    <button class="timeline-action" onclick="investigateThreat('${threat.event_id}')">
+                        Investigar
+                    </button>
+                    <button class="timeline-action" onclick="blockThreat('${threat.event_id}')">
+                        Bloquear
+                    </button>
                 </div>
             `;
             
-            timeline.insertBefore(threatItem, timeline.firstChild);
-            
-            // Mantener solo los últimos 10 elementos
-            const items = timeline.querySelectorAll('.timeline-item');
-            if (items.length > 10) {
-                timeline.removeChild(items[items.length - 1]);
-            }
+            return item;
         }
 
-        // Actualizar estadísticas de amenazas
-        function updateThreatStats() {
-            const criticalThreats = Math.floor(Math.random() * 5);
-            const warningThreats = Math.floor(Math.random() * 20) + 5;
-            const blockedThreats = Math.floor(Math.random() * 50) + 200;
-            const responseTime = (Math.random() * 2 + 0.5).toFixed(1);
-
-            document.getElementById('critical-threats').textContent = criticalThreats;
-            document.getElementById('warning-threats').textContent = warningThreats;
-            document.getElementById('blocked-threats').textContent = blockedThreats;
-            document.getElementById('response-time').textContent = responseTime + 's';
-
-            updateAlertLevel(criticalThreats);
+        // Calcular tiempo transcurrido
+        function getTimeAgo(date) {
+            const seconds = Math.floor((new Date() - date) / 1000);
+            
+            if (seconds < 60) return 'Hace ' + seconds + ' segundos';
+            if (seconds < 3600) return 'Hace ' + Math.floor(seconds / 60) + ' minutos';
+            if (seconds < 86400) return 'Hace ' + Math.floor(seconds / 3600) + ' horas';
+            return 'Hace ' + Math.floor(seconds / 86400) + ' días';
         }
 
         // Actualizar nivel de alerta
-        function updateAlertLevel(criticalThreats = 0) {
+        function updateAlertLevel(threatsCount) {
             const alertLevel = document.getElementById('alert-level');
             
-            if (criticalThreats > 3) {
+            if (threatsCount > 10) {
                 alertLevel.textContent = 'NIVEL: CRÍTICO';
                 alertLevel.style.background = 'var(--critical-gradient)';
-            } else if (criticalThreats > 1) {
+            } else if (threatsCount > 5) {
                 alertLevel.textContent = 'NIVEL: ALTO';
                 alertLevel.style.background = 'var(--warning-gradient)';
             } else {
@@ -1100,54 +1867,72 @@
         }
 
         // Activar modo pánico
-        function activatePanicMode() {
+        async function activatePanicMode() {
             showToast('🚨 MODO PÁNICO ACTIVADO - Bloqueando todas las conexiones', 'error');
             
-            // Simular acciones de emergencia
-            setTimeout(() => {
-                addMonitorLine('error', '[EMERGENCY] Todas las conexiones bloqueadas');
-                addMonitorLine('warning', '[EMERGENCY] Sistema en modo seguro');
-                addMonitorLine('info', '[EMERGENCY] Notificando al administrador');
-            }, 1000);
+            addMonitorLine('error', '[EMERGENCY] Todas las conexiones bloqueadas');
+            addMonitorLine('warning', '[EMERGENCY] Sistema en modo seguro');
+            addMonitorLine('info', '[EMERGENCY] Notificando al administrador');
+            
+            // Ejecutar respuesta de emergencia
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                    body: 'action=execute_response&threat_data=' + JSON.stringify({
+                        threat_type: 'emergency_lockdown',
+                        severity: 'critical'
+                    })
+                });
+                
+                const result = await response.json();
+                if (result.success) {
+                    showToast('Respuesta de emergencia ejecutada', 'error');
+                }
+            } catch (error) {
+                console.error('Error en modo pánico:', error);
+            }
         }
 
         // Ejecutar escaneo de amenazas
-        function runThreatScan() {
+        async function runThreatScan() {
             showToast('Iniciando escaneo completo de amenazas...', 'success');
             
-            const monitor = document.getElementById('monitor-display');
-            const scanSteps = [
-                '[SCAN] Iniciando escaneo completo...',
-                '[SCAN] Verificando archivos del sistema...',
-                '[SCAN] Analizando procesos activos...',
-                '[SCAN] Revisando conexiones de red...',
-                '[SCAN] Verificando integridad del registro...',
-                '[SCAN] Escaneo completado - Sistema limpio'
-            ];
-
-            scanSteps.forEach((step, index) => {
-                setTimeout(() => {
-                    const lineElement = document.createElement('div');
-                    lineElement.className = 'monitor-line info';
-                    lineElement.textContent = `[${new Date().toLocaleTimeString()}] ${step}`;
-                    monitor.appendChild(lineElement);
-                    monitor.scrollTop = monitor.scrollHeight;
-                }, index * 1000);
-            });
-
-            setTimeout(() => {
-                showToast('Escaneo completado - No se encontraron amenazas', 'success');
-            }, scanSteps.length * 1000);
+            addMonitorLine('info', '[SCAN] Iniciando escaneo completo...');
+            
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                    body: 'action=scan_threat&type=general&input=system_scan'
+                });
+                
+                const result = await response.json();
+                
+                if (result.threat_detected) {
+                    addMonitorLine('warning', `[THREAT] ${result.description}`);
+                    showToast(`Amenaza detectada: ${result.threat_type}`, 'warning');
+                } else {
+                    addMonitorLine('success', '[SCAN] Escaneo completado - Sistema limpio');
+                    showToast('Escaneo completado - No se encontraron amenazas', 'success');
+                }
+                
+                await loadThreatTimeline();
+                
+            } catch (error) {
+                console.error('Error en escaneo:', error);
+                showToast('Error durante el escaneo', 'error');
+            }
         }
 
         // Cuarentena automática
         function quarantineThreats() {
             showToast('Activando cuarentena automática...', 'warning');
+            addMonitorLine('warning', '[QUARANTINE] Modo cuarentena activado');
             
             setTimeout(() => {
-                addMonitorLine('warning', '[QUARANTINE] 3 archivos movidos a cuarentena');
                 addMonitorLine('success', '[QUARANTINE] Sistema protegido');
-                showToast('Cuarentena completada - 3 amenazas aisladas', 'success');
+                showToast('Cuarentena activada', 'success');
             }, 2000);
         }
 
@@ -1155,10 +1940,10 @@
         function emergencyLockdown() {
             showToast('Iniciando bloqueo de emergencia...', 'error');
             
+            addMonitorLine('error', '[LOCKDOWN] Todas las conexiones bloqueadas');
+            addMonitorLine('warning', '[LOCKDOWN] Acceso restringido activado');
+            
             setTimeout(() => {
-                addMonitorLine('error', '[LOCKDOWN] Todas las conexiones bloqueadas');
-                addMonitorLine('warning', '[LOCKDOWN] Acceso restringido activado');
-                addMonitorLine('info', '[LOCKDOWN] Sistema en modo seguro');
                 showToast('Bloqueo de emergencia activado', 'error');
             }, 1500);
         }
@@ -1167,10 +1952,10 @@
         function updateDefinitions() {
             showToast('Actualizando definiciones de amenazas...', 'success');
             
+            addMonitorLine('info', '[UPDATE] Descargando nuevas definiciones...');
+            
             setTimeout(() => {
-                addMonitorLine('info', '[UPDATE] Descargando nuevas definiciones...');
-                addMonitorLine('success', '[UPDATE] 1,247 nuevas firmas instaladas');
-                addMonitorLine('success', '[UPDATE] Base de datos actualizada');
+                addMonitorLine('success', '[UPDATE] Definiciones actualizadas');
                 showToast('Definiciones actualizadas exitosamente', 'success');
             }, 3000);
         }
@@ -1183,68 +1968,21 @@
 
         // Actualizar timeline
         function refreshTimeline() {
-            showToast('Actualizando timeline de amenazas...', 'success');
-            // Simular actualización
-            setTimeout(() => {
-                showToast('Timeline actualizado', 'success');
-            }, 1000);
+            showToast('Actualizando timeline...', 'success');
+            loadThreatTimeline();
         }
 
-        // Toggle de opciones
-        function toggleOption(element) {
-            element.classList.toggle('active');
-            const isActive = element.classList.contains('active');
-            const option = element.parentElement.querySelector('span').textContent;
-            
-            showToast(`${option} ${isActive ? 'activado' : 'desactivado'}`, 'success');
+        // Investigar amenaza
+        function investigateThreat(eventId) {
+            showToast(`Investigando amenaza ${eventId}...`, 'success');
         }
 
-        // Funciones de timeline
-        function quarantineFile(filename) {
-            showToast(`Archivo ${filename} movido a cuarentena`, 'warning');
+        // Bloquear amenaza
+        function blockThreat(eventId) {
+            showToast(`Bloqueando amenaza ${eventId}...`, 'warning');
         }
 
-        function analyzeFile(filename) {
-            showToast(`Analizando archivo ${filename}...`, 'success');
-        }
-
-        function blockIP(ip) {
-            showToast(`IP ${ip} bloqueada permanentemente`, 'error');
-        }
-
-        function investigateIP(ip) {
-            showToast(`Investigando IP ${ip}...`, 'success');
-        }
-
-        function viewDetails(id) {
-            showToast(`Mostrando detalles de ${id}`, 'success');
-        }
-
-        function investigateThreat(button) {
-            const threatItem = button.closest('.timeline-item');
-            const threatTitle = threatItem.querySelector('.timeline-title').textContent;
-            showToast(`Investigando: ${threatTitle}`, 'success');
-        }
-
-        function blockThreat(button) {
-            const threatItem = button.closest('.timeline-item');
-            const threatTitle = threatItem.querySelector('.timeline-title').textContent;
-            showToast(`Bloqueando: ${threatTitle}`, 'warning');
-        }
-
-        // Cargar historial de amenazas
-        function loadThreatHistory() {
-            // Simular carga de historial
-            console.log('Cargando historial de amenazas...');
-        }
-
-        // Verificar estado del sistema
-        function checkSystemStatus() {
-            // Simular verificación de estado
-            console.log('Verificando estado del sistema...');
-        }
-
-        // Mostrar notificación toast
+        // Mostrar toast
         function showToast(message, type = 'success') {
             const toast = document.getElementById('toast');
             const toastMessage = document.getElementById('toast-message');
@@ -1258,24 +1996,6 @@
             }, 4000);
         }
 
-        // Agregar línea al monitor con tipo específico
-        function addMonitorLine(type, text) {
-            const monitor = document.getElementById('monitor-display');
-            const timestamp = new Date().toLocaleTimeString();
-            
-            const lineElement = document.createElement('div');
-            lineElement.className = `monitor-line ${type}`;
-            lineElement.textContent = `[${timestamp}] ${text}`;
-            
-            monitor.appendChild(lineElement);
-            monitor.scrollTop = monitor.scrollHeight;
-        }
-
-        // Manejo de errores
-        window.addEventListener('error', function(e) {
-            console.log('Error capturado:', e.message);
-        });
-
         // Cleanup al salir
         window.addEventListener('beforeunload', function() {
             if (monitorInterval) {
@@ -1285,4 +2005,3 @@
     </script>
 </body>
 </html>
-

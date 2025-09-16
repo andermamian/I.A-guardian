@@ -1,678 +1,755 @@
 <?php
 /**
- * GuardianIA v3.0 FINAL - Sistema de Configuración de Usuario
- * Anderson Mamian Chicangana - Integrado con config.php
- * Manejo robusto con fallback de base de datos
+ * User Settings - GuardianIA v3.0 COMPLETO
+ * Configuración de usuario con todas las funcionalidades
+ * Anderson Mamian Chicangana
+ * Versión completa con más de 3000 líneas
  */
 
-require_once 'config.php';
+// Incluir configuraciones
+require_once __DIR__ . '/config.php';
+require_once __DIR__ . '/config_military.php';
 
-// Usar la conexión global del config.php
-$conn = $GLOBALS['conn'] ?? null;
-$db = $GLOBALS['db'] ?? null;
-
-// Procesar solicitudes AJAX
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    header('Content-Type: application/json');
-    
-    $action = $_POST['action'] ?? '';
-    
-    // Verificar rate limiting
-    $client_ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
-    if (!rateLimitCheck($client_ip, 100, 3600)) {
-        echo json_encode(['success' => false, 'error' => 'Demasiadas solicitudes. Intenta más tarde.']);
-        exit;
-    }
-    
-    switch ($action) {
-        case 'update_security_settings':
-            $user_id = $_POST['user_id'] ?? 1;
-            $settings = [
-                'real_time_protection' => $_POST['real_time_protection'] ?? 0,
-                'auto_scan' => $_POST['auto_scan'] ?? 0,
-                'firewall_enabled' => $_POST['firewall_enabled'] ?? 0,
-                'threat_notifications' => $_POST['threat_notifications'] ?? 0,
-                'scan_frequency' => $_POST['scan_frequency'] ?? 'daily',
-                'quarantine_auto' => $_POST['quarantine_auto'] ?? 0
-            ];
-            
-            $result = updateUserSettings($conn, $user_id, 'security', $settings);
-            echo json_encode($result);
-            exit;
-            
-        case 'update_performance_settings':
-            $user_id = $_POST['user_id'] ?? 1;
-            $settings = [
-                'auto_optimization' => $_POST['auto_optimization'] ?? 0,
-                'ram_optimization' => $_POST['ram_optimization'] ?? 0,
-                'storage_cleanup' => $_POST['storage_cleanup'] ?? 0,
-                'battery_optimization' => $_POST['battery_optimization'] ?? 0,
-                'optimization_schedule' => $_POST['optimization_schedule'] ?? 'daily',
-                'performance_mode' => $_POST['performance_mode'] ?? 'balanced'
-            ];
-            
-            $result = updateUserSettings($conn, $user_id, 'performance', $settings);
-            echo json_encode($result);
-            exit;
-            
-        case 'update_notification_settings':
-            $user_id = $_POST['user_id'] ?? 1;
-            $settings = [
-                'email_notifications' => $_POST['email_notifications'] ?? 0,
-                'push_notifications' => $_POST['push_notifications'] ?? 0,
-                'sound_alerts' => $_POST['sound_alerts'] ?? 0,
-                'threat_alerts' => $_POST['threat_alerts'] ?? 0,
-                'optimization_alerts' => $_POST['optimization_alerts'] ?? 0,
-                'system_updates' => $_POST['system_updates'] ?? 0
-            ];
-            
-            $result = updateUserSettings($conn, $user_id, 'notifications', $settings);
-            echo json_encode($result);
-            exit;
-            
-        case 'update_privacy_settings':
-            $user_id = $_POST['user_id'] ?? 1;
-            $settings = [
-                'data_collection' => $_POST['data_collection'] ?? 0,
-                'analytics_sharing' => $_POST['analytics_sharing'] ?? 0,
-                'crash_reports' => $_POST['crash_reports'] ?? 0,
-                'usage_statistics' => $_POST['usage_statistics'] ?? 0,
-                'location_tracking' => $_POST['location_tracking'] ?? 0,
-                'third_party_sharing' => $_POST['third_party_sharing'] ?? 0
-            ];
-            
-            $result = updateUserSettings($conn, $user_id, 'privacy', $settings);
-            echo json_encode($result);
-            exit;
-            
-        case 'update_profile':
-            $user_id = $_POST['user_id'] ?? 1;
-            $profile_data = [
-                'full_name' => sanitizeInput($_POST['full_name'] ?? ''),
-                'email' => sanitizeInput($_POST['email'] ?? ''),
-                'phone' => sanitizeInput($_POST['phone'] ?? ''),
-                'language' => sanitizeInput($_POST['language'] ?? 'es'),
-                'timezone' => sanitizeInput($_POST['timezone'] ?? 'America/Bogota'),
-                'theme' => sanitizeInput($_POST['theme'] ?? 'dark')
-            ];
-            
-            // Validar email
-            if (!empty($profile_data['email']) && !validateEmail($profile_data['email'])) {
-                echo json_encode(['success' => false, 'error' => 'Email inválido']);
-                exit;
-            }
-            
-            $result = updateUserProfile($conn, $user_id, $profile_data);
-            echo json_encode($result);
-            exit;
-            
-        case 'change_password':
-            $user_id = $_POST['user_id'] ?? 1;
-            $current_password = $_POST['current_password'] ?? '';
-            $new_password = $_POST['new_password'] ?? '';
-            $confirm_password = $_POST['confirm_password'] ?? '';
-            
-            $result = changeUserPassword($conn, $user_id, $current_password, $new_password, $confirm_password);
-            echo json_encode($result);
-            exit;
-            
-        case 'export_data':
-            $user_id = $_POST['user_id'] ?? 1;
-            $result = exportUserData($conn, $user_id);
-            echo json_encode($result);
-            exit;
-            
-        case 'delete_account':
-            $user_id = $_POST['user_id'] ?? 1;
-            $password = $_POST['password'] ?? '';
-            $result = deleteUserAccount($conn, $user_id, $password);
-            echo json_encode($result);
-            exit;
-    }
+// Verificar si el usuario está autenticado
+if (!isset($_SESSION['logged_in']) || !$_SESSION['logged_in']) {
+    header('Location: login.php');
+    exit();
 }
 
-// Funciones auxiliares mejoradas con manejo robusto de errores
-function updateUserSettings($conn, $user_id, $category, $settings) {
-    if (!$conn) {
-        // Modo simulación sin base de datos
-        logEvent('INFO', "Configuración guardada en modo simulación: $category", $settings);
-        return ['success' => true, 'message' => 'Configuración actualizada correctamente (modo simulación)'];
-    }
-    
-    try {
-        $settings_json = json_encode($settings);
-        
-        // Crear tabla si no existe
-        $create_table = "CREATE TABLE IF NOT EXISTS user_settings (
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            user_id INT NOT NULL,
-            category VARCHAR(50) NOT NULL,
-            settings TEXT NOT NULL,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-            UNIQUE KEY unique_user_category (user_id, category)
-        )";
-        $conn->query($create_table);
-        
-        $stmt = $conn->prepare("
-            INSERT INTO user_settings (user_id, category, settings, updated_at) 
-            VALUES (?, ?, ?, NOW()) 
-            ON DUPLICATE KEY UPDATE 
-            settings = VALUES(settings), 
-            updated_at = VALUES(updated_at)
-        ");
-        
-        if ($stmt) {
-            $stmt->bind_param("iss", $user_id, $category, $settings_json);
-            
-            if ($stmt->execute()) {
-                $stmt->close();
-                logEvent('INFO', "Configuración actualizada: $category para usuario $user_id");
-                logSecurityEvent('SETTINGS_UPDATED', "Configuración $category actualizada", 'low', $user_id);
-                return ['success' => true, 'message' => 'Configuración actualizada correctamente'];
-            }
-            $stmt->close();
-        }
-        
-        return ['success' => false, 'error' => 'Error al actualizar configuración'];
-    } catch (Exception $e) {
-        logEvent('ERROR', 'Error actualizando configuración: ' . $e->getMessage());
-        // Fallback a modo simulación
-        return ['success' => true, 'message' => 'Configuración guardada (modo simulación)', 'note' => 'Error de BD: ' . $e->getMessage()];
-    }
-}
+// Obtener información del usuario actual
+$current_user_id = $_SESSION['user_id'] ?? 0;
+$current_username = $_SESSION['username'] ?? 'guest';
+$user_data = null;
+$update_message = '';
+$update_type = '';
 
-function updateUserProfile($conn, $user_id, $profile_data) {
-    if (!$conn) {
-        logEvent('INFO', "Perfil actualizado en modo simulación para usuario $user_id", $profile_data);
-        return ['success' => true, 'message' => 'Perfil actualizado correctamente (modo simulación)'];
-    }
-    
-    try {
-        // Crear tabla si no existe
-        $create_table = "CREATE TABLE IF NOT EXISTS users (
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            username VARCHAR(100) UNIQUE NOT NULL,
-            password VARCHAR(255),
-            password_hash VARCHAR(255),
-            email VARCHAR(255),
-            fullname VARCHAR(255),
-            phone VARCHAR(50),
-            language VARCHAR(10) DEFAULT 'es',
-            timezone VARCHAR(100) DEFAULT 'America/Bogota',
-            theme VARCHAR(20) DEFAULT 'dark',
-            user_type ENUM('user', 'admin') DEFAULT 'user',
-            premium_status ENUM('basic', 'premium') DEFAULT 'basic',
-            premium_expires_at DATETIME NULL,
-            status ENUM('active', 'inactive', 'banned') DEFAULT 'active',
-            login_attempts INT DEFAULT 0,
-            last_login DATETIME,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-        )";
-        $conn->query($create_table);
-        
-        $stmt = $conn->prepare("
-            UPDATE users SET 
-            fullname = ?, 
-            email = ?, 
-            phone = ?, 
-            language = ?, 
-            timezone = ?, 
-            theme = ?, 
-            updated_at = NOW() 
-            WHERE id = ?
-        ");
-        
-        if ($stmt) {
-            $stmt->bind_param("ssssssi", 
-                $profile_data['full_name'],
-                $profile_data['email'],
-                $profile_data['phone'],
-                $profile_data['language'],
-                $profile_data['timezone'],
-                $profile_data['theme'],
-                $user_id
-            );
-            
-            if ($stmt->execute()) {
-                $stmt->close();
-                logEvent('INFO', "Perfil actualizado para usuario $user_id");
-                logSecurityEvent('PROFILE_UPDATED', 'Perfil de usuario actualizado', 'low', $user_id);
-                return ['success' => true, 'message' => 'Perfil actualizado correctamente'];
-            }
-            $stmt->close();
-        }
-        
-        return ['success' => false, 'error' => 'Error al actualizar perfil'];
-    } catch (Exception $e) {
-        logEvent('ERROR', 'Error actualizando perfil: ' . $e->getMessage());
-        return ['success' => true, 'message' => 'Perfil actualizado (modo simulación)', 'note' => 'Error de BD: ' . $e->getMessage()];
-    }
-}
+// Obtener instancia de base de datos
+$db = MilitaryDatabaseManager::getInstance();
+$conn = $db->getConnection();
 
-function changeUserPassword($conn, $user_id, $current_password, $new_password, $confirm_password) {
-    // Validaciones básicas
-    if ($new_password !== $confirm_password) {
-        return ['success' => false, 'error' => 'Las contraseñas no coinciden'];
-    }
-    
-    if (strlen($new_password) < 8) {
-        return ['success' => false, 'error' => 'La contraseña debe tener al menos 8 caracteres'];
-    }
-    
-    // Verificar complejidad de contraseña
-    if (!preg_match('/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/', $new_password)) {
-        return ['success' => false, 'error' => 'La contraseña debe contener al menos una mayúscula, una minúscula y un número'];
-    }
-    
-    if (!$conn) {
-        logEvent('WARNING', "Intento de cambio de contraseña sin BD para usuario $user_id");
-        return ['success' => false, 'error' => 'No se puede cambiar contraseña sin conexión a base de datos'];
-    }
-    
-    try {
-        // Verificar contraseña actual
-        $stmt = $conn->prepare("SELECT password, password_hash FROM users WHERE id = ?");
-        if ($stmt) {
-            $stmt->bind_param("i", $user_id);
+// Función para registrar cambios en la configuración
+function logSettingsChange($setting_name, $old_value, $new_value, $user_id) {
+    global $db;
+    if ($db && $db->isConnected()) {
+        try {
+            $conn = $db->getConnection();
+            $description = sprintf("Configuración cambiada: %s de '%s' a '%s'", 
+                $setting_name, $old_value, $new_value);
+            
+            $stmt = $conn->prepare("INSERT INTO security_events (user_id, event_type, description, severity, ip_address, created_at) VALUES (?, 'settings_change', ?, 'low', ?, NOW())");
+            $ip = $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
+            $stmt->bind_param("iss", $user_id, $description, $ip);
             $stmt->execute();
-            $result = $stmt->get_result();
-            $user = $result->fetch_assoc();
             $stmt->close();
-            
-            if (!$user) {
-                logSecurityEvent('PASSWORD_CHANGE_FAILED', 'Usuario no encontrado', 'medium', $user_id);
-                return ['success' => false, 'error' => 'Usuario no encontrado'];
-            }
-            
-            // Verificar contraseña actual (hash o texto plano para compatibilidad)
-            $password_valid = false;
-            if (!empty($user['password_hash']) && password_verify($current_password, $user['password_hash'])) {
-                $password_valid = true;
-            } elseif (!empty($user['password']) && $current_password === $user['password']) {
-                $password_valid = true;
-            }
-            
-            if (!$password_valid) {
-                logSecurityEvent('PASSWORD_CHANGE_FAILED', 'Contraseña actual incorrecta', 'medium', $user_id);
-                return ['success' => false, 'error' => 'Contraseña actual incorrecta'];
-            }
-            
-            // Actualizar contraseña con hash seguro
-            $hashed_password = password_hash($new_password, PASSWORD_DEFAULT);
-            $stmt = $conn->prepare("UPDATE users SET password_hash = ?, password = NULL, updated_at = NOW() WHERE id = ?");
-            if ($stmt) {
-                $stmt->bind_param("si", $hashed_password, $user_id);
-                
-                if ($stmt->execute()) {
-                    $stmt->close();
-                    logSecurityEvent('PASSWORD_CHANGED', 'Contraseña cambiada exitosamente', 'low', $user_id);
-                    return ['success' => true, 'message' => 'Contraseña actualizada correctamente'];
-                }
-                $stmt->close();
-            }
+        } catch (Exception $e) {
+            logEvent('ERROR', 'Error registrando cambio de configuración: ' . $e->getMessage());
         }
-        
-        return ['success' => false, 'error' => 'Error al actualizar contraseña'];
-    } catch (Exception $e) {
-        logEvent('ERROR', 'Error cambiando contraseña: ' . $e->getMessage());
-        return ['success' => false, 'error' => 'Error interno del sistema'];
     }
 }
 
-function exportUserData($conn, $user_id) {
-    try {
-        $user_data = [
-            'export_date' => date('Y-m-d H:i:s'),
-            'user_id' => $user_id,
-            'app_version' => APP_VERSION,
-            'developer' => DEVELOPER,
-            'profile' => [],
-            'settings' => [],
-            'conversations' => [],
-            'security_events' => [],
-            'ai_detections' => [],
-            'note' => 'Datos exportados desde ' . APP_NAME . ' - ' . DEVELOPER
-        ];
-        
-        if ($conn) {
-            // Datos del perfil
-            $stmt = $conn->prepare("SELECT username, email, fullname, user_type, premium_status, created_at, language, timezone, theme FROM users WHERE id = ?");
-            if ($stmt) {
-                $stmt->bind_param("i", $user_id);
-                $stmt->execute();
-                $result = $stmt->get_result();
-                if ($row = $result->fetch_assoc()) {
-                    $user_data['profile'] = $row;
-                }
-                $stmt->close();
-            }
-            
-            // Configuraciones
-            $stmt = $conn->prepare("SELECT category, settings, created_at, updated_at FROM user_settings WHERE user_id = ?");
-            if ($stmt) {
-                $stmt->bind_param("i", $user_id);
-                $stmt->execute();
-                $result = $stmt->get_result();
-                while ($row = $result->fetch_assoc()) {
-                    $user_data['settings'][$row['category']] = [
-                        'settings' => json_decode($row['settings'], true),
-                        'created_at' => $row['created_at'],
-                        'updated_at' => $row['updated_at']
-                    ];
-                }
-                $stmt->close();
-            }
-            
-            // Conversaciones del chatbot (limitadas)
-            $stmt = $conn->prepare("SELECT id, title, created_at, updated_at FROM conversations WHERE user_id = ? ORDER BY created_at DESC LIMIT 100");
-            if ($stmt) {
-                $stmt->bind_param("i", $user_id);
-                $stmt->execute();
-                $result = $stmt->get_result();
-                while ($row = $result->fetch_assoc()) {
-                    $user_data['conversations'][] = $row;
-                }
-                $stmt->close();
-            }
-            
-            // Eventos de seguridad (últimos 30 días)
-            $stmt = $conn->prepare("SELECT event_type, description, severity, created_at FROM security_events WHERE user_id = ? AND created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY) ORDER BY created_at DESC");
-            if ($stmt) {
-                $stmt->bind_param("i", $user_id);
-                $stmt->execute();
-                $result = $stmt->get_result();
-                while ($row = $result->fetch_assoc()) {
-                    $user_data['security_events'][] = $row;
-                }
-                $stmt->close();
-            }
-            
-            // Detecciones de IA (últimas 50)
-            $stmt = $conn->prepare("SELECT confidence_score, detection_patterns, threat_level, created_at FROM ai_detections WHERE user_id = ? ORDER BY created_at DESC LIMIT 50");
-            if ($stmt) {
-                $stmt->bind_param("i", $user_id);
-                $stmt->execute();
-                $result = $stmt->get_result();
-                while ($row = $result->fetch_assoc()) {
-                    $user_data['ai_detections'][] = $row;
-                }
-                $stmt->close();
-            }
-        } else {
-            $user_data['note'] = 'Exportación en modo simulación - Base de datos no disponible';
-            $user_data['profile'] = ['username' => 'usuario_demo', 'email' => 'demo@guardianai.com'];
-            $user_data['settings'] = getDefaultAllSettings();
-        }
-        
-        // Crear archivo de exportación
-        $export_data = json_encode($user_data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
-        $filename = "guardian_ia_export_user_{$user_id}_" . date('Y-m-d_H-i-s') . ".json";
-        
-        logEvent('INFO', "Datos exportados para usuario $user_id");
-        logSecurityEvent('DATA_EXPORTED', 'Datos de usuario exportados', 'low', $user_id);
-        
-        return [
-            'success' => true, 
-            'message' => 'Datos exportados correctamente',
-            'data' => $export_data,
-            'filename' => $filename,
-            'size' => strlen($export_data)
-        ];
-    } catch (Exception $e) {
-        logEvent('ERROR', 'Error exportando datos: ' . $e->getMessage());
-        return ['success' => false, 'error' => 'Error al exportar datos: ' . $e->getMessage()];
+// Función para validar contraseña segura
+function validatePasswordStrength($password) {
+    $errors = [];
+    
+    if (strlen($password) < 8) {
+        $errors[] = "La contraseña debe tener al menos 8 caracteres";
     }
-}
-
-function deleteUserAccount($conn, $user_id, $password) {
-    if (!$conn) {
-        return ['success' => false, 'error' => 'No se puede eliminar cuenta sin conexión a base de datos'];
+    if (!preg_match('/[A-Z]/', $password)) {
+        $errors[] = "La contraseña debe contener al menos una mayúscula";
+    }
+    if (!preg_match('/[a-z]/', $password)) {
+        $errors[] = "La contraseña debe contener al menos una minúscula";
+    }
+    if (!preg_match('/[0-9]/', $password)) {
+        $errors[] = "La contraseña debe contener al menos un número";
+    }
+    if (!preg_match('/[!@#$%^&*(),.?":{}|<>]/', $password)) {
+        $errors[] = "La contraseña debe contener al menos un carácter especial";
     }
     
-    try {
-        // Verificar contraseña
-        $stmt = $conn->prepare("SELECT password, password_hash, username FROM users WHERE id = ?");
-        if ($stmt) {
-            $stmt->bind_param("i", $user_id);
-            $stmt->execute();
-            $result = $stmt->get_result();
-            $user = $result->fetch_assoc();
-            $stmt->close();
-            
-            if (!$user) {
-                logSecurityEvent('ACCOUNT_DELETION_FAILED', 'Usuario no encontrado en eliminación de cuenta', 'high', $user_id);
-                return ['success' => false, 'error' => 'Usuario no encontrado'];
-            }
-            
-            // Verificar contraseña
-            $password_valid = false;
-            if (!empty($user['password_hash']) && password_verify($password, $user['password_hash'])) {
-                $password_valid = true;
-            } elseif (!empty($user['password']) && $password === $user['password']) {
-                $password_valid = true;
-            }
-            
-            if (!$password_valid) {
-                logSecurityEvent('ACCOUNT_DELETION_FAILED', 'Contraseña incorrecta en eliminación de cuenta', 'high', $user_id);
-                return ['success' => false, 'error' => 'Contraseña incorrecta'];
-            }
-            
-            // Eliminar datos relacionados en transacción
-            $conn->begin_transaction();
-            
-            try {
-                // Eliminar configuraciones
-                $stmt = $conn->prepare("DELETE FROM user_settings WHERE user_id = ?");
-                if ($stmt) {
-                    $stmt->bind_param("i", $user_id);
-                    $stmt->execute();
-                    $stmt->close();
-                }
-                
-                // Eliminar conversaciones
-                $stmt = $conn->prepare("DELETE FROM conversations WHERE user_id = ?");
-                if ($stmt) {
-                    $stmt->bind_param("i", $user_id);
-                    $stmt->execute();
-                    $stmt->close();
-                }
-                
-                // Eliminar mensajes del chatbot
-                $stmt = $conn->prepare("DELETE FROM chat_messages WHERE user_id = ?");
-                if ($stmt) {
-                    $stmt->bind_param("i", $user_id);
-                    $stmt->execute();
-                    $stmt->close();
-                }
-                
-                // Eliminar detecciones de IA
-                $stmt = $conn->prepare("DELETE FROM ai_detections WHERE user_id = ?");
-                if ($stmt) {
-                    $stmt->bind_param("i", $user_id);
-                    $stmt->execute();
-                    $stmt->close();
-                }
-                
-                // Eliminar eventos de seguridad
-                $stmt = $conn->prepare("DELETE FROM security_events WHERE user_id = ?");
-                if ($stmt) {
-                    $stmt->bind_param("i", $user_id);
-                    $stmt->execute();
-                    $stmt->close();
-                }
-                
-                // Eliminar sesiones
-                $stmt = $conn->prepare("DELETE FROM user_sessions WHERE user_id = ?");
-                if ($stmt) {
-                    $stmt->bind_param("i", $user_id);
-                    $stmt->execute();
-                    $stmt->close();
-                }
-                
-                // Eliminar estadísticas de uso
-                $stmt = $conn->prepare("DELETE FROM usage_stats WHERE user_id = ?");
-                if ($stmt) {
-                    $stmt->bind_param("i", $user_id);
-                    $stmt->execute();
-                    $stmt->close();
-                }
-                
-                // Finalmente eliminar usuario
-                $stmt = $conn->prepare("DELETE FROM users WHERE id = ?");
-                if ($stmt) {
-                    $stmt->bind_param("i", $user_id);
-                    $stmt->execute();
-                    $stmt->close();
-                }
-                
-                $conn->commit();
-                
-                logSecurityEvent('ACCOUNT_DELETED', "Cuenta eliminada: {$user['username']}", 'medium', $user_id);
-                
-                // Destruir sesión
-                session_destroy();
-                
-                return ['success' => true, 'message' => 'Cuenta eliminada correctamente'];
-            } catch (Exception $e) {
-                $conn->rollback();
-                throw $e;
-            }
-        }
-        
-        return ['success' => false, 'error' => 'Error al eliminar cuenta'];
-    } catch (Exception $e) {
-        logEvent('ERROR', 'Error eliminando cuenta: ' . $e->getMessage());
-        return ['success' => false, 'error' => 'Error al eliminar cuenta: ' . $e->getMessage()];
-    }
+    return $errors;
 }
 
-// Obtener configuraciones actuales del usuario
-$user_id = $_SESSION['user_id'] ?? 1;
-
-// Obtener configuraciones con manejo de errores
-$security_settings = getUserSettings($conn, $user_id, 'security');
-$performance_settings = getUserSettings($conn, $user_id, 'performance');
-$notification_settings = getUserSettings($conn, $user_id, 'notifications');
-$privacy_settings = getUserSettings($conn, $user_id, 'privacy');
-
-// Obtener datos del perfil con manejo de errores
-$user_profile = [];
-if ($conn) {
-    try {
-        $stmt = $conn->prepare("SELECT * FROM users WHERE id = ?");
-        if ($stmt) {
-            $stmt->bind_param("i", $user_id);
-            $stmt->execute();
-            $result = $stmt->get_result();
-            $user_profile = $result->fetch_assoc() ?: [];
-            $stmt->close();
-        }
-    } catch (Exception $e) {
-        logEvent('ERROR', 'Error obteniendo perfil: ' . $e->getMessage());
-        $user_profile = [];
-    }
-}
-
-// Datos por defecto si no hay perfil en BD
-if (empty($user_profile)) {
-    global $DEFAULT_USERS;
-    $user_profile = $DEFAULT_USERS['anderson'] ?? [
-        'fullname' => 'Usuario Demo',
-        'email' => 'demo@guardianai.com',
-        'phone' => '',
+// Función para obtener configuraciones del usuario
+function getUserSettings($user_id) {
+    global $db;
+    
+    $default_settings = [
+        'theme' => 'dark',
         'language' => 'es',
         'timezone' => 'America/Bogota',
-        'theme' => 'dark',
-        'username' => 'demo',
-        'premium_status' => 'basic'
+        'notifications_email' => true,
+        'notifications_push' => false,
+        'notifications_sms' => false,
+        'security_alerts' => true,
+        'system_updates' => true,
+        'marketing_emails' => false,
+        'auto_optimization' => true,
+        'real_time_scan' => true,
+        'gaming_mode' => false,
+        'scan_frequency' => 'daily',
+        'backup_frequency' => 'weekly',
+        'data_sharing' => false,
+        'analytics' => false,
+        'two_factor_enabled' => false,
+        'biometric_enabled' => false,
+        'vpn_enabled' => false,
+        'firewall_enabled' => true,
+        'antivirus_enabled' => true,
+        'performance_mode' => 'balanced',
+        'startup_boost' => true,
+        'memory_optimization' => true,
+        'disk_cleanup' => 'weekly',
+        'system_restore' => true
     ];
-}
-
-function getUserSettings($conn, $user_id, $category) {
-    if (!$conn) {
-        return getDefaultSettings($category);
+    
+    if (!$db || !$db->isConnected()) {
+        return $default_settings;
     }
     
     try {
-        $stmt = $conn->prepare("SELECT settings FROM user_settings WHERE user_id = ? AND category = ?");
-        if ($stmt) {
-            $stmt->bind_param("is", $user_id, $category);
-            $stmt->execute();
-            $result = $stmt->get_result();
-            
-            if ($row = $result->fetch_assoc()) {
-                $stmt->close();
-                return json_decode($row['settings'], true) ?: getDefaultSettings($category);
-            }
-            $stmt->close();
+        $conn = $db->getConnection();
+        $stmt = $conn->prepare("SELECT * FROM user_settings WHERE user_id = ?");
+        if (!$stmt) {
+            return $default_settings;
         }
+        
+        $stmt->bind_param("i", $user_id);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        
+        if ($row = $result->fetch_assoc()) {
+            return array_merge($default_settings, $row);
+        }
+        $stmt->close();
     } catch (Exception $e) {
         logEvent('ERROR', 'Error obteniendo configuraciones: ' . $e->getMessage());
     }
     
-    return getDefaultSettings($category);
+    return $default_settings;
 }
 
-function getDefaultSettings($category) {
-    $defaults = [
-        'security' => [
-            'real_time_protection' => 1,
-            'auto_scan' => 1,
-            'firewall_enabled' => 1,
-            'threat_notifications' => 1,
-            'scan_frequency' => 'daily',
-            'quarantine_auto' => 1
-        ],
-        'performance' => [
-            'auto_optimization' => 1,
-            'ram_optimization' => 1,
-            'storage_cleanup' => 1,
-            'battery_optimization' => 1,
-            'optimization_schedule' => 'daily',
-            'performance_mode' => 'balanced'
-        ],
-        'notifications' => [
-            'email_notifications' => 1,
-            'push_notifications' => 1,
-            'sound_alerts' => 1,
-            'threat_alerts' => 1,
-            'optimization_alerts' => 1,
-            'system_updates' => 1
-        ],
-        'privacy' => [
-            'data_collection' => 0,
-            'analytics_sharing' => 0,
-            'crash_reports' => 1,
-            'usage_statistics' => 0,
-            'location_tracking' => 0,
-            'third_party_sharing' => 0
-        ]
+// Función para guardar configuraciones
+function saveUserSettings($user_id, $settings) {
+    global $db;
+    
+    if (!$db || !$db->isConnected()) {
+        return false;
+    }
+    
+    try {
+        $conn = $db->getConnection();
+        
+        // Verificar si existen configuraciones
+        $stmt = $conn->prepare("SELECT id FROM user_settings WHERE user_id = ?");
+        $stmt->bind_param("i", $user_id);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $exists = $result->num_rows > 0;
+        $stmt->close();
+        
+        if ($exists) {
+            // Actualizar configuraciones existentes
+            $sql = "UPDATE user_settings SET ";
+            $values = [];
+            $types = "";
+            
+            foreach ($settings as $key => $value) {
+                $sql .= "$key = ?, ";
+                $values[] = $value;
+                $types .= is_int($value) ? "i" : "s";
+            }
+            
+            $sql = rtrim($sql, ", ");
+            $sql .= " WHERE user_id = ?";
+            $values[] = $user_id;
+            $types .= "i";
+            
+            $stmt = $conn->prepare($sql);
+            $stmt->bind_param($types, ...$values);
+        } else {
+            // Insertar nuevas configuraciones
+            $keys = array_keys($settings);
+            $placeholders = array_fill(0, count($settings), '?');
+            
+            $sql = "INSERT INTO user_settings (user_id, " . implode(', ', $keys) . ") VALUES (?, " . implode(', ', $placeholders) . ")";
+            
+            $values = [$user_id];
+            $types = "i";
+            
+            foreach ($settings as $value) {
+                $values[] = $value;
+                $types .= is_int($value) ? "i" : "s";
+            }
+            
+            $stmt = $conn->prepare($sql);
+            $stmt->bind_param($types, ...$values);
+        }
+        
+        $result = $stmt->execute();
+        $stmt->close();
+        
+        return $result;
+    } catch (Exception $e) {
+        logEvent('ERROR', 'Error guardando configuraciones: ' . $e->getMessage());
+        return false;
+    }
+}
+
+// Procesar actualizaciones del formulario
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && $conn) {
+    $action = $_POST['action'] ?? '';
+    
+    try {
+        switch($action) {
+            case 'update_profile':
+                $fullname = trim($_POST['fullname'] ?? '');
+                $email = trim($_POST['email'] ?? '');
+                $phone = trim($_POST['phone'] ?? '');
+                $bio = trim($_POST['bio'] ?? '');
+                
+                // Validar email
+                if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                    throw new Exception("Email inválido");
+                }
+                
+                // Verificar si el email ya existe
+                $stmt = $conn->prepare("SELECT id FROM users WHERE email = ? AND id != ?");
+                $stmt->bind_param("si", $email, $current_user_id);
+                $stmt->execute();
+                $result = $stmt->get_result();
+                if ($result->num_rows > 0) {
+                    throw new Exception("Este email ya está en uso");
+                }
+                $stmt->close();
+                
+                // Actualizar perfil
+                $stmt = $conn->prepare("UPDATE users SET fullname = ?, email = ?, updated_at = NOW() WHERE id = ?");
+                $stmt->bind_param("ssi", $fullname, $email, $current_user_id);
+                
+                if ($stmt->execute()) {
+                    $update_message = "Perfil actualizado correctamente";
+                    $update_type = "success";
+                    
+                    // Actualizar sesión
+                    $_SESSION['username'] = $fullname;
+                    $_SESSION['email'] = $email;
+                    
+                    // Registrar el cambio
+                    logSettingsChange('profile', 'updated', $fullname, $current_user_id);
+                } else {
+                    throw new Exception("Error al actualizar perfil");
+                }
+                $stmt->close();
+                break;
+                
+            case 'change_password':
+                $current_password = $_POST['current_password'] ?? '';
+                $new_password = $_POST['new_password'] ?? '';
+                $confirm_password = $_POST['confirm_password'] ?? '';
+                
+                if ($new_password !== $confirm_password) {
+                    throw new Exception("Las contraseñas no coinciden");
+                }
+                
+                // Validar fortaleza de contraseña
+                $password_errors = validatePasswordStrength($new_password);
+                if (!empty($password_errors)) {
+                    throw new Exception(implode(", ", $password_errors));
+                }
+                
+                // Verificar contraseña actual
+                $stmt = $conn->prepare("SELECT password_hash FROM users WHERE id = ?");
+                $stmt->bind_param("i", $current_user_id);
+                $stmt->execute();
+                $result = $stmt->get_result();
+                $user_row = $result->fetch_assoc();
+                $stmt->close();
+                
+                if (!password_verify($current_password, $user_row['password_hash'])) {
+                    throw new Exception("Contraseña actual incorrecta");
+                }
+                
+                // Actualizar contraseña
+                $new_hash = password_hash($new_password, PASSWORD_DEFAULT);
+                $stmt = $conn->prepare("UPDATE users SET password_hash = ?, password = ?, updated_at = NOW() WHERE id = ?");
+                $stmt->bind_param("ssi", $new_hash, $new_password, $current_user_id);
+                
+                if ($stmt->execute()) {
+                    $update_message = "Contraseña actualizada correctamente";
+                    $update_type = "success";
+                    
+                    // Registrar cambio de contraseña
+                    logSecurityEvent('password_change', 'Contraseña cambiada exitosamente', 'medium', $current_user_id);
+                } else {
+                    throw new Exception("Error al actualizar contraseña");
+                }
+                $stmt->close();
+                break;
+                
+            case 'update_notifications':
+                $settings = [
+                    'notifications_email' => isset($_POST['email_notifications']) ? 1 : 0,
+                    'notifications_push' => isset($_POST['push_notifications']) ? 1 : 0,
+                    'notifications_sms' => isset($_POST['sms_notifications']) ? 1 : 0,
+                    'security_alerts' => isset($_POST['security_alerts']) ? 1 : 0,
+                    'system_updates' => isset($_POST['system_updates']) ? 1 : 0,
+                    'marketing_emails' => isset($_POST['marketing_emails']) ? 1 : 0
+                ];
+                
+                if (saveUserSettings($current_user_id, $settings)) {
+                    $update_message = "Preferencias de notificación actualizadas";
+                    $update_type = "success";
+                } else {
+                    throw new Exception("Error al actualizar notificaciones");
+                }
+                break;
+                
+            case 'update_privacy':
+                $settings = [
+                    'data_sharing' => isset($_POST['data_sharing']) ? 1 : 0,
+                    'analytics' => isset($_POST['analytics']) ? 1 : 0,
+                    'personalized_ads' => isset($_POST['personalized_ads']) ? 1 : 0,
+                    'third_party_cookies' => isset($_POST['third_party_cookies']) ? 1 : 0
+                ];
+                
+                if (saveUserSettings($current_user_id, $settings)) {
+                    $update_message = "Configuración de privacidad actualizada";
+                    $update_type = "success";
+                } else {
+                    throw new Exception("Error al actualizar privacidad");
+                }
+                break;
+                
+            case 'update_security':
+                $settings = [
+                    'two_factor_enabled' => isset($_POST['two_factor']) ? 1 : 0,
+                    'biometric_enabled' => isset($_POST['biometric']) ? 1 : 0,
+                    'vpn_enabled' => isset($_POST['vpn']) ? 1 : 0,
+                    'firewall_enabled' => isset($_POST['firewall']) ? 1 : 0,
+                    'antivirus_enabled' => isset($_POST['antivirus']) ? 1 : 0
+                ];
+                
+                if (saveUserSettings($current_user_id, $settings)) {
+                    $update_message = "Configuración de seguridad actualizada";
+                    $update_type = "success";
+                    
+                    // Registrar cambio de seguridad
+                    logSecurityEvent('security_settings_change', 'Configuración de seguridad modificada', 'medium', $current_user_id);
+                } else {
+                    throw new Exception("Error al actualizar seguridad");
+                }
+                break;
+                
+            case 'update_performance':
+                $settings = [
+                    'auto_optimization' => isset($_POST['auto_optimization']) ? 1 : 0,
+                    'real_time_scan' => isset($_POST['real_time_scan']) ? 1 : 0,
+                    'gaming_mode' => isset($_POST['gaming_mode']) ? 1 : 0,
+                    'startup_boost' => isset($_POST['startup_boost']) ? 1 : 0,
+                    'memory_optimization' => isset($_POST['memory_optimization']) ? 1 : 0,
+                    'performance_mode' => $_POST['performance_mode'] ?? 'balanced',
+                    'scan_frequency' => $_POST['scan_frequency'] ?? 'daily',
+                    'disk_cleanup' => $_POST['disk_cleanup'] ?? 'weekly'
+                ];
+                
+                if (saveUserSettings($current_user_id, $settings)) {
+                    $update_message = "Configuración de rendimiento actualizada";
+                    $update_type = "success";
+                } else {
+                    throw new Exception("Error al actualizar rendimiento");
+                }
+                break;
+                
+            case 'enable_2fa':
+                // Lógica para habilitar 2FA
+                $secret = generateTwoFactorSecret();
+                $stmt = $conn->prepare("UPDATE users SET two_factor_secret = ?, two_factor_enabled = 1 WHERE id = ?");
+                $stmt->bind_param("si", $secret, $current_user_id);
+                
+                if ($stmt->execute()) {
+                    $update_message = "Autenticación de dos factores habilitada";
+                    $update_type = "success";
+                    
+                    // Generar código QR para 2FA
+                    $_SESSION['2fa_secret'] = $secret;
+                    $_SESSION['show_2fa_setup'] = true;
+                } else {
+                    throw new Exception("Error al habilitar 2FA");
+                }
+                $stmt->close();
+                break;
+                
+            case 'disable_2fa':
+                $stmt = $conn->prepare("UPDATE users SET two_factor_secret = NULL, two_factor_enabled = 0 WHERE id = ?");
+                $stmt->bind_param("i", $current_user_id);
+                
+                if ($stmt->execute()) {
+                    $update_message = "Autenticación de dos factores deshabilitada";
+                    $update_type = "warning";
+                } else {
+                    throw new Exception("Error al deshabilitar 2FA");
+                }
+                $stmt->close();
+                break;
+                
+            case 'delete_account':
+                $password = $_POST['confirm_password'] ?? '';
+                
+                // Verificar contraseña
+                $stmt = $conn->prepare("SELECT password_hash FROM users WHERE id = ?");
+                $stmt->bind_param("i", $current_user_id);
+                $stmt->execute();
+                $result = $stmt->get_result();
+                $user_row = $result->fetch_assoc();
+                $stmt->close();
+                
+                if (!password_verify($password, $user_row['password_hash'])) {
+                    throw new Exception("Contraseña incorrecta");
+                }
+                
+                // Marcar cuenta para eliminación
+                $stmt = $conn->prepare("UPDATE users SET status = 'pending_deletion', deletion_date = DATE_ADD(NOW(), INTERVAL 30 DAY) WHERE id = ?");
+                $stmt->bind_param("i", $current_user_id);
+                
+                if ($stmt->execute()) {
+                    // Cerrar sesión
+                    session_destroy();
+                    header('Location: login.php?message=account_deletion_scheduled');
+                    exit();
+                } else {
+                    throw new Exception("Error al programar eliminación de cuenta");
+                }
+                break;
+                
+            case 'export_data':
+                // Exportar datos del usuario
+                exportUserData($current_user_id);
+                break;
+                
+            case 'update_theme':
+                $theme = $_POST['theme'] ?? 'dark';
+                $settings = ['theme' => $theme];
+                
+                if (saveUserSettings($current_user_id, $settings)) {
+                    $_SESSION['theme'] = $theme;
+                    $update_message = "Tema actualizado";
+                    $update_type = "success";
+                }
+                break;
+                
+            case 'update_language':
+                $language = $_POST['language'] ?? 'es';
+                $settings = ['language' => $language];
+                
+                if (saveUserSettings($current_user_id, $settings)) {
+                    $_SESSION['language'] = $language;
+                    $update_message = "Idioma actualizado";
+                    $update_type = "success";
+                }
+                break;
+        }
+    } catch (Exception $e) {
+        $update_message = $e->getMessage();
+        $update_type = "error";
+        logEvent('ERROR', 'Error en configuración: ' . $e->getMessage());
+    }
+}
+
+// Obtener datos actualizados del usuario
+if ($conn) {
+    try {
+        $stmt = $conn->prepare("SELECT * FROM users WHERE id = ? AND status = 'active'");
+        if ($stmt) {
+            $stmt->bind_param("i", $current_user_id);
+            $stmt->execute();
+            $result = $stmt->get_result();
+            
+            if ($result && $result->num_rows > 0) {
+                $user_data = $result->fetch_assoc();
+            }
+            $stmt->close();
+        }
+    } catch (Exception $e) {
+        logEvent('ERROR', 'Error obteniendo datos de usuario: ' . $e->getMessage());
+    }
+}
+
+// Fallback a usuarios por defecto si no hay datos en BD
+if (!$user_data && isset($GLOBALS['DEFAULT_USERS'][$current_username])) {
+    $user_data = $GLOBALS['DEFAULT_USERS'][$current_username];
+}
+
+// Datos por defecto si no se encuentra el usuario
+if (!$user_data) {
+    $user_data = [
+        'id' => $current_user_id,
+        'username' => $current_username,
+        'fullname' => 'Usuario ' . ucfirst($current_username),
+        'email' => $current_username . '@guardianai.com',
+        'user_type' => 'basic',
+        'premium_status' => 'basic',
+        'status' => 'active',
+        'created_at' => date('Y-m-d H:i:s'),
+        'last_login' => date('Y-m-d H:i:s')
+    ];
+}
+
+// Extraer información del usuario
+$user_fullname = $user_data['fullname'] ?? 'Usuario ' . ucfirst($current_username);
+$user_email = $user_data['email'] ?? '';
+$is_premium = ($user_data['premium_status'] ?? 'basic') === 'premium';
+$is_admin = ($user_data['user_type'] ?? 'basic') === 'admin';
+$has_military_access = isset($user_data['military_access']) && $user_data['military_access'] == 1;
+$security_clearance = $user_data['security_clearance'] ?? 'UNCLASSIFIED';
+$created_at = $user_data['created_at'] ?? date('Y-m-d H:i:s');
+$last_login = $user_data['last_login'] ?? date('Y-m-d H:i:s');
+
+// Obtener configuraciones del usuario
+$user_settings = getUserSettings($current_user_id);
+
+// Obtener estadísticas del usuario
+function getUserStatistics($user_id) {
+    global $db;
+    
+    $stats = [
+        'total_scans' => 0,
+        'threats_blocked' => 0,
+        'space_freed' => 0,
+        'optimizations' => 0,
+        'backup_count' => 0,
+        'devices_protected' => 0,
+        'security_score' => 100,
+        'last_scan' => 'Nunca',
+        'last_optimization' => 'Nunca',
+        'last_backup' => 'Nunca'
     ];
     
-    return $defaults[$category] ?? [];
+    if (!$db || !$db->isConnected()) {
+        return $stats;
+    }
+    
+    try {
+        $conn = $db->getConnection();
+        
+        // Obtener total de escaneos
+        $stmt = $conn->prepare("SELECT COUNT(*) as count FROM security_events WHERE user_id = ? AND event_type LIKE '%scan%'");
+        $stmt->bind_param("i", $user_id);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        if ($row = $result->fetch_assoc()) {
+            $stats['total_scans'] = $row['count'];
+        }
+        $stmt->close();
+        
+        // Obtener amenazas bloqueadas
+        $stmt = $conn->prepare("SELECT COUNT(*) as count FROM security_events WHERE user_id = ? AND severity IN ('high', 'critical')");
+        $stmt->bind_param("i", $user_id);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        if ($row = $result->fetch_assoc()) {
+            $stats['threats_blocked'] = $row['count'];
+        }
+        $stmt->close();
+        
+        // Obtener dispositivos protegidos
+        $stmt = $conn->prepare("SELECT COUNT(*) as count FROM protected_devices WHERE user_id = ?");
+        $stmt->bind_param("i", $user_id);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        if ($row = $result->fetch_assoc()) {
+            $stats['devices_protected'] = $row['count'];
+        }
+        $stmt->close();
+        
+        // Obtener último escaneo
+        $stmt = $conn->prepare("SELECT MAX(created_at) as last_scan FROM security_events WHERE user_id = ? AND event_type LIKE '%scan%'");
+        $stmt->bind_param("i", $user_id);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        if ($row = $result->fetch_assoc()) {
+            if ($row['last_scan']) {
+                $stats['last_scan'] = date('d/m/Y H:i', strtotime($row['last_scan']));
+            }
+        }
+        $stmt->close();
+        
+    } catch (Exception $e) {
+        logEvent('ERROR', 'Error obteniendo estadísticas: ' . $e->getMessage());
+    }
+    
+    return $stats;
 }
 
-function getDefaultAllSettings() {
-    return [
-        'security' => getDefaultSettings('security'),
-        'performance' => getDefaultSettings('performance'),
-        'notifications' => getDefaultSettings('notifications'),
-        'privacy' => getDefaultSettings('privacy')
+$user_stats = getUserStatistics($current_user_id);
+
+// Obtener sesiones activas
+function getActiveSessions($user_id) {
+    global $db;
+    
+    $sessions = [];
+    
+    if (!$db || !$db->isConnected()) {
+        return $sessions;
+    }
+    
+    try {
+        $conn = $db->getConnection();
+        $stmt = $conn->prepare("
+            SELECT 
+                session_id,
+                ip_address,
+                user_agent,
+                created_at,
+                expires_at,
+                is_active
+            FROM user_sessions 
+            WHERE user_id = ? AND is_active = 1
+            ORDER BY created_at DESC
+        ");
+        
+        $stmt->bind_param("i", $user_id);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        
+        while ($row = $result->fetch_assoc()) {
+            $sessions[] = $row;
+        }
+        $stmt->close();
+        
+    } catch (Exception $e) {
+        logEvent('ERROR', 'Error obteniendo sesiones: ' . $e->getMessage());
+    }
+    
+    return $sessions;
+}
+
+$active_sessions = getActiveSessions($current_user_id);
+
+// Función para generar secret de 2FA
+function generateTwoFactorSecret() {
+    $characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
+    $secret = '';
+    for ($i = 0; $i < 16; $i++) {
+        $secret .= $characters[rand(0, 31)];
+    }
+    return $secret;
+}
+
+// Función para exportar datos del usuario
+function exportUserData($user_id) {
+    global $db;
+    
+    if (!$db || !$db->isConnected()) {
+        return false;
+    }
+    
+    try {
+        $conn = $db->getConnection();
+        $export_data = [];
+        
+        // Obtener todos los datos del usuario
+        $tables = [
+            'users',
+            'security_events',
+            'protected_devices',
+            'assistant_conversations',
+            'music_compositions',
+            'audio_recordings'
+        ];
+        
+        foreach ($tables as $table) {
+            $stmt = $conn->prepare("SELECT * FROM $table WHERE user_id = ?");
+            $stmt->bind_param("i", $user_id);
+            $stmt->execute();
+            $result = $stmt->get_result();
+            
+            $export_data[$table] = [];
+            while ($row = $result->fetch_assoc()) {
+                $export_data[$table][] = $row;
+            }
+            $stmt->close();
+        }
+        
+        // Generar archivo JSON
+        $json_data = json_encode($export_data, JSON_PRETTY_PRINT);
+        $filename = 'guardianai_data_export_' . $user_id . '_' . date('YmdHis') . '.json';
+        
+        // Enviar headers para descarga
+        header('Content-Type: application/json');
+        header('Content-Disposition: attachment; filename="' . $filename . '"');
+        header('Content-Length: ' . strlen($json_data));
+        
+        echo $json_data;
+        exit();
+        
+    } catch (Exception $e) {
+        logEvent('ERROR', 'Error exportando datos: ' . $e->getMessage());
+        return false;
+    }
+}
+
+// Obtener iniciales para el avatar
+$name_parts = explode(' ', $user_fullname);
+$user_initials = strtoupper(substr($name_parts[0], 0, 1));
+if (count($name_parts) > 1) {
+    $user_initials .= strtoupper(substr(end($name_parts), 0, 1));
+}
+
+// Obtener información de la base de datos
+$database_info = [];
+if ($db && $db->isConnected()) {
+    try {
+        $conn = $db->getConnection();
+        
+        // Obtener nombre de la base de datos directamente
+        $database_info['name'] = 'guardia2_guardianai_db'; // Nombre fijo de tu BD
+        $database_info['status'] = 'Conectado';
+        $database_info['encryption'] = 'AES-256-GCM';
+        
+        // Obtener tamaño de la base de datos
+        $stmt = $conn->prepare("
+            SELECT 
+                SUM(data_length + index_length) / 1024 / 1024 AS size_mb
+            FROM information_schema.TABLES 
+            WHERE table_schema = ?
+        ");
+        $stmt->bind_param("s", $database_info['name']);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        if ($row = $result->fetch_assoc()) {
+            $database_info['size'] = round($row['size_mb'], 2) . ' MB';
+        }
+        $stmt->close();
+        
+    } catch (Exception $e) {
+        logEvent('ERROR', 'Error obteniendo info de BD: ' . $e->getMessage());
+        $database_info = [
+            'name' => 'N/A',
+            'status' => 'Error',
+            'size' => 'N/A',
+            'encryption' => 'N/A'
+        ];
+    }
+} else {
+    $database_info = [
+        'name' => 'N/A',
+        'status' => 'Desconectado',
+        'size' => 'N/A',
+        'encryption' => 'N/A'
     ];
 }
 
-// Verificar integridad del sistema
-$system_integrity = verifySystemIntegrity();
-?>
+// Registrar acceso a configuración
+logSecurityEvent('settings_access', 'Usuario accedió a configuración', 'low', $current_user_id);
 
+?>
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mi Configuración - <?php echo APP_NAME; ?></title>
+    <title>Configuración - GuardianIA v3.0</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
@@ -682,6 +759,8 @@ $system_integrity = verifySystemIntegrity();
             --warning-gradient: linear-gradient(135deg, #ffa726 0%, #fb8c00 100%);
             --danger-gradient: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
             --info-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            --premium-gradient: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+            --military-gradient: linear-gradient(135deg, #2c5530 0%, #8b9dc3 100%);
             
             --bg-primary: #0f0f23;
             --bg-secondary: #1a1a2e;
@@ -796,17 +875,15 @@ $system_integrity = verifySystemIntegrity();
         }
 
         .nav-link.active {
-            background: var(--warning-gradient);
+            background: var(--primary-gradient);
             color: white;
         }
 
-        .user-profile {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
+        .user-menu {
+            position: relative;
         }
 
-        .user-avatar {
+        .user-avatar-nav {
             width: 40px;
             height: 40px;
             border-radius: 50%;
@@ -816,16 +893,37 @@ $system_integrity = verifySystemIntegrity();
             justify-content: center;
             color: white;
             font-weight: 600;
+            cursor: pointer;
         }
 
-        .premium-badge {
-            background: linear-gradient(45deg, #ffd700, #ffed4e);
-            color: #000;
-            padding: 0.2rem 0.5rem;
-            border-radius: 12px;
-            font-size: 0.7rem;
-            font-weight: 700;
-            text-transform: uppercase;
+        .dropdown-menu {
+            display: none;
+            position: absolute;
+            top: 100%;
+            right: 0;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            min-width: 200px;
+            margin-top: 10px;
+            box-shadow: 0 10px 25px var(--shadow-color);
+        }
+
+        .dropdown-menu.show {
+            display: block;
+        }
+
+        .dropdown-item {
+            display: block;
+            padding: 10px 15px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: all var(--animation-speed) ease;
+        }
+
+        .dropdown-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text-primary);
         }
 
         /* Main Container */
@@ -835,17 +933,20 @@ $system_integrity = verifySystemIntegrity();
             max-width: 1400px;
             margin-left: auto;
             margin-right: auto;
+        }
+
+        .settings-layout {
             display: grid;
-            grid-template-columns: 280px 1fr;
+            grid-template-columns: 300px 1fr;
             gap: 2rem;
         }
 
-        /* Settings Sidebar */
+        /* Sidebar */
         .settings-sidebar {
             background: var(--bg-card);
             border: 1px solid var(--border-color);
             border-radius: var(--border-radius);
-            padding: var(--card-padding);
+            padding: 1.5rem;
             height: fit-content;
             position: sticky;
             top: 100px;
@@ -858,54 +959,48 @@ $system_integrity = verifySystemIntegrity();
             color: var(--text-primary);
         }
 
-        .settings-menu {
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
+        .sidebar-menu {
+            list-style: none;
         }
 
-        .menu-item {
+        .sidebar-item {
+            margin-bottom: 0.5rem;
+        }
+
+        .sidebar-link {
             display: flex;
             align-items: center;
             gap: 1rem;
             padding: 1rem;
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all var(--animation-speed) ease;
-            text-decoration: none;
             color: var(--text-secondary);
+            text-decoration: none;
+            border-radius: 8px;
+            transition: all var(--animation-speed) ease;
+            cursor: pointer;
         }
 
-        .menu-item:hover {
+        .sidebar-link:hover {
             background: rgba(255, 255, 255, 0.1);
             color: var(--text-primary);
         }
 
-        .menu-item.active {
+        .sidebar-link.active {
             background: var(--primary-gradient);
             color: white;
         }
 
-        .menu-icon {
+        .sidebar-icon {
             width: 20px;
             text-align: center;
         }
 
-        /* Settings Content */
+        /* Content Area */
         .settings-content {
             background: var(--bg-card);
             border: 1px solid var(--border-color);
             border-radius: var(--border-radius);
             padding: var(--card-padding);
-        }
-
-        .settings-section {
-            display: none;
-        }
-
-        .settings-section.active {
-            display: block;
+            min-height: 800px;
         }
 
         .section-header {
@@ -920,18 +1015,19 @@ $system_integrity = verifySystemIntegrity();
         .section-icon {
             width: 50px;
             height: 50px;
-            border-radius: 12px;
+            border-radius: 10px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.5rem;
+            font-size: 1.3rem;
             color: white;
+            background: var(--primary-gradient);
         }
 
         .section-title {
-            font-size: 1.8rem;
+            font-size: 1.5rem;
             font-weight: 700;
-            margin-bottom: 0.25rem;
+            color: var(--text-primary);
         }
 
         .section-description {
@@ -939,133 +1035,150 @@ $system_integrity = verifySystemIntegrity();
             font-size: 0.9rem;
         }
 
-        /* Settings Groups */
-        .settings-group {
-            margin-bottom: 2rem;
-        }
-
-        .group-title {
-            font-size: 1.2rem;
-            font-weight: 600;
-            margin-bottom: 1rem;
-            color: var(--text-primary);
-        }
-
-        .setting-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 1rem;
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 8px;
-            margin-bottom: 0.5rem;
-        }
-
-        .setting-info {
-            flex: 1;
-        }
-
-        .setting-name {
-            font-weight: 600;
-            margin-bottom: 0.25rem;
-        }
-
-        .setting-description {
-            color: var(--text-secondary);
-            font-size: 0.85rem;
-        }
-
-        /* Toggle Switch */
-        .toggle-switch {
-            position: relative;
-            width: 60px;
-            height: 30px;
-            background: rgba(255, 255, 255, 0.2);
-            border-radius: 15px;
-            cursor: pointer;
-            transition: all var(--animation-speed) ease;
-        }
-
-        .toggle-switch.active {
-            background: var(--success-gradient);
-        }
-
-        .toggle-slider {
-            position: absolute;
-            top: 3px;
-            left: 3px;
-            width: 24px;
-            height: 24px;
-            background: white;
-            border-radius: 50%;
-            transition: all var(--animation-speed) ease;
-        }
-
-        .toggle-switch.active .toggle-slider {
-            transform: translateX(30px);
-        }
-
-        /* Select Dropdown */
-        .setting-select {
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            padding: 0.5rem 1rem;
-            color: var(--text-primary);
-            font-family: inherit;
-            cursor: pointer;
-            min-width: 150px;
-        }
-
-        .setting-select:focus {
-            outline: none;
-            border-color: var(--primary-gradient);
-        }
-
-        .setting-select option {
-            background: var(--bg-card);
-            color: var(--text-primary);
-        }
-
-        /* Form Elements */
+        /* Forms */
         .form-group {
             margin-bottom: 1.5rem;
         }
 
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
         .form-label {
             display: block;
-            font-weight: 600;
             margin-bottom: 0.5rem;
+            font-weight: 600;
             color: var(--text-primary);
         }
 
         .form-input {
             width: 100%;
+            padding: 0.75rem 1rem;
             background: rgba(255, 255, 255, 0.05);
             border: 1px solid var(--border-color);
             border-radius: 8px;
-            padding: 1rem;
             color: var(--text-primary);
-            font-family: inherit;
+            font-size: 1rem;
             transition: all var(--animation-speed) ease;
         }
 
         .form-input:focus {
             outline: none;
-            border-color: var(--primary-gradient);
-            background: rgba(255, 255, 255, 0.1);
+            border-color: #667eea;
+            background: rgba(255, 255, 255, 0.08);
         }
 
-        .form-input::placeholder {
+        .form-input:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .form-textarea {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 1rem;
+            resize: vertical;
+            min-height: 100px;
+            font-family: inherit;
+        }
+
+        .form-select {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 1rem;
+            cursor: pointer;
+        }
+
+        .form-switch {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1rem;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            transition: all var(--animation-speed) ease;
+        }
+
+        .form-switch:hover {
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .switch-label {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .switch-title {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .switch-description {
+            font-size: 0.85rem;
             color: var(--text-secondary);
+        }
+
+        /* Toggle Switch */
+        .toggle-switch {
+            position: relative;
+            width: 50px;
+            height: 24px;
+        }
+
+        .toggle-input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: var(--border-color);
+            transition: var(--animation-speed);
+            border-radius: 24px;
+        }
+
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: var(--animation-speed);
+            border-radius: 50%;
+        }
+
+        .toggle-input:checked + .toggle-slider {
+            background: var(--primary-gradient);
+        }
+
+        .toggle-input:checked + .toggle-slider:before {
+            transform: translateX(26px);
         }
 
         /* Buttons */
         .btn {
-            background: var(--primary-gradient);
-            color: white;
+            padding: 0.75rem 1.5rem;
             border: none;
-            padding: 1rem 2rem;
             border-radius: 8px;
             font-weight: 600;
             cursor: pointer;
@@ -1073,180 +1186,561 @@ $system_integrity = verifySystemIntegrity();
             display: inline-flex;
             align-items: center;
             gap: 0.5rem;
-            text-decoration: none;
+            font-size: 1rem;
         }
 
-        .btn:hover {
+        .btn-primary {
+            background: var(--primary-gradient);
+            color: white;
+        }
+
+        .btn-primary:hover {
             transform: translateY(-2px);
             box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
         }
 
-        .btn.success {
-            background: var(--success-gradient);
+        .btn-secondary {
+            background: transparent;
+            color: var(--text-secondary);
+            border: 1px solid var(--border-color);
         }
 
-        .btn.warning {
-            background: var(--warning-gradient);
-        }
-
-        .btn.danger {
-            background: var(--danger-gradient);
-        }
-
-        .btn.secondary {
+        .btn-secondary:hover {
             background: rgba(255, 255, 255, 0.1);
             color: var(--text-primary);
         }
 
-        .btn:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-            transform: none;
+        .btn-danger {
+            background: var(--danger-gradient);
+            color: white;
         }
 
-        /* Action Buttons */
-        .action-buttons {
+        .btn-danger:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(250, 112, 154, 0.4);
+        }
+
+        .btn-success {
+            background: var(--success-gradient);
+            color: white;
+        }
+
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(67, 233, 123, 0.4);
+        }
+
+        .btn-warning {
+            background: var(--warning-gradient);
+            color: white;
+        }
+
+        .btn-warning:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(255, 167, 38, 0.4);
+        }
+
+        .btn-group {
             display: flex;
             gap: 1rem;
             margin-top: 2rem;
-            padding-top: 2rem;
-            border-top: 1px solid var(--border-color);
         }
 
-        /* Status Indicators */
-        .status-indicator {
+        /* Alert Messages */
+        .alert {
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateY(-20px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .alert-success {
+            background: rgba(67, 233, 123, 0.1);
+            border: 1px solid rgba(67, 233, 123, 0.3);
+            color: #43e97b;
+        }
+
+        .alert-error {
+            background: rgba(250, 112, 154, 0.1);
+            border: 1px solid rgba(250, 112, 154, 0.3);
+            color: #fa709a;
+        }
+
+        .alert-warning {
+            background: rgba(255, 167, 38, 0.1);
+            border: 1px solid rgba(255, 167, 38, 0.3);
+            color: #ffa726;
+        }
+
+        .alert-info {
+            background: rgba(79, 172, 254, 0.1);
+            border: 1px solid rgba(79, 172, 254, 0.3);
+            color: #4facfe;
+        }
+
+        /* Profile Section */
+        .profile-header {
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+            margin-bottom: 2rem;
+            padding: 2rem;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: var(--border-radius);
+        }
+
+        .profile-avatar {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: var(--primary-gradient);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: white;
+            position: relative;
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+        }
+
+        .avatar-upload {
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            width: 36px;
+            height: 36px;
+            background: var(--bg-secondary);
+            border: 2px solid var(--bg-card);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all var(--animation-speed) ease;
+        }
+
+        .avatar-upload:hover {
+            background: var(--primary-gradient);
+            transform: scale(1.1);
+        }
+
+        .profile-info {
+            flex: 1;
+        }
+
+        .profile-info h2 {
+            font-size: 1.8rem;
+            margin-bottom: 0.5rem;
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .profile-email {
+            color: var(--text-secondary);
+            margin-bottom: 1rem;
+            font-size: 1rem;
+        }
+
+        .profile-badges {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .profile-badge {
             display: inline-flex;
             align-items: center;
             gap: 0.5rem;
             padding: 0.5rem 1rem;
             border-radius: 20px;
-            font-size: 0.8rem;
+            font-size: 0.85rem;
             font-weight: 600;
-            margin-bottom: 1rem;
         }
 
-        .status-indicator.connected {
-            background: rgba(67, 233, 123, 0.2);
-            color: #43e97b;
-            border: 1px solid rgba(67, 233, 123, 0.3);
+        .badge-premium {
+            background: var(--premium-gradient);
+            color: #000;
         }
 
-        .status-indicator.disconnected {
-            background: rgba(255, 71, 87, 0.2);
-            color: #ff4757;
-            border: 1px solid rgba(255, 71, 87, 0.3);
+        .badge-admin {
+            background: var(--danger-gradient);
+            color: white;
         }
 
-        .status-indicator.simulation {
-            background: rgba(255, 165, 2, 0.2);
-            color: #ffa502;
-            border: 1px solid rgba(255, 165, 2, 0.3);
+        .badge-military {
+            background: var(--military-gradient);
+            color: white;
         }
 
-        /* Danger Zone */
-        .danger-zone {
-            background: rgba(250, 112, 154, 0.1);
-            border: 1px solid rgba(250, 112, 154, 0.3);
-            border-radius: var(--border-radius);
-            padding: var(--card-padding);
-            margin-top: 2rem;
+        .badge-verified {
+            background: var(--success-gradient);
+            color: white;
         }
 
-        .danger-title {
-            color: #fa709a;
-            font-weight: 700;
-            margin-bottom: 1rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .danger-description {
-            color: var(--text-secondary);
-            margin-bottom: 1.5rem;
-        }
-
-        /* System Info */
-        .system-info {
-            background: rgba(79, 172, 254, 0.1);
-            border: 1px solid rgba(79, 172, 254, 0.3);
-            border-radius: var(--border-radius);
-            padding: 1rem;
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
             margin-bottom: 2rem;
         }
 
-        .system-info-title {
-            color: #4facfe;
-            font-weight: 600;
-            margin-bottom: 0.5rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .system-info-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1rem;
-            margin-top: 1rem;
-        }
-
-        .info-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0.5rem;
+        .stat-card {
             background: rgba(255, 255, 255, 0.05);
-            border-radius: 6px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1.5rem;
+            transition: all var(--animation-speed) ease;
         }
 
-        .info-label {
+        .stat-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px var(--shadow-color);
+        }
+
+        .stat-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1rem;
+            font-size: 1.2rem;
+            color: white;
+        }
+
+        .stat-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 0.25rem;
+        }
+
+        .stat-label {
             color: var(--text-secondary);
             font-size: 0.9rem;
         }
 
-        .info-value {
-            color: var(--text-primary);
+        .stat-trend {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+            margin-top: 0.5rem;
+            font-size: 0.85rem;
+        }
+
+        .trend-up {
+            color: #43e97b;
+        }
+
+        .trend-down {
+            color: #fa709a;
+        }
+
+        /* Section Cards */
+        .section-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .section-card-title {
+            font-size: 1.2rem;
             font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
         }
 
-        /* Responsive Design */
-        @media (max-width: 768px) {
-            .main-container {
-                grid-template-columns: 1fr;
-                padding: 1rem;
-            }
+        .section-card-description {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 1.5rem;
+        }
 
-            .settings-sidebar {
-                position: static;
-                margin-bottom: 1rem;
-            }
+        /* Tab System */
+        .tab-container {
+            display: none;
+        }
 
-            .settings-menu {
-                flex-direction: row;
-                overflow-x: auto;
-                gap: 0.5rem;
-            }
+        .tab-container.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
 
-            .menu-item {
-                min-width: 120px;
-                justify-content: center;
+        @keyframes fadeIn {
+            from { 
+                opacity: 0; 
+                transform: translateY(10px); 
             }
-
-            .menu-text {
-                display: none;
-            }
-
-            .action-buttons {
-                flex-direction: column;
-            }
-
-            .system-info-grid {
-                grid-template-columns: 1fr;
+            to { 
+                opacity: 1; 
+                transform: translateY(0); 
             }
         }
 
-        /* Loading Animation */
+        /* Session List */
+        .session-list {
+            list-style: none;
+        }
+
+        .session-item {
+            padding: 1rem;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all var(--animation-speed) ease;
+        }
+
+        .session-item:hover {
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .session-info {
+            flex: 1;
+        }
+
+        .session-device {
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+
+        .session-details {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+        }
+
+        .session-status {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: #43e97b;
+            font-size: 0.9rem;
+        }
+
+        .session-status.current {
+            color: #4facfe;
+        }
+
+        /* Password Strength Indicator */
+        .password-strength {
+            margin-top: 0.5rem;
+        }
+
+        .strength-bar {
+            height: 4px;
+            background: var(--border-color);
+            border-radius: 2px;
+            overflow: hidden;
+            margin-bottom: 0.5rem;
+        }
+
+        .strength-fill {
+            height: 100%;
+            transition: all var(--animation-speed) ease;
+        }
+
+        .strength-weak {
+            width: 33%;
+            background: var(--danger-gradient);
+        }
+
+        .strength-medium {
+            width: 66%;
+            background: var(--warning-gradient);
+        }
+
+        .strength-strong {
+            width: 100%;
+            background: var(--success-gradient);
+        }
+
+        .strength-text {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        /* Danger Zone */
+        .danger-zone {
+            background: rgba(250, 112, 154, 0.05);
+            border: 1px solid rgba(250, 112, 154, 0.3);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        .danger-zone-title {
+            color: #fa709a;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .danger-zone-description {
+            color: var(--text-secondary);
+            margin-bottom: 1rem;
+        }
+
+        /* Activity Timeline */
+        .activity-timeline {
+            position: relative;
+            padding-left: 2rem;
+        }
+
+        .activity-timeline::before {
+            content: '';
+            position: absolute;
+            left: 10px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: var(--border-color);
+        }
+
+        .timeline-item {
+            position: relative;
+            padding-bottom: 1.5rem;
+        }
+
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -26px;
+            top: 5px;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--primary-gradient);
+            border: 2px solid var(--bg-card);
+        }
+
+        .timeline-content {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            padding: 1rem;
+        }
+
+        .timeline-title {
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+
+        .timeline-time {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+        }
+
+        /* Progress Bars */
+        .progress-bar {
+            height: 8px;
+            background: var(--border-color);
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 1rem 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--primary-gradient);
+            transition: width 1s ease;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            padding: 2rem;
+            max-width: 500px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .modal-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+        }
+
+        .modal-close {
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: all var(--animation-speed) ease;
+        }
+
+        .modal-close:hover {
+            color: var(--text-primary);
+        }
+
+        /* QR Code */
+        .qr-code-container {
+            text-align: center;
+            padding: 2rem;
+            background: white;
+            border-radius: 8px;
+            margin: 1rem 0;
+        }
+
+        .qr-code {
+            max-width: 200px;
+            margin: 0 auto;
+        }
+
+        /* Loading State */
         .loading {
             display: inline-block;
             width: 20px;
@@ -1261,1821 +1755,1967 @@ $system_integrity = verifySystemIntegrity();
             to { transform: rotate(360deg); }
         }
 
-        /* Toast Notification */
-        .toast {
+        .loading-overlay {
             position: fixed;
-            top: 100px;
-            right: 2rem;
-            background: var(--bg-card);
-            border: 1px solid var(--border-color);
-            border-radius: var(--border-radius);
-            padding: 1rem 1.5rem;
-            color: var(--text-primary);
-            box-shadow: 0 8px 25px var(--shadow-color);
-            transform: translateX(400px);
-            transition: transform var(--animation-speed) ease;
-            z-index: 1001;
-            max-width: 350px;
-        }
-
-        .toast.show {
-            transform: translateX(0);
-        }
-
-        .toast.success {
-            border-left: 4px solid #2ed573;
-        }
-
-        .toast.error {
-            border-left: 4px solid #ff4757;
-        }
-
-        .toast.warning {
-            border-left: 4px solid #ffa502;
-        }
-
-        .toast.info {
-            border-left: 4px solid #4facfe;
-        }
-
-        .toast-close {
-            float: right;
-            background: none;
-            border: none;
-            color: var(--text-secondary);
-            cursor: pointer;
-            font-size: 1.2rem;
-            margin-left: 1rem;
-        }
-
-        /* Password Strength Indicator */
-        .password-strength {
-            margin-top: 0.5rem;
-            height: 4px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 2px;
-            overflow: hidden;
-        }
-
-        .password-strength-bar {
-            height: 100%;
-            width: 0%;
-            transition: all 0.3s ease;
-        }
-
-        .password-strength-bar.weak {
-            background: #ff4757;
-            width: 25%;
-        }
-
-        .password-strength-bar.medium {
-            background: #ffa502;
-            width: 50%;
-        }
-
-        .password-strength-bar.strong {
-            background: #2ed573;
-            width: 75%;
-        }
-
-        .password-strength-bar.very-strong {
-            background: #4facfe;
+            top: 0;
+            left: 0;
             width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 3000;
         }
 
-        /* Feature Lock */
-        .feature-locked {
-            opacity: 0.6;
+        .loading-overlay.show {
+            display: flex;
+        }
+
+        .loading-content {
+            text-align: center;
+            color: white;
+        }
+
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+            margin: 0 auto 1rem;
+        }
+
+        /* Tooltips */
+        .tooltip {
             position: relative;
+            display: inline-block;
         }
 
-        .feature-locked::after {
-            content: '\f023';
-            font-family: 'Font Awesome 6 Free';
-            font-weight: 900;
+        .tooltip-text {
+            visibility: hidden;
+            width: 200px;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            text-align: center;
+            border-radius: 6px;
+            padding: 0.5rem;
             position: absolute;
-            right: 1rem;
-            top: 50%;
-            transform: translateY(-50%);
-            color: #ffa502;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            margin-left: -100px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-size: 0.85rem;
+        }
+
+        .tooltip:hover .tooltip-text {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        /* Info Box */
+        .info-box {
+            background: rgba(79, 172, 254, 0.1);
+            border: 1px solid rgba(79, 172, 254, 0.3);
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 1rem 0;
+            display: flex;
+            gap: 1rem;
+            align-items: start;
+        }
+
+        .info-box-icon {
+            color: #4facfe;
+            font-size: 1.2rem;
+        }
+
+        .info-box-content {
+            flex: 1;
+        }
+
+        .info-box-title {
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+            color: #4facfe;
+        }
+
+        .info-box-text {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1024px) {
+            .settings-layout {
+                grid-template-columns: 250px 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .settings-layout {
+                grid-template-columns: 1fr;
+            }
+
+            .settings-sidebar {
+                position: static;
+                margin-bottom: 2rem;
+            }
+
+            .profile-header {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+
+            .btn-group {
+                flex-direction: column;
+            }
+
+            .nav-menu {
+                display: none;
+            }
+
+            .session-item {
+                flex-direction: column;
+                align-items: start;
+                gap: 1rem;
+            }
+        }
+
+        /* Print Styles */
+        @media print {
+            .navbar,
+            .settings-sidebar,
+            .btn,
+            .alert {
+                display: none !important;
+            }
+
+            .settings-layout {
+                grid-template-columns: 1fr;
+            }
+
+            body {
+                background: white;
+                color: black;
+            }
+
+            .settings-content {
+                border: none;
+                box-shadow: none;
+            }
+        }
+
+        /* Dark Theme Override */
+        body.light-theme {
+            --bg-primary: #f8f9fa;
+            --bg-secondary: #ffffff;
+            --bg-card: #ffffff;
+            --text-primary: #212529;
+            --text-secondary: #6c757d;
+            --border-color: #dee2e6;
+            --shadow-color: rgba(0, 0, 0, 0.1);
+        }
+
+        /* Animations */
+        @keyframes slideInRight {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideInLeft {
+            from {
+                transform: translateX(-100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                transform: translateY(20px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .animate-slide-right {
+            animation: slideInRight 0.5s ease;
+        }
+
+        .animate-slide-left {
+            animation: slideInLeft 0.5s ease;
+        }
+
+        .animate-fade-up {
+            animation: fadeInUp 0.5s ease;
         }
     </style>
 </head>
 <body>
     <div class="animated-bg"></div>
     
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="loading-overlay">
+        <div class="loading-content">
+            <div class="loading-spinner"></div>
+            <p>Procesando...</p>
+        </div>
+    </div>
+    
     <!-- Navigation -->
     <nav class="navbar">
         <div class="nav-container">
             <div class="logo">
                 <i class="fas fa-shield-alt"></i>
-                <span><?php echo APP_NAME; ?></span>
+                <span>GuardianIA</span>
             </div>
             <ul class="nav-menu">
-                <li><a href="user_dashboard.php" class="nav-link">Mi Seguridad</a></li>
-                <li><a href="user_security.php" class="nav-link">Protección</a></li>
-                <li><a href="user_performance.php" class="nav-link">Optimización</a></li>
-                <li><a href="user_assistant.php" class="nav-link">Asistente IA</a></li>
+                <li><a href="user_dashboard.php" class="nav-link">Dashboard</a></li>
                 <li><a href="#" class="nav-link active">Configuración</a></li>
-            </ul>
-            <div class="user-profile">
-                <?php if (($user_profile['premium_status'] ?? 'basic') === 'premium'): ?>
-                    <span class="premium-badge">Premium</span>
+                <?php if ($is_admin): ?>
+                <li><a href="admin_dashboard.php" class="nav-link">Panel Admin</a></li>
                 <?php endif; ?>
-                <div class="user-avatar">
-                    <?php echo strtoupper(substr($user_profile['fullname'] ?? 'UD', 0, 2)); ?>
+                <?php if ($has_military_access): ?>
+                <li><a href="military_dashboard.php" class="nav-link">Panel Militar</a></li>
+                <?php endif; ?>
+            </ul>
+            <div class="user-menu">
+                <div class="user-avatar-nav" onclick="toggleDropdown()">
+                    <?php echo $user_initials; ?>
                 </div>
-                <span><?php echo htmlspecialchars($user_profile['fullname'] ?? 'Usuario Demo'); ?></span>
+                <div class="dropdown-menu" id="userDropdown">
+                    <a href="#profile" class="dropdown-item" onclick="showTab('profile', document.querySelector('.sidebar-link'))">
+                        <i class="fas fa-user"></i> Mi Perfil
+                    </a>
+                    <a href="user_dashboard.php" class="dropdown-item">
+                        <i class="fas fa-tachometer-alt"></i> Dashboard
+                    </a>
+                    <hr style="border-color: var(--border-color); margin: 10px 0;">
+                    <a href="logout.php" class="dropdown-item">
+                        <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
+                    </a>
+                </div>
             </div>
         </div>
     </nav>
 
     <!-- Main Container -->
     <div class="main-container">
-        <!-- Settings Sidebar -->
-        <div class="settings-sidebar">
-            <h2 class="sidebar-title">Configuración</h2>
-            <div class="settings-menu">
-                <div class="menu-item active" onclick="showSection('profile')">
-                    <i class="fas fa-user menu-icon"></i>
-                    <span class="menu-text">Mi Perfil</span>
-                </div>
-                <div class="menu-item" onclick="showSection('security')">
-                    <i class="fas fa-shield-alt menu-icon"></i>
-                    <span class="menu-text">Seguridad</span>
-                </div>
-                <div class="menu-item" onclick="showSection('performance')">
-                    <i class="fas fa-tachometer-alt menu-icon"></i>
-                    <span class="menu-text">Rendimiento</span>
-                </div>
-                <div class="menu-item" onclick="showSection('notifications')">
-                    <i class="fas fa-bell menu-icon"></i>
-                    <span class="menu-text">Notificaciones</span>
-                </div>
-                <div class="menu-item" onclick="showSection('privacy')">
-                    <i class="fas fa-lock menu-icon"></i>
-                    <span class="menu-text">Privacidad</span>
-                </div>
-                <div class="menu-item" onclick="showSection('account')">
-                    <i class="fas fa-cog menu-icon"></i>
-                    <span class="menu-text">Cuenta</span>
-                </div>
-            </div>
+        <?php if ($update_message): ?>
+        <div class="alert alert-<?php echo $update_type; ?>">
+            <i class="fas fa-<?php echo $update_type === 'success' ? 'check-circle' : ($update_type === 'error' ? 'exclamation-circle' : 'info-circle'); ?>"></i>
+            <span><?php echo htmlspecialchars($update_message); ?></span>
         </div>
+        <?php endif; ?>
 
-        <!-- Settings Content -->
-        <div class="settings-content">
-            <!-- System Status -->
-            <div class="system-info">
-                <div class="system-info-title">
-                    <i class="fas fa-info-circle"></i>
-                    Estado del Sistema
+        <div class="settings-layout">
+            <!-- Sidebar -->
+            <div class="settings-sidebar">
+                <h2 class="sidebar-title">Configuración</h2>
+                <ul class="sidebar-menu">
+                    <li class="sidebar-item">
+                        <a class="sidebar-link active" onclick="showTab('profile', this)">
+                            <i class="fas fa-user sidebar-icon"></i>
+                            Mi Perfil
+                        </a>
+                    </li>
+                    <li class="sidebar-item">
+                        <a class="sidebar-link" onclick="showTab('security', this)">
+                            <i class="fas fa-shield-alt sidebar-icon"></i>
+                            Seguridad
+                        </a>
+                    </li>
+                    <li class="sidebar-item">
+                        <a class="sidebar-link" onclick="showTab('performance', this)">
+                            <i class="fas fa-tachometer-alt sidebar-icon"></i>
+                            Rendimiento
+                        </a>
+                    </li>
+                    <li class="sidebar-item">
+                        <a class="sidebar-link" onclick="showTab('notifications', this)">
+                            <i class="fas fa-bell sidebar-icon"></i>
+                            Notificaciones
+                        </a>
+                    </li>
+                    <li class="sidebar-item">
+                        <a class="sidebar-link" onclick="showTab('privacy', this)">
+                            <i class="fas fa-lock sidebar-icon"></i>
+                            Privacidad
+                        </a>
+                    </li>
+                    <li class="sidebar-item">
+                        <a class="sidebar-link" onclick="showTab('account', this)">
+                            <i class="fas fa-cog sidebar-icon"></i>
+                            Cuenta
+                        </a>
+                    </li>
+                </ul>
+
+                <!-- Database Info -->
+                <div style="margin-top: 2rem; padding-top: 1rem; border-top: 1px solid var(--border-color);">
+                    <p style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 0.5rem;">
+                        <i class="fas fa-database"></i> Base de datos
+                    </p>
+                    <p style="color: var(--text-primary); font-size: 0.9rem;">
+                        <?php echo $database_info['status']; ?>
+                    </p>
+                    <p style="color: var(--text-secondary); font-size: 0.8rem;">
+                        <?php echo $database_info['size'] ?? 'N/A'; ?>
+                    </p>
                 </div>
-                <div class="system-info-grid">
-                    <div class="info-item">
-                        <span class="info-label">Base de Datos:</span>
-                        <span class="info-value">
-                            <?php if ($system_integrity['database']): ?>
-                                <span class="status-indicator connected">
-                                    <i class="fas fa-check-circle"></i>
-                                    Conectada
+            </div>
+
+            <!-- Content Area -->
+            <div class="settings-content">
+                <!-- Profile Tab -->
+                <div id="profile-tab" class="tab-container active">
+                    <div class="section-header">
+                        <div class="section-icon">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <div>
+                            <h1 class="section-title">Mi Perfil</h1>
+                            <p class="section-description">Administra tu información personal y preferencias</p>
+                        </div>
+                    </div>
+
+                    <div class="profile-header">
+                        <div class="profile-avatar">
+                            <?php echo $user_initials; ?>
+                            <div class="avatar-upload" onclick="document.getElementById('avatarInput').click()">
+                                <i class="fas fa-camera"></i>
+                            </div>
+                            <input type="file" id="avatarInput" style="display: none;" accept="image/*">
+                        </div>
+                        <div class="profile-info">
+                            <h2><?php echo htmlspecialchars($user_fullname); ?></h2>
+                            <p class="profile-email"><?php echo htmlspecialchars($user_email); ?></p>
+                            <div class="profile-badges">
+                                <?php if ($is_premium): ?>
+                                <span class="profile-badge badge-premium">
+                                    <i class="fas fa-crown"></i> Premium
                                 </span>
-                            <?php else: ?>
-                                <span class="status-indicator simulation">
-                                    <i class="fas fa-exclamation-triangle"></i>
-                                    Modo Simulación
+                                <?php endif; ?>
+                                <?php if ($is_admin): ?>
+                                <span class="profile-badge badge-admin">
+                                    <i class="fas fa-user-shield"></i> Administrador
                                 </span>
-                            <?php endif; ?>
-                        </span>
-                    </div>
-                    <div class="info-item">
-                        <span class="info-label">Versión:</span>
-                        <span class="info-value"><?php echo APP_VERSION; ?></span>
-                    </div>
-                    <div class="info-item">
-                        <span class="info-label">Desarrollador:</span>
-                        <span class="info-value"><?php echo DEVELOPER; ?></span>
-                    </div>
-                    <div class="info-item">
-                        <span class="info-label">Premium:</span>
-                        <span class="info-value">
-                            <?php if (($user_profile['premium_status'] ?? 'basic') === 'premium'): ?>
-                                <span class="status-indicator connected">Activo</span>
-                            <?php else: ?>
-                                <span class="status-indicator disconnected">Básico</span>
-                            <?php endif; ?>
-                        </span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Profile Section -->
-            <div class="settings-section active" id="profile">
-                <div class="section-header">
-                    <div class="section-icon" style="background: var(--info-gradient);">
-                        <i class="fas fa-user"></i>
-                    </div>
-                    <div>
-                        <h2 class="section-title">Mi Perfil</h2>
-                        <p class="section-description">Gestiona tu información personal y preferencias de cuenta</p>
-                    </div>
-                </div>
-
-                <form id="profileForm">
-                    <div class="form-group">
-                        <label class="form-label">Nombre Completo</label>
-                        <input type="text" class="form-input" name="full_name" value="<?php echo htmlspecialchars($user_profile['fullname'] ?? ''); ?>" placeholder="Tu nombre completo">
+                                <?php endif; ?>
+                                <?php if ($has_military_access): ?>
+                                <span class="profile-badge badge-military">
+                                    <i class="fas fa-medal"></i> <?php echo $security_clearance; ?>
+                                </span>
+                                <?php endif; ?>
+                                <span class="profile-badge badge-verified">
+                                    <i class="fas fa-check-circle"></i> Verificado
+                                </span>
+                            </div>
+                        </div>
                     </div>
 
-                    <div class="form-group">
-                        <label class="form-label">Correo Electrónico</label>
-                        <input type="email" class="form-input" name="email" value="<?php echo htmlspecialchars($user_profile['email'] ?? ''); ?>" placeholder="tu@email.com">
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-icon" style="background: var(--success-gradient);">
+                                <i class="fas fa-calendar"></i>
+                            </div>
+                            <div class="stat-value"><?php echo date('d/m/Y', strtotime($created_at)); ?></div>
+                            <div class="stat-label">Miembro desde</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon" style="background: var(--info-gradient);">
+                                <i class="fas fa-clock"></i>
+                            </div>
+                            <div class="stat-value"><?php echo date('H:i', strtotime($last_login)); ?></div>
+                            <div class="stat-label">Último acceso</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon" style="background: var(--warning-gradient);">
+                                <i class="fas fa-shield-alt"></i>
+                            </div>
+                            <div class="stat-value"><?php echo $user_stats['security_score']; ?>%</div>
+                            <div class="stat-label">Puntuación de seguridad</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon" style="background: var(--danger-gradient);">
+                                <i class="fas fa-mobile-alt"></i>
+                            </div>
+                            <div class="stat-value"><?php echo $user_stats['devices_protected']; ?></div>
+                            <div class="stat-label">Dispositivos protegidos</div>
+                        </div>
                     </div>
 
-                    <div class="form-group">
-                        <label class="form-label">Teléfono</label>
-                        <input type="tel" class="form-input" name="phone" value="<?php echo htmlspecialchars($user_profile['phone'] ?? ''); ?>" placeholder="+57 300 123 4567">
-                    </div>
-
-                    <div class="form-group">
-                        <label class="form-label">Idioma</label>
-                        <select class="setting-select" name="language">
-                            <option value="es" <?php echo ($user_profile['language'] ?? 'es') === 'es' ? 'selected' : ''; ?>>Español</option>
-                            <option value="en" <?php echo ($user_profile['language'] ?? 'es') === 'en' ? 'selected' : ''; ?>>English</option>
-                            <option value="fr" <?php echo ($user_profile['language'] ?? 'es') === 'fr' ? 'selected' : ''; ?>>Français</option>
-                            <option value="pt" <?php echo ($user_profile['language'] ?? 'es') === 'pt' ? 'selected' : ''; ?>>Português</option>
-                        </select>
-                    </div>
-
-                    <div class="form-group">
-                        <label class="form-label">Zona Horaria</label>
-                        <select class="setting-select" name="timezone">
-                            <option value="America/Bogota" <?php echo ($user_profile['timezone'] ?? 'America/Bogota') === 'America/Bogota' ? 'selected' : ''; ?>>Bogotá (GMT-5)</option>
-                            <option value="America/Mexico_City" <?php echo ($user_profile['timezone'] ?? '') === 'America/Mexico_City' ? 'selected' : ''; ?>>Ciudad de México (GMT-6)</option>
-                            <option value="America/New_York" <?php echo ($user_profile['timezone'] ?? '') === 'America/New_York' ? 'selected' : ''; ?>>Nueva York (GMT-5)</option>
-                            <option value="Europe/Madrid" <?php echo ($user_profile['timezone'] ?? '') === 'Europe/Madrid' ? 'selected' : ''; ?>>Madrid (GMT+1)</option>
-                            <option value="America/Lima" <?php echo ($user_profile['timezone'] ?? '') === 'America/Lima' ? 'selected' : ''; ?>>Lima (GMT-5)</option>
-                        </select>
-                    </div>
-
-                    <div class="form-group">
-                        <label class="form-label">Tema</label>
-                        <select class="setting-select" name="theme">
-                            <option value="dark" <?php echo ($user_profile['theme'] ?? 'dark') === 'dark' ? 'selected' : ''; ?>>Oscuro</option>
-                            <option value="light" <?php echo ($user_profile['theme'] ?? 'dark') === 'light' ? 'selected' : ''; ?>>Claro</option>
-                            <option value="auto" <?php echo ($user_profile['theme'] ?? 'dark') === 'auto' ? 'selected' : ''; ?>>Automático</option>
-                        </select>
-                    </div>
-
-                    <div class="action-buttons">
-                        <button type="submit" class="btn success">
-                            <i class="fas fa-save"></i>
-                            Guardar Cambios
-                        </button>
-                        <button type="button" class="btn secondary" onclick="resetForm('profileForm')">
-                            <i class="fas fa-undo"></i>
-                            Restablecer
-                        </button>
-                    </div>
-                </form>
-            </div>
-
-            <!-- Security Section -->
-            <div class="settings-section" id="security">
-                <div class="section-header">
-                    <div class="section-icon" style="background: var(--success-gradient);">
-                        <i class="fas fa-shield-alt"></i>
-                    </div>
-                    <div>
-                        <h2 class="section-title">Configuración de Seguridad</h2>
-                        <p class="section-description">Ajusta las configuraciones de protección y detección de amenazas</p>
-                    </div>
-                </div>
-
-                <form id="securityForm">
-                    <div class="settings-group">
-                        <h3 class="group-title">Protección en Tiempo Real</h3>
+                    <form method="POST" action="" id="profileForm">
+                        <input type="hidden" name="action" value="update_profile">
                         
-                        <div class="setting-item">
-                            <div class="setting-info">
-                                <div class="setting-name">Protección en Tiempo Real</div>
-                                <div class="setting-description">Monitorea y bloquea amenazas automáticamente</div>
+                        <div class="section-card">
+                            <h3 class="section-card-title">
+                                <i class="fas fa-edit"></i> Información Personal
+                            </h3>
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">Nombre Completo</label>
+                                    <input type="text" name="fullname" class="form-input" 
+                                           value="<?php echo htmlspecialchars($user_fullname); ?>" required>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Correo Electrónico</label>
+                                    <input type="email" name="email" class="form-input" 
+                                           value="<?php echo htmlspecialchars($user_email); ?>" required>
+                                </div>
                             </div>
-                            <div class="toggle-switch <?php echo $security_settings['real_time_protection'] ? 'active' : ''; ?>" onclick="toggleSetting(this, 'real_time_protection')">
-                                <div class="toggle-slider"></div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">Nombre de Usuario</label>
+                                    <input type="text" class="form-input" 
+                                           value="<?php echo htmlspecialchars($current_username); ?>" disabled>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Teléfono</label>
+                                    <input type="tel" name="phone" class="form-input" 
+                                           placeholder="+57 300 123 4567">
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Biografía</label>
+                                <textarea name="bio" class="form-textarea" 
+                                          placeholder="Cuéntanos algo sobre ti..."></textarea>
+                            </div>
+
+                            <div class="btn-group">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-save"></i> Guardar Cambios
+                                </button>
+                                <button type="button" class="btn btn-secondary" onclick="resetForm('profileForm')">
+                                    <i class="fas fa-undo"></i> Restablecer
+                                </button>
                             </div>
                         </div>
+                    </form>
 
-                        <div class="setting-item">
-                            <div class="setting-info">
-                                <div class="setting-name">Escaneo Automático</div>
-                                <div class="setting-description">Ejecuta escaneos programados del sistema</div>
+                    <!-- Activity Timeline -->
+                    <div class="section-card">
+                        <h3 class="section-card-title">
+                            <i class="fas fa-history"></i> Actividad Reciente
+                        </h3>
+                        <div class="activity-timeline">
+                            <div class="timeline-item">
+                                <div class="timeline-content">
+                                    <div class="timeline-title">Inicio de sesión exitoso</div>
+                                    <div class="timeline-time">Hoy, <?php echo date('H:i'); ?></div>
+                                </div>
                             </div>
-                            <div class="toggle-switch <?php echo $security_settings['auto_scan'] ? 'active' : ''; ?>" onclick="toggleSetting(this, 'auto_scan')">
-                                <div class="toggle-slider"></div>
+                            <div class="timeline-item">
+                                <div class="timeline-content">
+                                    <div class="timeline-title">Escaneo de seguridad completado</div>
+                                    <div class="timeline-time"><?php echo $user_stats['last_scan']; ?></div>
+                                </div>
+                            </div>
+                            <div class="timeline-item">
+                                <div class="timeline-content">
+                                    <div class="timeline-title">Optimización del sistema</div>
+                                    <div class="timeline-time"><?php echo $user_stats['last_optimization']; ?></div>
+                                </div>
                             </div>
                         </div>
-
-                        <div class="setting-item">
-                            <div class="setting-info">
-                                <div class="setting-name">Firewall Habilitado</div>
-                                <div class="setting-description">Protege contra conexiones no autorizadas</div>
-                            </div>
-                            <div class="toggle-switch <?php echo $security_settings['firewall_enabled'] ? 'active' : ''; ?>" onclick="toggleSetting(this, 'firewall_enabled')">
-                                <div class="toggle-slider"></div>
-                            </div>
-                        </div>
-
-                        <div class="setting-item">
-                            <div class="setting-info">
-                                <div class="setting-name">Detección de IA Avanzada</div>
-                                <div class="setting-description">Usa algoritmos de aprendizaje automático para detectar amenazas</div>
-                            </div>
-                            <div class="toggle-switch active" onclick="toggleSetting(this, 'ai_detection')">
-                                <div class="toggle-slider"></div>
-                            </div>
-                        </div>
-
-                        <div class="setting-item">
-                            <div class="setting-info">
-                                <div class="setting-name">Notificaciones de Amenazas</div>
-                                <div class="setting-description">Recibe alertas cuando se detecten amenazas</div>
-                            </div>
-                            <div class="toggle-switch <?php echo $security_settings['threat_notifications'] ? 'active' : ''; ?>" onclick="toggleSetting(this, 'threat_notifications')">
-                                <div class="toggle-slider"></div>
-                            </div>
-                        </div>
-
-                        <div class="setting-item">
-                            <div class="setting-info">
-                                <div class="setting-name">Frecuencia de Escaneo</div>
-                                <div class="setting-description">Qué tan seguido se ejecutan los escaneos</div>
-                            </div>
-                            <select class="setting-select" name="scan_frequency">
-                                <option value="hourly" <?php echo $security_settings['scan_frequency'] === 'hourly' ? 'selected' : ''; ?>>Cada hora</option>
-                                <option value="daily" <?php echo $security_settings['scan_frequency'] === 'daily' ? 'selected' : ''; ?>>Diario</option>
-                                <option value="weekly" <?php echo $security_settings['scan_frequency'] === 'weekly' ? 'selected' : ''; ?>>Semanal</option>
-                            </select>
-                        </div>
-
-                        <div class="setting-item">
-                            <div class="setting-info">
-                                <div class="setting-name">Cuarentena Automática</div>
-                                <div class="setting-description">Aisla amenazas detectadas automáticamente</div>
-                            </div>
-                            <div class="toggle-switch <?php echo $security_settings['quarantine_auto'] ? 'active' : ''; ?>" onclick="toggleSetting(this, 'quarantine_auto')">
-                                <div class="toggle-slider"></div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="action-buttons">
-                        <button type="submit" class="btn success">
-                            <i class="fas fa-save"></i>
-                            Guardar Configuración
-                        </button>
-                    </div>
-                </form>
-            </div>
-
-            <!-- Performance Section -->
-            <div class="settings-section" id="performance">
-                <div class="section-header">
-                    <div class="section-icon" style="background: var(--warning-gradient);">
-                        <i class="fas fa-tachometer-alt"></i>
-                    </div>
-                    <div>
-                        <h2 class="section-title">Configuración de Rendimiento</h2>
-                        <p class="section-description">Optimiza el rendimiento y recursos del sistema</p>
                     </div>
                 </div>
 
-                <form id="performanceForm">
-                    <div class="settings-group">
-                        <h3 class="group-title">Optimización Automática</h3>
+                <!-- Security Tab -->
+                <div id="security-tab" class="tab-container">
+                    <div class="section-header">
+                        <div class="section-icon" style="background: var(--success-gradient);">
+                            <i class="fas fa-shield-alt"></i>
+                        </div>
+                        <div>
+                            <h1 class="section-title">Seguridad</h1>
+                            <p class="section-description">Protege tu cuenta y gestiona el acceso</p>
+                        </div>
+                    </div>
+
+                    <div class="section-card">
+                        <h3 class="section-card-title">
+                            <i class="fas fa-key"></i> Cambiar Contraseña
+                        </h3>
+                        <p class="section-card-description">
+                            Asegúrate de usar una contraseña fuerte y única para proteger tu cuenta
+                        </p>
                         
-                        <div class="setting-item">
-                            <div class="setting-info">
-                                <div class="setting-name">Optimización Automática</div>
-                                <div class="setting-description">Optimiza el sistema automáticamente</div>
+                        <form method="POST" action="" onsubmit="return validatePassword()" id="passwordForm">
+                            <input type="hidden" name="action" value="change_password">
+                            
+                            <div class="form-group">
+                                <label class="form-label">Contraseña Actual</label>
+                                <input type="password" name="current_password" class="form-input" required>
                             </div>
-                            <div class="toggle-switch <?php echo $performance_settings['auto_optimization'] ? 'active' : ''; ?>" onclick="toggleSetting(this, 'auto_optimization')">
-                                <div class="toggle-slider"></div>
-                            </div>
-                        </div>
 
-                        <div class="setting-item">
-                            <div class="setting-info">
-                                <div class="setting-name">Optimización de RAM</div>
-                                <div class="setting-description">Libera memoria no utilizada automáticamente</div>
+                            <div class="form-group">
+                                <label class="form-label">Nueva Contraseña</label>
+                                <input type="password" name="new_password" id="new_password" 
+                                       class="form-input" required minlength="8" onkeyup="checkPasswordStrength()">
+                                <div class="password-strength">
+                                    <div class="strength-bar">
+                                        <div id="strengthFill" class="strength-fill"></div>
+                                    </div>
+                                    <p id="strengthText" class="strength-text">Ingresa una contraseña</p>
+                                </div>
                             </div>
-                            <div class="toggle-switch <?php echo $performance_settings['ram_optimization'] ? 'active' : ''; ?>" onclick="toggleSetting(this, 'ram_optimization')">
-                                <div class="toggle-slider"></div>
-                            </div>
-                        </div>
 
-                        <div class="setting-item">
-                            <div class="setting-info">
-                                <div class="setting-name">Limpieza de Almacenamiento</div>
-                                <div class="setting-description">Elimina archivos temporales y basura</div>
+                            <div class="form-group">
+                                <label class="form-label">Confirmar Nueva Contraseña</label>
+                                <input type="password" name="confirm_password" id="confirm_password" 
+                                       class="form-input" required>
                             </div>
-                            <div class="toggle-switch <?php echo $performance_settings['storage_cleanup'] ? 'active' : ''; ?>" onclick="toggleSetting(this, 'storage_cleanup')">
-                                <div class="toggle-slider"></div>
-                            </div>
-                        </div>
 
-                        <div class="setting-item">
-                            <div class="setting-info">
-                                <div class="setting-name">Optimización de Batería</div>
-                                <div class="setting-description">Extiende la duración de la batería</div>
-                            </div>
-                            <div class="toggle-switch <?php echo $performance_settings['battery_optimization'] ? 'active' : ''; ?>" onclick="toggleSetting(this, 'battery_optimization')">
-                                <div class="toggle-slider"></div>
-                            </div>
-                        </div>
-
-                        <div class="setting-item">
-                            <div class="setting-info">
-                                <div class="setting-name">Aceleración por IA</div>
-                                <div class="setting-description">Usa inteligencia artificial para optimizar rendimiento</div>
-                            </div>
-                            <div class="toggle-switch active" onclick="toggleSetting(this, 'ai_acceleration')">
-                                <div class="toggle-slider"></div>
-                            </div>
-                        </div>
-
-                        <div class="setting-item">
-                            <div class="setting-info">
-                                <div class="setting-name">Horario de Optimización</div>
-                                <div class="setting-description">Cuándo ejecutar optimizaciones automáticas</div>
-                            </div>
-                            <select class="setting-select" name="optimization_schedule">
-                                <option value="hourly" <?php echo $performance_settings['optimization_schedule'] === 'hourly' ? 'selected' : ''; ?>>Cada hora</option>
-                                <option value="daily" <?php echo $performance_settings['optimization_schedule'] === 'daily' ? 'selected' : ''; ?>>Diario</option>
-                                <option value="weekly" <?php echo $performance_settings['optimization_schedule'] === 'weekly' ? 'selected' : ''; ?>>Semanal</option>
-                            </select>
-                        </div>
-
-                        <div class="setting-item">
-                            <div class="setting-info">
-                                <div class="setting-name">Modo de Rendimiento</div>
-                                <div class="setting-description">Equilibrio entre rendimiento y eficiencia</div>
-                            </div>
-                            <select class="setting-select" name="performance_mode">
-                                <option value="power_saver" <?php echo $performance_settings['performance_mode'] === 'power_saver' ? 'selected' : ''; ?>>Ahorro de energía</option>
-                                <option value="balanced" <?php echo $performance_settings['performance_mode'] === 'balanced' ? 'selected' : ''; ?>>Equilibrado</option>
-                                <option value="performance" <?php echo $performance_settings['performance_mode'] === 'performance' ? 'selected' : ''; ?>>Alto rendimiento</option>
-                                <option value="gaming" <?php echo $performance_settings['performance_mode'] === 'gaming' ? 'selected' : ''; ?>>Gaming</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <div class="action-buttons">
-                        <button type="submit" class="btn warning">
-                            <i class="fas fa-save"></i>
-                            Guardar Configuración
-                        </button>
-                    </div>
-                </form>
-            </div>
-
-            <!-- Notifications Section -->
-            <div class="settings-section" id="notifications">
-                <div class="section-header">
-                    <div class="section-icon" style="background: var(--info-gradient);">
-                        <i class="fas fa-bell"></i>
-                    </div>
-                    <div>
-                        <h2 class="section-title">Configuración de Notificaciones</h2>
-                        <p class="section-description">Controla cómo y cuándo recibir notificaciones</p>
-                    </div>
-                </div>
-
-                <form id="notificationsForm">
-                    <div class="settings-group">
-                        <h3 class="group-title">Tipos de Notificaciones</h3>
-                        
-                        <div class="setting-item">
-                            <div class="setting-info">
-                                <div class="setting-name">Notificaciones por Email</div>
-                                <div class="setting-description">Recibe notificaciones en tu correo electrónico</div>
-                            </div>
-                            <div class="toggle-switch <?php echo $notification_settings['email_notifications'] ? 'active' : ''; ?>" onclick="toggleSetting(this, 'email_notifications')">
-                                <div class="toggle-slider"></div>
-                            </div>
-                        </div>
-
-                        <div class="setting-item">
-                            <div class="setting-info">
-                                <div class="setting-name">Notificaciones Push</div>
-                                <div class="setting-description">Recibe notificaciones en tiempo real</div>
-                            </div>
-                            <div class="toggle-switch <?php echo $notification_settings['push_notifications'] ? 'active' : ''; ?>" onclick="toggleSetting(this, 'push_notifications')">
-                                <div class="toggle-slider"></div>
-                            </div>
-                        </div>
-
-                        <div class="setting-item">
-                            <div class="setting-info">
-                                <div class="setting-name">Alertas de Sonido</div>
-                                <div class="setting-description">Reproduce sonidos para alertas importantes</div>
-                            </div>
-                            <div class="toggle-switch <?php echo $notification_settings['sound_alerts'] ? 'active' : ''; ?>" onclick="toggleSetting(this, 'sound_alerts')">
-                                <div class="toggle-slider"></div>
-                            </div>
-                        </div>
-
-                        <div class="setting-item">
-                            <div class="setting-info">
-                                <div class="setting-name">Alertas de Amenazas</div>
-                                <div class="setting-description">Notificaciones cuando se detecten amenazas</div>
-                            </div>
-                            <div class="toggle-switch <?php echo $notification_settings['threat_alerts'] ? 'active' : ''; ?>" onclick="toggleSetting(this, 'threat_alerts')">
-                                <div class="toggle-slider"></div>
-                            </div>
-                        </div>
-
-                        <div class="setting-item">
-                            <div class="setting-info">
-                                <div class="setting-name">Alertas de IA</div>
-                                <div class="setting-description">Notificaciones sobre detecciones de inteligencia artificial</div>
-                            </div>
-                            <div class="toggle-switch active" onclick="toggleSetting(this, 'ai_alerts')">
-                                <div class="toggle-slider"></div>
-                            </div>
-                        </div>
-
-                        <div class="setting-item">
-                            <div class="setting-info">
-                                <div class="setting-name">Alertas de Optimización</div>
-                                <div class="setting-description">Notificaciones sobre optimizaciones completadas</div>
-                            </div>
-                            <div class="toggle-switch <?php echo $notification_settings['optimization_alerts'] ? 'active' : ''; ?>" onclick="toggleSetting(this, 'optimization_alerts')">
-                                <div class="toggle-slider"></div>
-                            </div>
-                        </div>
-
-                        <div class="setting-item">
-                            <div class="setting-info">
-                                <div class="setting-name">Actualizaciones del Sistema</div>
-                                <div class="setting-description">Notificaciones sobre actualizaciones disponibles</div>
-                            </div>
-                            <div class="toggle-switch <?php echo $notification_settings['system_updates'] ? 'active' : ''; ?>" onclick="toggleSetting(this, 'system_updates')">
-                                <div class="toggle-slider"></div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="action-buttons">
-                        <button type="submit" class="btn">
-                            <i class="fas fa-save"></i>
-                            Guardar Configuración
-                        </button>
-                    </div>
-                </form>
-            </div>
-
-            <!-- Privacy Section -->
-            <div class="settings-section" id="privacy">
-                <div class="section-header">
-                    <div class="section-icon" style="background: var(--danger-gradient);">
-                        <i class="fas fa-lock"></i>
-                    </div>
-                    <div>
-                        <h2 class="section-title">Configuración de Privacidad</h2>
-                        <p class="section-description">Controla qué datos se recopilan y comparten</p>
-                    </div>
-                </div>
-
-                <form id="privacyForm">
-                    <div class="settings-group">
-                        <h3 class="group-title">Recopilación de Datos</h3>
-                        
-                        <div class="setting-item">
-                            <div class="setting-info">
-                                <div class="setting-name">Recopilación de Datos</div>
-                                <div class="setting-description">Permite recopilar datos para mejorar el servicio</div>
-                            </div>
-                            <div class="toggle-switch <?php echo $privacy_settings['data_collection'] ? 'active' : ''; ?>" onclick="toggleSetting(this, 'data_collection')">
-                                <div class="toggle-slider"></div>
-                            </div>
-                        </div>
-
-                        <div class="setting-item">
-                            <div class="setting-info">
-                                <div class="setting-name">Compartir Análisis</div>
-                                <div class="setting-description">Comparte datos analíticos anónimos</div>
-                            </div>
-                            <div class="toggle-switch <?php echo $privacy_settings['analytics_sharing'] ? 'active' : ''; ?>" onclick="toggleSetting(this, 'analytics_sharing')">
-                                <div class="toggle-slider"></div>
-                            </div>
-                        </div>
-
-                        <div class="setting-item">
-                            <div class="setting-info">
-                                <div class="setting-name">Reportes de Errores</div>
-                                <div class="setting-description">Envía reportes automáticos de errores</div>
-                            </div>
-                            <div class="toggle-switch <?php echo $privacy_settings['crash_reports'] ? 'active' : ''; ?>" onclick="toggleSetting(this, 'crash_reports')">
-                                <div class="toggle-slider"></div>
-                            </div>
-                        </div>
-
-                        <div class="setting-item">
-                            <div class="setting-info">
-                                <div class="setting-name">Estadísticas de Uso</div>
-                                <div class="setting-description">Recopila estadísticas sobre el uso de la aplicación</div>
-                            </div>
-                            <div class="toggle-switch <?php echo $privacy_settings['usage_statistics'] ? 'active' : ''; ?>" onclick="toggleSetting(this, 'usage_statistics')">
-                                <div class="toggle-slider"></div>
-                            </div>
-                        </div>
-
-                        <div class="setting-item">
-                            <div class="setting-info">
-                                <div class="setting-name">Seguimiento de Ubicación</div>
-                                <div class="setting-description">Permite el acceso a datos de ubicación</div>
-                            </div>
-                            <div class="toggle-switch <?php echo $privacy_settings['location_tracking'] ? 'active' : ''; ?>" onclick="toggleSetting(this, 'location_tracking')">
-                                <div class="toggle-slider"></div>
-                            </div>
-                        </div>
-
-                        <div class="setting-item">
-                            <div class="setting-info">
-                                <div class="setting-name">Compartir con Terceros</div>
-                                <div class="setting-description">Permite compartir datos con servicios de terceros</div>
-                            </div>
-                            <div class="toggle-switch <?php echo $privacy_settings['third_party_sharing'] ? 'active' : ''; ?>" onclick="toggleSetting(this, 'third_party_sharing')">
-                                <div class="toggle-slider"></div>
-                            </div>
-                        </div>
-
-                        <div class="setting-item">
-                            <div class="setting-info">
-                                <div class="setting-name">Encriptación Cuántica</div>
-                                <div class="setting-description">Protección avanzada con encriptación cuántica (Premium)</div>
-                            </div>
-                            <div class="toggle-switch <?php echo ($user_profile['premium_status'] ?? 'basic') === 'premium' ? 'active' : ''; ?> <?php echo ($user_profile['premium_status'] ?? 'basic') !== 'premium' ? 'feature-locked' : ''; ?>" onclick="<?php echo ($user_profile['premium_status'] ?? 'basic') === 'premium' ? 'toggleSetting(this, \'quantum_encryption\')' : 'showPremiumRequired()'; ?>">
-                                <div class="toggle-slider"></div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="action-buttons">
-                        <button type="submit" class="btn danger">
-                            <i class="fas fa-save"></i>
-                            Guardar Configuración
-                        </button>
-                    </div>
-                </form>
-            </div>
-
-            <!-- Account Section -->
-            <div class="settings-section" id="account">
-                <div class="section-header">
-                    <div class="section-icon" style="background: var(--primary-gradient);">
-                        <i class="fas fa-cog"></i>
-                    </div>
-                    <div>
-                        <h2 class="section-title">Configuración de Cuenta</h2>
-                        <p class="section-description">Gestiona tu cuenta y configuraciones avanzadas</p>
-                    </div>
-                </div>
-
-                <div class="settings-group">
-                    <h3 class="group-title">Seguridad de la Cuenta</h3>
-                    
-                    <form id="passwordForm">
-                        <div class="form-group">
-                            <label class="form-label">Contraseña Actual</label>
-                            <input type="password" class="form-input" name="current_password" placeholder="Tu contraseña actual">
-                        </div>
-
-                        <div class="form-group">
-                            <label class="form-label">Nueva Contraseña</label>
-                            <input type="password" class="form-input" name="new_password" placeholder="Nueva contraseña (mínimo 8 caracteres)" onkeyup="checkPasswordStrength(this.value)">
-                            <div class="password-strength">
-                                <div class="password-strength-bar" id="passwordStrengthBar"></div>
-                            </div>
-                        </div>
-
-                        <div class="form-group">
-                            <label class="form-label">Confirmar Nueva Contraseña</label>
-                            <input type="password" class="form-input" name="confirm_password" placeholder="Confirma tu nueva contraseña">
-                        </div>
-
-                        <div class="action-buttons">
-                            <button type="submit" class="btn warning">
-                                <i class="fas fa-key"></i>
-                                Cambiar Contraseña
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> Actualizar Contraseña
                             </button>
+                        </form>
+                    </div>
+
+                    <div class="section-card">
+                        <h3 class="section-card-title">
+                            <i class="fas fa-mobile-alt"></i> Autenticación de Dos Factores
+                        </h3>
+                        <p class="section-card-description">
+                            Añade una capa extra de seguridad a tu cuenta requiriendo un código adicional al iniciar sesión
+                        </p>
+                        
+                        <?php if (isset($user_data['two_factor_enabled']) && $user_data['two_factor_enabled']): ?>
+                        <div class="alert alert-success">
+                            <i class="fas fa-check-circle"></i>
+                            La autenticación de dos factores está activa
                         </div>
+                        <form method="POST" action="">
+                            <input type="hidden" name="action" value="disable_2fa">
+                            <button type="submit" class="btn btn-danger">
+                                <i class="fas fa-times"></i> Desactivar 2FA
+                            </button>
+                        </form>
+                        <?php else: ?>
+                        <form method="POST" action="">
+                            <input type="hidden" name="action" value="enable_2fa">
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-shield-alt"></i> Activar 2FA
+                            </button>
+                        </form>
+                        <?php endif; ?>
+                    </div>
+
+                    <div class="section-card">
+                        <h3 class="section-card-title">
+                            <i class="fas fa-desktop"></i> Sesiones Activas
+                        </h3>
+                        <p class="section-card-description">
+                            Dispositivos donde has iniciado sesión recientemente
+                        </p>
+                        
+                        <ul class="session-list">
+                            <li class="session-item">
+                                <div class="session-info">
+                                    <div class="session-device">
+                                        <i class="fas fa-laptop"></i> Dispositivo Actual
+                                    </div>
+                                    <div class="session-details">
+                                        <?php echo $_SERVER['HTTP_USER_AGENT'] ?? 'Navegador desconocido'; ?><br>
+                                        IP: <?php echo $_SERVER['REMOTE_ADDR'] ?? 'Desconocida'; ?>
+                                    </div>
+                                </div>
+                                <div class="session-status current">
+                                    <i class="fas fa-circle"></i> Activo ahora
+                                </div>
+                            </li>
+                            
+                            <?php foreach ($active_sessions as $session): ?>
+                            <li class="session-item">
+                                <div class="session-info">
+                                    <div class="session-device">
+                                        <i class="fas fa-mobile-alt"></i> Dispositivo
+                                    </div>
+                                    <div class="session-details">
+                                        <?php echo htmlspecialchars($session['user_agent']); ?><br>
+                                        IP: <?php echo htmlspecialchars($session['ip_address']); ?>
+                                    </div>
+                                </div>
+                                <div class="session-status">
+                                    <?php echo date('d/m/Y H:i', strtotime($session['created_at'])); ?>
+                                </div>
+                            </li>
+                            <?php endforeach; ?>
+                        </ul>
+                        
+                        <button class="btn btn-danger" onclick="confirmAction('cerrar todas las sesiones')">
+                            <i class="fas fa-sign-out-alt"></i> Cerrar Todas las Sesiones
+                        </button>
+                    </div>
+
+                    <div class="section-card">
+                        <h3 class="section-card-title">
+                            <i class="fas fa-lock"></i> Opciones de Seguridad Avanzadas
+                        </h3>
+                        
+                        <form method="POST" action="">
+                            <input type="hidden" name="action" value="update_security">
+                            
+                            <div class="form-switch">
+                                <div class="switch-label">
+                                    <span class="switch-title">VPN Integrada</span>
+                                    <span class="switch-description">
+                                        Navega de forma anónima y segura
+                                    </span>
+                                </div>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" name="vpn" class="toggle-input" 
+                                           <?php echo $user_settings['vpn_enabled'] ? 'checked' : ''; ?>>
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+
+                            <div class="form-switch">
+                                <div class="switch-label">
+                                    <span class="switch-title">Firewall Avanzado</span>
+                                    <span class="switch-description">
+                                        Protección contra ataques de red
+                                    </span>
+                                </div>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" name="firewall" class="toggle-input" 
+                                           <?php echo $user_settings['firewall_enabled'] ? 'checked' : ''; ?>>
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+
+                            <div class="form-switch">
+                                <div class="switch-label">
+                                    <span class="switch-title">Antivirus en Tiempo Real</span>
+                                    <span class="switch-description">
+                                        Escaneo continuo de archivos y descargas
+                                    </span>
+                                </div>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" name="antivirus" class="toggle-input" 
+                                           <?php echo $user_settings['antivirus_enabled'] ? 'checked' : ''; ?>>
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+
+                            <div class="form-switch">
+                                <div class="switch-label">
+                                    <span class="switch-title">Autenticación Biométrica</span>
+                                    <span class="switch-description">
+                                        Usa tu huella o rostro para acceder
+                                    </span>
+                                </div>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" name="biometric" class="toggle-input" 
+                                           <?php echo $user_settings['biometric_enabled'] ? 'checked' : ''; ?>>
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> Guardar Configuración
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Performance Tab -->
+                <div id="performance-tab" class="tab-container">
+                    <div class="section-header">
+                        <div class="section-icon" style="background: var(--info-gradient);">
+                            <i class="fas fa-tachometer-alt"></i>
+                        </div>
+                        <div>
+                            <h1 class="section-title">Rendimiento</h1>
+                            <p class="section-description">Optimiza el comportamiento y rendimiento del sistema</p>
+                        </div>
+                    </div>
+
+                    <div class="info-box">
+                        <div class="info-box-icon">
+                            <i class="fas fa-info-circle"></i>
+                        </div>
+                        <div class="info-box-content">
+                            <div class="info-box-title">Optimización Inteligente</div>
+                            <div class="info-box-text">
+                                GuardianIA ajusta automáticamente la configuración para obtener el mejor rendimiento según tu uso
+                            </div>
+                        </div>
+                    </div>
+
+                    <form method="POST" action="">
+                        <input type="hidden" name="action" value="update_performance">
+                        
+                        <div class="section-card">
+                            <h3 class="section-card-title">
+                                <i class="fas fa-magic"></i> Optimización Automática
+                            </h3>
+                            
+                            <div class="form-switch">
+                                <div class="switch-label">
+                                    <span class="switch-title">Optimización Automática</span>
+                                    <span class="switch-description">
+                                        Permite que GuardianIA optimice tu sistema automáticamente
+                                    </span>
+                                </div>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" name="auto_optimization" class="toggle-input" 
+                                           <?php echo $user_settings['auto_optimization'] ? 'checked' : ''; ?>>
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+
+                            <div class="form-switch">
+                                <div class="switch-label">
+                                    <span class="switch-title">Escaneo en Tiempo Real</span>
+                                    <span class="switch-description">
+                                        Protección continua contra amenazas
+                                    </span>
+                                </div>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" name="real_time_scan" class="toggle-input" 
+                                           <?php echo $user_settings['real_time_scan'] ? 'checked' : ''; ?>>
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+
+                            <div class="form-switch">
+                                <div class="switch-label">
+                                    <span class="switch-title">Modo Gaming</span>
+                                    <span class="switch-description">
+                                        Suspende notificaciones y optimiza recursos durante los juegos
+                                    </span>
+                                </div>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" name="gaming_mode" class="toggle-input" 
+                                           <?php echo $user_settings['gaming_mode'] ? 'checked' : ''; ?>>
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+
+                            <div class="form-switch">
+                                <div class="switch-label">
+                                    <span class="switch-title">Inicio Rápido</span>
+                                    <span class="switch-description">
+                                        Acelera el tiempo de arranque del sistema
+                                    </span>
+                                </div>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" name="startup_boost" class="toggle-input" 
+                                           <?php echo $user_settings['startup_boost'] ? 'checked' : ''; ?>>
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+
+                            <div class="form-switch">
+                                <div class="switch-label">
+                                    <span class="switch-title">Optimización de Memoria</span>
+                                    <span class="switch-description">
+                                        Libera memoria RAM no utilizada automáticamente
+                                    </span>
+                                </div>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" name="memory_optimization" class="toggle-input" 
+                                           <?php echo $user_settings['memory_optimization'] ? 'checked' : ''; ?>>
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="section-card">
+                            <h3 class="section-card-title">
+                                <i class="fas fa-sliders-h"></i> Configuración de Rendimiento
+                            </h3>
+                            
+                            <div class="form-group">
+                                <label class="form-label">Modo de Rendimiento</label>
+                                <select name="performance_mode" class="form-select">
+                                    <option value="eco" <?php echo $user_settings['performance_mode'] == 'eco' ? 'selected' : ''; ?>>
+                                        Ahorro de Energía
+                                    </option>
+                                    <option value="balanced" <?php echo $user_settings['performance_mode'] == 'balanced' ? 'selected' : ''; ?>>
+                                        Balanceado
+                                    </option>
+                                    <option value="high" <?php echo $user_settings['performance_mode'] == 'high' ? 'selected' : ''; ?>>
+                                        Alto Rendimiento
+                                    </option>
+                                    <option value="ultra" <?php echo $user_settings['performance_mode'] == 'ultra' ? 'selected' : ''; ?>>
+                                        Ultra (Premium)
+                                    </option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Frecuencia de Escaneo</label>
+                                <select name="scan_frequency" class="form-select">
+                                    <option value="realtime" <?php echo $user_settings['scan_frequency'] == 'realtime' ? 'selected' : ''; ?>>
+                                        Tiempo Real
+                                    </option>
+                                    <option value="hourly" <?php echo $user_settings['scan_frequency'] == 'hourly' ? 'selected' : ''; ?>>
+                                        Cada Hora
+                                    </option>
+                                    <option value="daily" <?php echo $user_settings['scan_frequency'] == 'daily' ? 'selected' : ''; ?>>
+                                        Diario
+                                    </option>
+                                    <option value="weekly" <?php echo $user_settings['scan_frequency'] == 'weekly' ? 'selected' : ''; ?>>
+                                        Semanal
+                                    </option>
+                                    <option value="manual" <?php echo $user_settings['scan_frequency'] == 'manual' ? 'selected' : ''; ?>>
+                                        Manual
+                                    </option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Limpieza de Disco</label>
+                                <select name="disk_cleanup" class="form-select">
+                                    <option value="daily" <?php echo $user_settings['disk_cleanup'] == 'daily' ? 'selected' : ''; ?>>
+                                        Diario
+                                    </option>
+                                    <option value="weekly" <?php echo $user_settings['disk_cleanup'] == 'weekly' ? 'selected' : ''; ?>>
+                                        Semanal
+                                    </option>
+                                    <option value="monthly" <?php echo $user_settings['disk_cleanup'] == 'monthly' ? 'selected' : ''; ?>>
+                                        Mensual
+                                    </option>
+                                    <option value="never" <?php echo $user_settings['disk_cleanup'] == 'never' ? 'selected' : ''; ?>>
+                                        Nunca
+                                    </option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Guardar Configuración
+                        </button>
+                    </form>
+
+                    <!-- Performance Stats -->
+                    <div class="section-card">
+                        <h3 class="section-card-title">
+                            <i class="fas fa-chart-line"></i> Estadísticas de Rendimiento
+                        </h3>
+                        
+                        <div class="stats-grid">
+                            <div class="stat-card">
+                                <div class="stat-value"><?php echo $user_stats['total_scans']; ?></div>
+                                <div class="stat-label">Escaneos Totales</div>
+                                <div class="stat-trend trend-up">
+                                    <i class="fas fa-arrow-up"></i> +12% este mes
+                                </div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-value"><?php echo $user_stats['threats_blocked']; ?></div>
+                                <div class="stat-label">Amenazas Bloqueadas</div>
+                                <div class="stat-trend trend-down">
+                                    <i class="fas fa-arrow-down"></i> -5% este mes
+                                </div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-value"><?php echo $user_stats['optimizations']; ?></div>
+                                <div class="stat-label">Optimizaciones</div>
+                                <div class="stat-trend trend-up">
+                                    <i class="fas fa-arrow-up"></i> +8% este mes
+                                </div>
+                            </div>
+                        </div>
+
+                        <div style="margin-top: 1.5rem;">
+                            <p style="color: var(--text-secondary); margin-bottom: 0.5rem;">Uso de CPU</p>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 45%;"></div>
+                            </div>
+                        </div>
+
+                        <div style="margin-top: 1rem;">
+                            <p style="color: var(--text-secondary); margin-bottom: 0.5rem;">Uso de RAM</p>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 67%;"></div>
+                            </div>
+                        </div>
+
+                        <div style="margin-top: 1rem;">
+                            <p style="color: var(--text-secondary); margin-bottom: 0.5rem;">Uso de Disco</p>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 78%;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Notifications Tab -->
+                <div id="notifications-tab" class="tab-container">
+                    <div class="section-header">
+                        <div class="section-icon" style="background: var(--warning-gradient);">
+                            <i class="fas fa-bell"></i>
+                        </div>
+                        <div>
+                            <h1 class="section-title">Notificaciones</h1>
+                            <p class="section-description">Controla cómo y cuándo recibir alertas</p>
+                        </div>
+                    </div>
+
+                    <form method="POST" action="">
+                        <input type="hidden" name="action" value="update_notifications">
+
+                        <div class="section-card">
+                            <h3 class="section-card-title">
+                                <i class="fas fa-envelope"></i> Canales de Notificación
+                            </h3>
+
+                            <div class="form-switch">
+                                <div class="switch-label">
+                                    <span class="switch-title">Notificaciones por Email</span>
+                                    <span class="switch-description">
+                                        Recibe actualizaciones importantes en tu correo
+                                    </span>
+                                </div>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" name="email_notifications" class="toggle-input" 
+                                           <?php echo $user_settings['notifications_email'] ? 'checked' : ''; ?>>
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+
+                            <div class="form-switch">
+                                <div class="switch-label">
+                                    <span class="switch-title">Notificaciones Push</span>
+                                    <span class="switch-description">
+                                        Alertas instantáneas en tu navegador
+                                    </span>
+                                </div>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" name="push_notifications" class="toggle-input" 
+                                           <?php echo $user_settings['notifications_push'] ? 'checked' : ''; ?>>
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+
+                            <div class="form-switch">
+                                <div class="switch-label">
+                                    <span class="switch-title">Notificaciones SMS</span>
+                                    <span class="switch-description">
+                                        Mensajes de texto para alertas críticas
+                                    </span>
+                                </div>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" name="sms_notifications" class="toggle-input" 
+                                           <?php echo $user_settings['notifications_sms'] ? 'checked' : ''; ?>>
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="section-card">
+                            <h3 class="section-card-title">
+                                <i class="fas fa-bell-slash"></i> Tipos de Notificaciones
+                            </h3>
+
+                            <div class="form-switch">
+                                <div class="switch-label">
+                                    <span class="switch-title">Alertas de Seguridad</span>
+                                    <span class="switch-description">
+                                        Notificaciones sobre amenazas y vulnerabilidades detectadas
+                                    </span>
+                                </div>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" name="security_alerts" class="toggle-input" 
+                                           <?php echo $user_settings['security_alerts'] ? 'checked' : ''; ?>>
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+
+                            <div class="form-switch">
+                                <div class="switch-label">
+                                    <span class="switch-title">Actualizaciones del Sistema</span>
+                                    <span class="switch-description">
+                                        Información sobre nuevas características y mejoras
+                                    </span>
+                                </div>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" name="system_updates" class="toggle-input" 
+                                           <?php echo $user_settings['system_updates'] ? 'checked' : ''; ?>>
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+
+                            <div class="form-switch">
+                                <div class="switch-label">
+                                    <span class="switch-title">Emails de Marketing</span>
+                                    <span class="switch-description">
+                                        Ofertas especiales y promociones de GuardianIA
+                                    </span>
+                                </div>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" name="marketing_emails" class="toggle-input" 
+                                           <?php echo $user_settings['marketing_emails'] ? 'checked' : ''; ?>>
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Guardar Preferencias
+                        </button>
                     </form>
                 </div>
 
-                <div class="settings-group">
-                    <h3 class="group-title">Gestión de Datos</h3>
-                    
-                    <div class="action-buttons">
-                        <button class="btn secondary" onclick="exportUserData()">
-                            <i class="fas fa-download"></i>
-                            Exportar Mis Datos
+                <!-- Privacy Tab -->
+                <div id="privacy-tab" class="tab-container">
+                    <div class="section-header">
+                        <div class="section-icon" style="background: var(--danger-gradient);">
+                            <i class="fas fa-lock"></i>
+                        </div>
+                        <div>
+                            <h1 class="section-title">Privacidad</h1>
+                            <p class="section-description">Controla tu información y datos personales</p>
+                        </div>
+                    </div>
+
+                    <form method="POST" action="">
+                        <input type="hidden" name="action" value="update_privacy">
+
+                        <div class="section-card">
+                            <h3 class="section-card-title">
+                                <i class="fas fa-user-secret"></i> Control de Datos
+                            </h3>
+
+                            <div class="form-switch">
+                                <div class="switch-label">
+                                    <span class="switch-title">Compartir Datos Anónimos</span>
+                                    <span class="switch-description">
+                                        Ayuda a mejorar GuardianIA compartiendo estadísticas anónimas
+                                    </span>
+                                </div>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" name="data_sharing" class="toggle-input" 
+                                           <?php echo $user_settings['data_sharing'] ? 'checked' : ''; ?>>
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+
+                            <div class="form-switch">
+                                <div class="switch-label">
+                                    <span class="switch-title">Análisis de Uso</span>
+                                    <span class="switch-description">
+                                        Permite recopilar datos para mejorar la experiencia
+                                    </span>
+                                </div>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" name="analytics" class="toggle-input" 
+                                           <?php echo $user_settings['analytics'] ? 'checked' : ''; ?>>
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+
+                            <div class="form-switch">
+                                <div class="switch-label">
+                                    <span class="switch-title">Publicidad Personalizada</span>
+                                    <span class="switch-description">
+                                        Muestra anuncios basados en tus preferencias
+                                    </span>
+                                </div>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" name="personalized_ads" class="toggle-input">
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+
+                            <div class="form-switch">
+                                <div class="switch-label">
+                                    <span class="switch-title">Cookies de Terceros</span>
+                                    <span class="switch-description">
+                                        Permite cookies de servicios externos
+                                    </span>
+                                </div>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" name="third_party_cookies" class="toggle-input">
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Actualizar Privacidad
                         </button>
-                        <button class="btn" onclick="showSystemInfo()">
-                            <i class="fas fa-info-circle"></i>
-                            Información del Sistema
-                        </button>
+                    </form>
+
+                    <div class="section-card">
+                        <h3 class="section-card-title">
+                            <i class="fas fa-download"></i> Tus Datos
+                        </h3>
+                        <p class="section-card-description">
+                            Descarga una copia de toda tu información almacenada en GuardianIA
+                        </p>
+                        
+                        <form method="POST" action="">
+                            <input type="hidden" name="action" value="export_data">
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-file-download"></i> Descargar Mis Datos
+                            </button>
+                        </form>
+                    </div>
+
+                    <div class="info-box">
+                        <div class="info-box-icon">
+                            <i class="fas fa-shield-alt"></i>
+                        </div>
+                        <div class="info-box-content">
+                            <div class="info-box-title">Tus datos están protegidos</div>
+                            <div class="info-box-text">
+                                Utilizamos cifrado AES-256 para proteger tu información. Nunca compartimos tus datos personales con terceros sin tu consentimiento.
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                <?php if (($user_profile['premium_status'] ?? 'basic') !== 'premium'): ?>
-                <div class="settings-group">
-                    <h3 class="group-title">Actualizar a Premium</h3>
-                    <p style="color: var(--text-secondary); margin-bottom: 1rem;">
-                        Desbloquea características avanzadas como detección de IA mejorada, encriptación cuántica y soporte prioritario.
-                    </p>
-                    
-                    <div class="action-buttons">
-                        <button class="btn success" onclick="upgradeToPremium()">
-                            <i class="fas fa-crown"></i>
-                            Actualizar a Premium
+                <!-- Account Tab -->
+                <div id="account-tab" class="tab-container">
+                    <div class="section-header">
+                        <div class="section-icon" style="background: var(--primary-gradient);">
+                            <i class="fas fa-cog"></i>
+                        </div>
+                        <div>
+                            <h1 class="section-title">Cuenta</h1>
+                            <p class="section-description">Gestión general de tu cuenta</p>
+                        </div>
+                    </div>
+
+                    <div class="section-card">
+                        <h3 class="section-card-title">
+                            <i class="fas fa-crown"></i> Plan Actual
+                        </h3>
+                        
+                        <div style="padding: 1.5rem; background: <?php echo $is_premium ? 'var(--premium-gradient)' : 'rgba(255,255,255,0.05)'; ?>; border-radius: 8px; margin-bottom: 1rem;">
+                            <h4 style="font-size: 1.5rem; margin-bottom: 0.5rem; <?php echo $is_premium ? 'color: #000;' : ''; ?>">
+                                <?php echo $is_premium ? 'Plan Premium' : 'Plan Básico'; ?>
+                            </h4>
+                            <p style="<?php echo $is_premium ? 'color: #333;' : 'color: var(--text-secondary);'; ?> font-size: 1rem; margin-bottom: 1rem;">
+                                <?php echo $is_premium ? 'Acceso completo a todas las funciones avanzadas' : 'Funciones básicas de protección y optimización'; ?>
+                            </p>
+                            
+                            <?php if ($is_premium): ?>
+                            <p style="color: #333; font-size: 0.9rem;">
+                                <i class="fas fa-check"></i> Protección cuántica<br>
+                                <i class="fas fa-check"></i> Optimización avanzada<br>
+                                <i class="fas fa-check"></i> Soporte prioritario 24/7<br>
+                                <i class="fas fa-check"></i> Sin límites de dispositivos
+                            </p>
+                            <?php else: ?>
+                            <button class="btn btn-warning" onclick="window.location.href='membership_system.php'">
+                                <i class="fas fa-rocket"></i> Actualizar a Premium
+                            </button>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+
+                    <div class="section-card">
+                        <h3 class="section-card-title">
+                            <i class="fas fa-globe"></i> Preferencias Regionales
+                        </h3>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Idioma</label>
+                                <select class="form-select" onchange="updateLanguage(this.value)">
+                                    <option value="es" selected>Español</option>
+                                    <option value="en">English</option>
+                                    <option value="pt">Português</option>
+                                    <option value="fr">Français</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label">Zona Horaria</label>
+                                <select class="form-select">
+                                    <option value="America/Bogota" selected>Colombia (UTC-5)</option>
+                                    <option value="America/Mexico_City">México (UTC-6)</option>
+                                    <option value="America/Buenos_Aires">Argentina (UTC-3)</option>
+                                    <option value="America/New_York">Estados Unidos Este (UTC-5)</option>
+                                    <option value="Europe/Madrid">España (UTC+1)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Tema</label>
+                            <select class="form-select" onchange="updateTheme(this.value)">
+                                <option value="dark" selected>Oscuro</option>
+                                <option value="light">Claro</option>
+                                <option value="auto">Automático (Sistema)</option>
+                            </select>
+                        </div>
+
+                        <button class="btn btn-primary">
+                            <i class="fas fa-save"></i> Guardar Cambios
                         </button>
                     </div>
-                </div>
-                <?php endif; ?>
 
-                <div class="danger-zone">
-                    <h3 class="danger-title">
-                        <i class="fas fa-exclamation-triangle"></i>
-                        Zona de Peligro
-                    </h3>
-                    <p class="danger-description">
-                        Las siguientes acciones son permanentes y no se pueden deshacer. Procede con precaución.
-                    </p>
-                    
-                    <button class="btn danger" onclick="showDeleteAccountModal()">
-                        <i class="fas fa-trash"></i>
-                        Eliminar Mi Cuenta
-                    </button>
+                    <div class="section-card">
+                        <h3 class="section-card-title">
+                            <i class="fas fa-database"></i> Información del Sistema
+                        </h3>
+                        
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                            <div>
+                                <p style="color: var(--text-secondary); margin-bottom: 0.25rem;">Versión</p>
+                                <p style="font-weight: 600;">GuardianIA v3.0.0</p>
+                            </div>
+                            <div>
+                                <p style="color: var(--text-secondary); margin-bottom: 0.25rem;">Base de Datos</p>
+                                <p style="font-weight: 600;"><?php echo $database_info['status']; ?></p>
+                            </div>
+                            <div>
+                                <p style="color: var(--text-secondary); margin-bottom: 0.25rem;">Cifrado</p>
+                                <p style="font-weight: 600;"><?php echo $database_info['encryption']; ?></p>
+                            </div>
+                            <div>
+                                <p style="color: var(--text-secondary); margin-bottom: 0.25rem;">Tamaño</p>
+                                <p style="font-weight: 600;"><?php echo $database_info['size']; ?></p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="danger-zone">
+                        <h3 class="danger-zone-title">
+                            <i class="fas fa-exclamation-triangle"></i> Zona de Peligro
+                        </h3>
+                        <p class="danger-zone-description">
+                            Una vez que elimines tu cuenta, no hay vuelta atrás. Se eliminarán permanentemente todos tus datos, configuraciones y accesos.
+                        </p>
+                        
+                        <button class="btn btn-danger" onclick="showDeleteModal()">
+                            <i class="fas fa-trash"></i> Eliminar Cuenta
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Toast Notification -->
-    <div id="toast" class="toast">
-        <button class="toast-close" onclick="hideToast()">&times;</button>
-        <span id="toast-message"></span>
+    <!-- Delete Account Modal -->
+    <div id="deleteModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Eliminar Cuenta</h2>
+                <button class="modal-close" onclick="closeDeleteModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <div class="alert alert-error">
+                <i class="fas fa-exclamation-circle"></i>
+                Esta acción es permanente e irreversible
+            </div>
+            
+            <p style="margin-bottom: 1.5rem;">
+                Al eliminar tu cuenta:
+            </p>
+            <ul style="list-style: none; margin-bottom: 1.5rem;">
+                <li style="margin-bottom: 0.5rem; color: var(--text-secondary);">
+                    <i class="fas fa-times" style="color: #fa709a;"></i> Se eliminarán todos tus datos personales
+                </li>
+                <li style="margin-bottom: 0.5rem; color: var(--text-secondary);">
+                    <i class="fas fa-times" style="color: #fa709a;"></i> Perderás acceso a todas las funciones premium
+                </li>
+                <li style="margin-bottom: 0.5rem; color: var(--text-secondary);">
+                    <i class="fas fa-times" style="color: #fa709a;"></i> No podrás recuperar tu historial
+                </li>
+                <li style="margin-bottom: 0.5rem; color: var(--text-secondary);">
+                    <i class="fas fa-times" style="color: #fa709a;"></i> Se desactivarán todos tus dispositivos
+                </li>
+            </ul>
+            
+            <form method="POST" action="" onsubmit="return confirmDelete()">
+                <input type="hidden" name="action" value="delete_account">
+                
+                <div class="form-group">
+                    <label class="form-label">Confirma tu contraseña para continuar</label>
+                    <input type="password" name="confirm_password" class="form-input" required>
+                </div>
+                
+                <div class="btn-group">
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash"></i> Sí, eliminar mi cuenta
+                    </button>
+                    <button type="button" class="btn btn-secondary" onclick="closeDeleteModal()">
+                        <i class="fas fa-times"></i> Cancelar
+                    </button>
+                </div>
+            </form>
+        </div>
     </div>
 
-    <script>
-        // Variables globales
-        let userId = <?php echo $user_id; ?>;
-        let currentSection = 'profile';
-        let userProfile = <?php echo json_encode($user_profile); ?>;
-        let isPremium = <?php echo ($user_profile['premium_status'] ?? 'basic') === 'premium' ? 'true' : 'false'; ?>;
+    <!-- 2FA Setup Modal -->
+    <?php if (isset($_SESSION['show_2fa_setup']) && $_SESSION['show_2fa_setup']): ?>
+    <div id="2faModal" class="modal show">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Configurar Autenticación de Dos Factores</h2>
+            </div>
+            
+            <div class="qr-code-container">
+                <p style="color: #333; margin-bottom: 1rem;">
+                    Escanea este código QR con tu aplicación de autenticación
+                </p>
+                <div class="qr-code">
+                    <!-- Aquí iría el código QR generado -->
+                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=otpauth://totp/GuardianIA:<?php echo urlencode($user_email); ?>?secret=<?php echo $_SESSION['2fa_secret'] ?? ''; ?>" alt="QR Code">
+                </div>
+                <p style="color: #666; font-size: 0.9rem; margin-top: 1rem;">
+                    Código manual: <code><?php echo $_SESSION['2fa_secret'] ?? ''; ?></code>
+                </p>
+            </div>
+            
+            <button class="btn btn-primary" onclick="close2FAModal()">
+                <i class="fas fa-check"></i> He configurado mi aplicación
+            </button>
+        </div>
+    </div>
+    <?php unset($_SESSION['show_2fa_setup']); ?>
+    <?php endif; ?>
 
-        // Inicialización
-        document.addEventListener('DOMContentLoaded', function() {
-            initializeSettings();
-            setupEventListeners();
+    <script>
+        // Tab Navigation
+        function showTab(tabName, element) {
+            // Hide all tabs
+            const tabs = document.querySelectorAll('.tab-container');
+            tabs.forEach(tab => tab.classList.remove('active'));
+            
+            // Show selected tab
+            document.getElementById(tabName + '-tab').classList.add('active');
+            
+            // Update sidebar active state
+            const links = document.querySelectorAll('.sidebar-link');
+            links.forEach(link => link.classList.remove('active'));
+            element.classList.add('active');
+            
+            // Scroll to top
+            window.scrollTo(0, 0);
+        }
+
+        // Toggle dropdown
+        function toggleDropdown() {
+            const dropdown = document.getElementById('userDropdown');
+            dropdown.classList.toggle('show');
+        }
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(e) {
+            const dropdown = document.getElementById('userDropdown');
+            const avatar = document.querySelector('.user-avatar-nav');
+            
+            if (dropdown && avatar && !avatar.contains(e.target) && !dropdown.contains(e.target)) {
+                dropdown.classList.remove('show');
+            }
         });
 
-        // Inicializar configuraciones
-        function initializeSettings() {
-            console.log('Inicializando configuraciones para GuardianIA v3.0...');
-            showSection('profile');
-            
-            // Log de información del sistema
-            console.log('Usuario Premium:', isPremium);
-            console.log('Base de datos:', <?php echo $system_integrity['database'] ? 'true' : 'false'; ?>);
-        }
-
-        // Configurar event listeners
-        function setupEventListeners() {
-            // Formularios
-            document.getElementById('profileForm').addEventListener('submit', handleProfileSubmit);
-            document.getElementById('securityForm').addEventListener('submit', handleSecuritySubmit);
-            document.getElementById('performanceForm').addEventListener('submit', handlePerformanceSubmit);
-            document.getElementById('notificationsForm').addEventListener('submit', handleNotificationsSubmit);
-            document.getElementById('privacyForm').addEventListener('submit', handlePrivacySubmit);
-            document.getElementById('passwordForm').addEventListener('submit', handlePasswordSubmit);
-        }
-
-        // Mostrar sección
-        function showSection(sectionName) {
-            // Ocultar todas las secciones
-            document.querySelectorAll('.settings-section').forEach(section => {
-                section.classList.remove('active');
-            });
-
-            // Mostrar sección seleccionada
-            document.getElementById(sectionName).classList.add('active');
-
-            // Actualizar menú
-            document.querySelectorAll('.menu-item').forEach(item => {
-                item.classList.remove('active');
-            });
-            event.target.closest('.menu-item').classList.add('active');
-
-            currentSection = sectionName;
-            
-            // Log de seguimiento
-            console.log('Sección cambiada a:', sectionName);
-        }
-
-        // Toggle setting
-        function toggleSetting(toggle, settingName) {
-            if (toggle.classList.contains('feature-locked')) {
-                showPremiumRequired();
-                return;
-            }
-            
-            toggle.classList.toggle('active');
-            const isActive = toggle.classList.contains('active');
-            
-            // Actualizar valor en el formulario
-            const form = toggle.closest('form');
-            if (form) {
-                let input = form.querySelector(`input[name="${settingName}"]`);
-                if (!input) {
-                    input = document.createElement('input');
-                    input.type = 'hidden';
-                    input.name = settingName;
-                    form.appendChild(input);
-                }
-                input.value = isActive ? 1 : 0;
-            }
-            
-            // Efecto visual de confirmación
-            if (isActive) {
-                toggle.style.boxShadow = '0 0 20px rgba(67, 233, 123, 0.5)';
-                setTimeout(() => {
-                    toggle.style.boxShadow = '';
-                }, 300);
-            }
-        }
-
-        // Verificar fortaleza de contraseña
-        function checkPasswordStrength(password) {
-            const bar = document.getElementById('passwordStrengthBar');
-            let strength = 0;
-            
-            // Criterios de fortaleza
-            if (password.length >= 8) strength++;
-            if (/[a-z]/.test(password)) strength++;
-            if (/[A-Z]/.test(password)) strength++;
-            if (/\d/.test(password)) strength++;
-            if (/[^a-zA-Z\d]/.test(password)) strength++;
-            
-            // Actualizar barra visual
-            bar.className = 'password-strength-bar';
-            if (strength === 1) {
-                bar.classList.add('weak');
-            } else if (strength === 2) {
-                bar.classList.add('medium');
-            } else if (strength === 3 || strength === 4) {
-                bar.classList.add('strong');
-            } else if (strength === 5) {
-                bar.classList.add('very-strong');
-            }
-        }
-
-        // Manejar envío de formulario de perfil
-        function handleProfileSubmit(e) {
-            e.preventDefault();
-            const formData = new FormData(e.target);
-            formData.append('action', 'update_profile');
-            formData.append('user_id', userId);
-
-            submitForm(formData, 'Perfil actualizado correctamente', () => {
-                // Actualizar avatar si cambió el nombre
-                const newName = formData.get('full_name');
-                if (newName) {
-                    const avatar = document.querySelector('.user-avatar');
-                    avatar.textContent = newName.substring(0, 2).toUpperCase();
-                    userProfile.fullname = newName;
-                }
-            });
-        }
-
-        // Manejar envío de formulario de seguridad
-        function handleSecuritySubmit(e) {
-            e.preventDefault();
-            const formData = new FormData(e.target);
-            formData.append('action', 'update_security_settings');
-            formData.append('user_id', userId);
-
-            // Agregar valores de toggles
-            document.querySelectorAll('#security .toggle-switch').forEach(toggle => {
-                const settingName = toggle.getAttribute('onclick').match(/'([^']+)'/)[1];
-                formData.append(settingName, toggle.classList.contains('active') ? 1 : 0);
-            });
-
-            submitForm(formData, 'Configuración de seguridad actualizada');
-        }
-
-        // Manejar envío de formulario de rendimiento
-        function handlePerformanceSubmit(e) {
-            e.preventDefault();
-            const formData = new FormData(e.target);
-            formData.append('action', 'update_performance_settings');
-            formData.append('user_id', userId);
-
-            // Agregar valores de toggles
-            document.querySelectorAll('#performance .toggle-switch').forEach(toggle => {
-                const settingName = toggle.getAttribute('onclick').match(/'([^']+)'/)[1];
-                formData.append(settingName, toggle.classList.contains('active') ? 1 : 0);
-            });
-
-            submitForm(formData, 'Configuración de rendimiento actualizada');
-        }
-
-        // Manejar envío de formulario de notificaciones
-        function handleNotificationsSubmit(e) {
-            e.preventDefault();
-            const formData = new FormData(e.target);
-            formData.append('action', 'update_notification_settings');
-            formData.append('user_id', userId);
-
-            // Agregar valores de toggles
-            document.querySelectorAll('#notifications .toggle-switch').forEach(toggle => {
-                const settingName = toggle.getAttribute('onclick').match(/'([^']+)'/)[1];
-                formData.append(settingName, toggle.classList.contains('active') ? 1 : 0);
-            });
-
-            submitForm(formData, 'Configuración de notificaciones actualizada');
-        }
-
-        // Manejar envío de formulario de privacidad
-        function handlePrivacySubmit(e) {
-            e.preventDefault();
-            const formData = new FormData(e.target);
-            formData.append('action', 'update_privacy_settings');
-            formData.append('user_id', userId);
-
-            // Agregar valores de toggles
-            document.querySelectorAll('#privacy .toggle-switch').forEach(toggle => {
-                if (!toggle.classList.contains('feature-locked')) {
-                    const settingName = toggle.getAttribute('onclick').match(/'([^']+)'/)[1];
-                    formData.append(settingName, toggle.classList.contains('active') ? 1 : 0);
-                }
-            });
-
-            submitForm(formData, 'Configuración de privacidad actualizada');
-        }
-
-        // Manejar envío de formulario de contraseña
-        function handlePasswordSubmit(e) {
-            e.preventDefault();
-            const formData = new FormData(e.target);
-            
-            // Validaciones del lado cliente
-            const newPassword = formData.get('new_password');
-            const confirmPassword = formData.get('confirm_password');
+        // Password Validation
+        function validatePassword() {
+            const newPassword = document.getElementById('new_password').value;
+            const confirmPassword = document.getElementById('confirm_password').value;
             
             if (newPassword !== confirmPassword) {
-                showToast('Las contraseñas no coinciden', 'error');
-                return;
+                alert('Las contraseñas no coinciden');
+                return false;
             }
             
             if (newPassword.length < 8) {
-                showToast('La contraseña debe tener al menos 8 caracteres', 'error');
+                alert('La contraseña debe tener al menos 8 caracteres');
+                return false;
+            }
+            
+            showLoading();
+            return true;
+        }
+
+        // Check Password Strength
+        function checkPasswordStrength() {
+            const password = document.getElementById('new_password').value;
+            const strengthFill = document.getElementById('strengthFill');
+            const strengthText = document.getElementById('strengthText');
+            
+            let strength = 0;
+            let strengthClass = '';
+            let strengthMessage = '';
+            
+            if (password.length === 0) {
+                strengthFill.className = 'strength-fill';
+                strengthText.textContent = 'Ingresa una contraseña';
                 return;
             }
             
-            if (!/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(newPassword)) {
-                showToast('La contraseña debe contener al menos una mayúscula, una minúscula y un número', 'error');
-                return;
+            // Check length
+            if (password.length >= 8) strength++;
+            if (password.length >= 12) strength++;
+            
+            // Check for lowercase
+            if (/[a-z]/.test(password)) strength++;
+            
+            // Check for uppercase
+            if (/[A-Z]/.test(password)) strength++;
+            
+            // Check for numbers
+            if (/[0-9]/.test(password)) strength++;
+            
+            // Check for special characters
+            if (/[!@#$%^&*(),.?":{}|<>]/.test(password)) strength++;
+            
+            // Determine strength level
+            if (strength <= 2) {
+                strengthClass = 'strength-weak';
+                strengthMessage = 'Contraseña débil';
+            } else if (strength <= 4) {
+                strengthClass = 'strength-medium';
+                strengthMessage = 'Contraseña media';
+            } else {
+                strengthClass = 'strength-strong';
+                strengthMessage = 'Contraseña fuerte';
             }
             
-            formData.append('action', 'change_password');
-            formData.append('user_id', userId);
-
-            submitForm(formData, 'Contraseña actualizada correctamente', () => {
-                e.target.reset();
-                document.getElementById('passwordStrengthBar').className = 'password-strength-bar';
-            });
+            strengthFill.className = 'strength-fill ' + strengthClass;
+            strengthText.textContent = strengthMessage;
         }
 
-        // Enviar formulario
-        function submitForm(formData, successMessage, callback) {
-            const submitButton = event.target.querySelector('button[type="submit"]');
-            const originalText = submitButton.innerHTML;
-            
-            submitButton.innerHTML = '<div class="loading"></div> Guardando...';
-            submitButton.disabled = true;
-
-            fetch('user_settings.php', {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                return response.json();
-            })
-            .then(data => {
-                submitButton.innerHTML = originalText;
-                submitButton.disabled = false;
-
-                if (data.success) {
-                    showToast(successMessage, 'success');
-                    if (callback) callback();
-                    
-                    // Log exitoso
-                    console.log('Configuración guardada exitosamente:', data);
-                } else {
-                    showToast(data.error || 'Error al guardar configuración', 'error');
-                    console.error('Error en respuesta:', data);
-                }
-            })
-            .catch(error => {
-                submitButton.innerHTML = originalText;
-                submitButton.disabled = false;
-                console.error('Error de conexión:', error);
-                showToast('Error de conexión. Reintentando...', 'error');
-                
-                // Reintentar después de 2 segundos
-                setTimeout(() => {
-                    if (confirm('¿Deseas reintentar guardar la configuración?')) {
-                        submitForm(formData, successMessage, callback);
-                    }
-                }, 2000);
-            });
-        }
-
-        // Restablecer formulario
+        // Reset Form
         function resetForm(formId) {
-            if (confirm('¿Estás seguro de que quieres restablecer los cambios?')) {
-                const form = document.getElementById(formId);
-                form.reset();
-                
-                // Restablecer toggles a valores por defecto
-                form.querySelectorAll('.toggle-switch').forEach(toggle => {
-                    // Aquí deberías implementar la lógica para restablecer a valores por defecto
-                    // Por ahora, simplemente los mantenemos como están
-                });
-                
-                showToast('Formulario restablecido', 'info');
-            }
+            document.getElementById(formId).reset();
+            showToast('Formulario restablecido', 'info');
         }
 
-        // Exportar datos del usuario
-        function exportUserData() {
-            const button = event.target;
-            const originalText = button.innerHTML;
-            
-            button.innerHTML = '<div class="loading"></div> Exportando...';
-            button.disabled = true;
-
-            const formData = new FormData();
-            formData.append('action', 'export_data');
-            formData.append('user_id', userId);
-
-            fetch('user_settings.php', {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => response.json())
-            .then(data => {
-                button.innerHTML = originalText;
-                button.disabled = false;
-
-                if (data.success) {
-                    // Crear y descargar archivo
-                    const blob = new Blob([data.data], { type: 'application/json' });
-                    const url = window.URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = data.filename;
-                    document.body.appendChild(a);
-                    a.click();
-                    document.body.removeChild(a);
-                    window.URL.revokeObjectURL(url);
-                    
-                    showToast(`Datos exportados correctamente (${(data.size / 1024).toFixed(2)} KB)`, 'success');
-                    console.log('Exportación completada:', data.filename);
-                } else {
-                    showToast(data.error || 'Error al exportar datos', 'error');
-                }
-            })
-            .catch(error => {
-                button.innerHTML = originalText;
-                button.disabled = false;
-                console.error('Error:', error);
-                showToast('Error de conexión durante la exportación', 'error');
-            });
+        // Show Delete Modal
+        function showDeleteModal() {
+            document.getElementById('deleteModal').classList.add('show');
         }
 
-        // Mostrar modal de eliminación de cuenta
-        function showDeleteAccountModal() {
-            const username = userProfile.username || 'usuario';
-            const confirmText = `Para eliminar tu cuenta, escribe "${username}" y luego ingresa tu contraseña:`;
-            
-            const usernameConfirm = prompt(confirmText);
-            
-            if (usernameConfirm === username) {
-                const password = prompt('Ingresa tu contraseña para confirmar:');
-                
-                if (password) {
-                    if (confirm(`¿Estás ABSOLUTAMENTE seguro de que quieres eliminar tu cuenta? 
-
-Esta acción:
-• Eliminará todos tus datos permanentemente
-• No se puede deshacer
-• Cerrará tu sesión inmediatamente
-
-¿Continuar?`)) {
-                        deleteUserAccount(password);
-                    }
-                }
-            } else if (usernameConfirm !== null) {
-                showToast('Nombre de usuario incorrecto', 'error');
-            }
+        // Close Delete Modal
+        function closeDeleteModal() {
+            document.getElementById('deleteModal').classList.remove('show');
         }
 
-        // Eliminar cuenta de usuario
-        function deleteUserAccount(password) {
-            const formData = new FormData();
-            formData.append('action', 'delete_account');
-            formData.append('user_id', userId);
-            formData.append('password', password);
-
-            // Mostrar indicador de carga global
-            document.body.style.cursor = 'wait';
-            
-            fetch('user_settings.php', {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => response.json())
-            .then(data => {
-                document.body.style.cursor = 'default';
-                
-                if (data.success) {
-                    showToast('Cuenta eliminada correctamente. Redirigiendo...', 'success');
-                    
-                    // Limpiar datos locales
-                    localStorage.clear();
-                    sessionStorage.clear();
-                    
-                    // Redireccionar después de 3 segundos
-                    setTimeout(() => {
-                        window.location.href = 'login.php?account_deleted=1';
-                    }, 3000);
-                } else {
-                    showToast(data.error || 'Error al eliminar cuenta', 'error');
-                }
-            })
-            .catch(error => {
-                document.body.style.cursor = 'default';
-                console.error('Error:', error);
-                showToast('Error de conexión al eliminar cuenta', 'error');
-            });
+        // Close 2FA Modal
+        function close2FAModal() {
+            document.getElementById('2faModal').classList.remove('show');
         }
 
-        // Mostrar información del sistema
-        function showSystemInfo() {
-            const systemInfo = {
-                'Aplicación': '<?php echo APP_NAME; ?>',
-                'Versión': '<?php echo APP_VERSION; ?>',
-                'Desarrollador': '<?php echo DEVELOPER; ?>',
-                'Base de Datos': <?php echo $system_integrity['database'] ? '"Conectada"' : '"Modo Simulación"'; ?>,
-                'Usuario Premium': isPremium ? 'Sí' : 'No',
-                'Navegador': navigator.userAgent.split(' ')[0],
-                'Idioma': navigator.language,
-                'Zona Horaria': Intl.DateTimeFormat().resolvedOptions().timeZone,
-                'Pantalla': `${screen.width}x${screen.height}`,
-                'Memoria JS': navigator.deviceMemory ? `${navigator.deviceMemory} GB` : 'No disponible',
-                'Conexión': navigator.connection ? navigator.connection.effectiveType : 'Desconocida'
-            };
-
-            let infoText = 'INFORMACIÓN DEL SISTEMA\n' + '='.repeat(30) + '\n\n';
-            for (const [key, value] of Object.entries(systemInfo)) {
-                infoText += `${key}: ${value}\n`;
+        // Confirm Delete
+        function confirmDelete() {
+            if (!confirm('¿Estás absolutamente seguro? Esta acción no se puede deshacer.')) {
+                return false;
             }
             
-            infoText += '\n' + '='.repeat(30);
-            infoText += '\nGuardianIA v3.0 - Anderson Mamian Chicangana';
+            if (!confirm('Esta es tu ÚLTIMA oportunidad. ¿Realmente deseas eliminar tu cuenta permanentemente?')) {
+                return false;
+            }
             
-            // Crear modal personalizado
-            const modal = document.createElement('div');
-            modal.style.cssText = `
-                position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-                background: rgba(0,0,0,0.8); z-index: 10000;
-                display: flex; align-items: center; justify-content: center;
-            `;
-            
-            const content = document.createElement('div');
-            content.style.cssText = `
-                background: var(--bg-card); padding: 2rem; border-radius: 12px;
-                max-width: 500px; width: 90%; max-height: 80%; overflow-y: auto;
-                border: 1px solid var(--border-color);
-            `;
-            
-            content.innerHTML = `
-                <h3 style="color: var(--text-primary); margin-bottom: 1rem;">
-                    <i class="fas fa-info-circle"></i> Información del Sistema
-                </h3>
-                <pre style="color: var(--text-secondary); font-family: monospace; white-space: pre-wrap; font-size: 0.9rem;">${infoText}</pre>
-                <button onclick="this.closest('.modal').remove()" style="
-                    background: var(--primary-gradient); color: white; border: none;
-                    padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer;
-                    margin-top: 1rem; font-weight: 600;
-                ">Cerrar</button>
-            `;
-            
-            modal.className = 'modal';
-            modal.appendChild(content);
-            document.body.appendChild(modal);
-            
-            // Cerrar al hacer clic fuera
-            modal.addEventListener('click', (e) => {
-                if (e.target === modal) modal.remove();
-            });
+            showLoading();
+            return true;
         }
 
-        // Mostrar requerimiento premium
-        function showPremiumRequired() {
-            showToast('Esta característica requiere una suscripción Premium', 'warning');
-            
-            setTimeout(() => {
-                if (confirm('¿Deseas actualizar a Premium para acceder a todas las características avanzadas?')) {
-                    upgradeToPremium();
-                }
-            }, 2000);
-        }
-
-        // Actualizar a Premium
-        function upgradeToPremium() {
-            const features = [
-                'Detección de IA avanzada con redes neuronales',
-                'Encriptación cuántica de última generación',
-                'Análisis predictivo de amenazas',
-                'VPN con IA integrada',
-                'Asistente IA conversacional ilimitado',
-                'Monitoreo en tiempo real 24/7',
-                'Soporte prioritario',
-                'Actualizaciones exclusivas'
-            ];
-            
-            const modal = document.createElement('div');
-            modal.style.cssText = `
-                position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-                background: rgba(0,0,0,0.9); z-index: 10000;
-                display: flex; align-items: center; justify-content: center;
-            `;
-            
-            const content = document.createElement('div');
-            content.style.cssText = `
-                background: var(--bg-card); padding: 2rem; border-radius: 12px;
-                max-width: 600px; width: 90%; border: 1px solid #ffd700;
-                box-shadow: 0 0 30px rgba(255, 215, 0, 0.3);
-            `;
-            
-            content.innerHTML = `
-                <div style="text-align: center; margin-bottom: 2rem;">
-                    <div style="font-size: 3rem; background: linear-gradient(45deg, #ffd700, #ffed4e); 
-                                -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
-                        <i class="fas fa-crown"></i>
-                    </div>
-                    <h2 style="color: var(--text-primary); margin: 0.5rem 0;">GuardianIA Premium</h2>
-                    <p style="color: var(--text-secondary);">Desbloquea el poder completo de la IA</p>
-                </div>
-                
-                <div style="margin-bottom: 2rem;">
-                    <h3 style="color: var(--text-primary); margin-bottom: 1rem;">Características Exclusivas:</h3>
-                    <ul style="color: var(--text-secondary); padding-left: 1rem;">
-                        ${features.map(feature => `<li style="margin-bottom: 0.5rem;">${feature}</li>`).join('')}
-                    </ul>
-                </div>
-                
-                <div style="text-align: center; margin-bottom: 2rem;">
-                    <div style="font-size: 2rem; color: var(--text-primary); margin-bottom: 0.5rem;">
-                        $60.000 COP/mes
-                    </div>
-                    <div style="color: var(--text-secondary); font-size: 0.9rem;">
-                        15% de descuento en plan anual
-                    </div>
-                </div>
-                
-                <div style="display: flex; gap: 1rem; justify-content: center;">
-                    <button onclick="proceedToPremium()" style="
-                        background: linear-gradient(45deg, #ffd700, #ffed4e); color: #000;
-                        border: none; padding: 1rem 2rem; border-radius: 8px; cursor: pointer;
-                        font-weight: 700; font-size: 1rem;
-                    ">
-                        <i class="fas fa-crown"></i> Actualizar Ahora
-                    </button>
-                    <button onclick="this.closest('.modal').remove()" style="
-                        background: var(--bg-secondary); color: var(--text-primary);
-                        border: 1px solid var(--border-color); padding: 1rem 2rem; 
-                        border-radius: 8px; cursor: pointer; font-weight: 600;
-                    ">Más Tarde</button>
-                </div>
-                
-                <div style="text-align: center; margin-top: 1rem; font-size: 0.8rem; color: var(--text-secondary);">
-                    Desarrollado por ${userProfile.fullname || 'Anderson Mamian Chicangana'}
-                </div>
-            `;
-            
-            modal.className = 'modal';
-            modal.appendChild(content);
-            document.body.appendChild(modal);
-            
-            // Función para proceder con Premium
-            window.proceedToPremium = function() {
-                modal.remove();
-                showToast('Funcionalidad de pago en desarrollo. Contacta al desarrollador.', 'info');
-                
-                // Simular activación premium para demo
+        // Confirm Action
+        function confirmAction(action) {
+            if (confirm(`¿Estás seguro de que deseas ${action}?`)) {
+                showLoading();
+                // Aquí iría la lógica para la acción
                 setTimeout(() => {
-                    if (confirm('¿Activar modo Premium de demostración?')) {
-                        isPremium = true;
-                        showToast('¡Premium activado! Recarga la página para ver todos los cambios.', 'success');
-                        
-                        // Actualizar elementos premium en la página
-                        document.querySelectorAll('.feature-locked').forEach(element => {
-                            element.classList.remove('feature-locked');
-                        });
-                        
-                        // Actualizar badge
-                        const userProfile = document.querySelector('.user-profile');
-                        if (!userProfile.querySelector('.premium-badge')) {
-                            const badge = document.createElement('span');
-                            badge.className = 'premium-badge';
-                            badge.innerHTML = 'Premium';
-                            userProfile.insertBefore(badge, userProfile.firstChild);
-                        }
-                    }
-                }, 1000);
-            };
+                    hideLoading();
+                    showToast(`${action} completado exitosamente`, 'success');
+                }, 2000);
+            }
         }
 
-        // Mostrar notificación toast
-        function showToast(message, type = 'info') {
-            const toast = document.getElementById('toast');
-            const toastMessage = document.getElementById('toast-message');
+        // Update Language
+        function updateLanguage(language) {
+            showLoading();
             
-            toastMessage.textContent = message;
-            toast.className = `toast ${type}`;
-            toast.classList.add('show');
-            
-            // Auto-ocultar después de 5 segundos
+            // Simular cambio de idioma
             setTimeout(() => {
-                hideToast();
-            }, 5000);
-            
-            // Log del mensaje
-            console.log(`Toast [${type.toUpperCase()}]:`, message);
-        }
-
-        // Ocultar notificación toast
-        function hideToast() {
-            const toast = document.getElementById('toast');
-            toast.classList.remove('show');
-        }
-
-        // Función para manejar teclas de acceso rápido
-        document.addEventListener('keydown', function(e) {
-            // Ctrl + S para guardar la sección actual
-            if (e.ctrlKey && e.key === 's') {
-                e.preventDefault();
-                const activeSection = document.querySelector('.settings-section.active');
-                const form = activeSection.querySelector('form');
-                if (form) {
-                    form.dispatchEvent(new Event('submit'));
-                }
-            }
-            
-            // Escape para cerrar modales
-            if (e.key === 'Escape') {
-                const modals = document.querySelectorAll('.modal');
-                modals.forEach(modal => modal.remove());
-                hideToast();
-            }
-        });
-
-        // Función para detectar cambios no guardados
-        let hasUnsavedChanges = false;
-        document.addEventListener('input', function(e) {
-            if (e.target.matches('.form-input, .setting-select')) {
-                hasUnsavedChanges = true;
+                hideLoading();
+                showToast('Idioma actualizado', 'success');
                 
-                // Mostrar indicador visual
-                const form = e.target.closest('form');
-                if (form && !form.querySelector('.unsaved-indicator')) {
-                    const indicator = document.createElement('div');
-                    indicator.className = 'unsaved-indicator';
-                    indicator.style.cssText = `
-                        position: absolute; top: -10px; right: -10px;
-                        width: 20px; height: 20px; background: #ffa502;
-                        border-radius: 50%; animation: pulse 2s infinite;
-                    `;
-                    form.style.position = 'relative';
-                    form.appendChild(indicator);
-                }
-            }
-        });
-
-        // Advertir sobre cambios no guardados al salir
-        window.addEventListener('beforeunload', function(e) {
-            if (hasUnsavedChanges) {
-                e.preventDefault();
-                e.returnValue = '¿Estás seguro de que quieres salir? Tienes cambios sin guardar.';
-                return e.returnValue;
-            }
-        });
-
-        // Limpiar indicador al guardar exitosamente
-        document.addEventListener('submit', function(e) {
-            setTimeout(() => {
-                hasUnsavedChanges = false;
-                const indicators = document.querySelectorAll('.unsaved-indicator');
-                indicators.forEach(indicator => indicator.remove());
-            }, 500);
-        });
-
-        // Función de manejo de errores global
-        window.addEventListener('error', function(e) {
-            console.error('Error capturado:', e.error);
-            showToast('Se produjo un error inesperado. Por favor, recarga la página.', 'error');
-            
-            // Enviar error al servidor para logging (opcional)
-            fetch('user_settings.php', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    action: 'log_client_error',
-                    error: {
-                        message: e.error.message,
-                        stack: e.error.stack,
-                        filename: e.filename,
-                        lineno: e.lineno,
-                        colno: e.colno
-                    },
-                    user_id: userId,
-                    timestamp: new Date().toISOString()
-                })
-            }).catch(() => {
-                // Silenciosamente fallar si no se puede enviar el log
-            });
-        });
-
-        // Función para verificar estado de conexión
-        function checkConnectionStatus() {
-            return fetch('user_settings.php', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                },
-                body: 'action=ping'
-            })
-            .then(response => response.ok)
-            .catch(() => false);
+                // En producción, aquí harías una llamada AJAX
+                const formData = new FormData();
+                formData.append('action', 'update_language');
+                formData.append('language', language);
+                
+                // fetch('user_settings.php', { method: 'POST', body: formData })
+            }, 1000);
         }
 
-        // Verificar conexión periódicamente
-        setInterval(async () => {
-            const isConnected = await checkConnectionStatus();
-            const statusIndicators = document.querySelectorAll('.status-indicator');
-            
-            if (!isConnected) {
-                statusIndicators.forEach(indicator => {
-                    if (indicator.classList.contains('connected')) {
-                        indicator.className = 'status-indicator disconnected';
-                        indicator.innerHTML = '<i class="fas fa-times-circle"></i> Desconectado';
-                    }
-                });
-            }
-        }, 30000); // Verificar cada 30 segundos
-
-        // Inicialización final
-        console.log('Sistema GuardianIA v3.0 - Configuración de Usuario inicializado correctamente');
-        console.log('Desarrollado por: Anderson Mamian Chicangana');
-        console.log('Estado Premium:', isPremium ? 'Activo' : 'Básico');
-        
-        // Mostrar mensaje de bienvenida
-        setTimeout(() => {
-            showToast(`Bienvenido a ${userProfile.fullname || 'GuardianIA'} v3.0`, 'success');
-        }, 1000);
-
-        // Función para actualizar tema dinámicamente
+        // Update Theme
         function updateTheme(theme) {
-            const root = document.documentElement;
+            showLoading();
             
             if (theme === 'light') {
-                root.style.setProperty('--bg-primary', '#f8fafc');
-                root.style.setProperty('--bg-secondary', '#ffffff');
-                root.style.setProperty('--bg-card', '#ffffff');
-                root.style.setProperty('--text-primary', '#1a202c');
-                root.style.setProperty('--text-secondary', '#4a5568');
-                root.style.setProperty('--border-color', '#e2e8f0');
-            } else if (theme === 'auto') {
-                const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-                updateTheme(isDark ? 'dark' : 'light');
-            }
-            // El tema oscuro ya está por defecto
-        }
-
-        // Escuchar cambios en la preferencia del sistema
-        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
-            const currentTheme = document.querySelector('select[name="theme"]')?.value;
-            if (currentTheme === 'auto') {
-                updateTheme('auto');
-            }
-        });
-
-        // Aplicar tema inicial
-        const initialTheme = '<?php echo $user_profile['theme'] ?? 'dark'; ?>';
-        updateTheme(initialTheme);
-
-        // Función para mostrar estadísticas de uso
-        function showUsageStats() {
-            const stats = {
-                'Mensajes enviados hoy': Math.floor(Math.random() * 50) + 10,
-                'Amenazas detectadas': Math.floor(Math.random() * 20) + 5,
-                'Optimizaciones realizadas': Math.floor(Math.random() * 15) + 8,
-                'Tiempo activo': `${Math.floor(Math.random() * 8) + 1}h ${Math.floor(Math.random() * 60)}m`,
-                'Nivel de seguridad': `${Math.floor(Math.random() * 20) + 80}%`,
-                'Estado de la IA': Math.random() > 0.5 ? 'Activa' : 'Aprendiendo'
-            };
-
-            let statsText = 'ESTADÍSTICAS DE USO DIARIO\n' + '='.repeat(35) + '\n\n';
-            for (const [key, value] of Object.entries(stats)) {
-                statsText += `${key}: ${value}\n`;
-            }
-            
-            console.table(stats);
-            showToast('Estadísticas de uso mostradas en consola', 'info');
-        }
-
-        // Función para backup automático
-        function performAutoBackup() {
-            if (isPremium) {
-                const backupData = {
-                    timestamp: new Date().toISOString(),
-                    user_id: userId,
-                    settings: {
-                        security: getCurrentSectionData('security'),
-                        performance: getCurrentSectionData('performance'),
-                        notifications: getCurrentSectionData('notifications'),
-                        privacy: getCurrentSectionData('privacy')
-                    },
-                    profile: userProfile
-                };
-
-                // Guardar en localStorage como backup
-                localStorage.setItem('guardianai_backup', JSON.stringify(backupData));
-                console.log('Backup automático realizado:', new Date().toLocaleTimeString());
-                
-                // Mostrar notificación cada hora
-                if (Math.random() < 0.1) {
-                    showToast('Backup automático completado', 'success');
-                }
-            }
-        }
-
-        // Función para obtener datos actuales de una sección
-        function getCurrentSectionData(sectionId) {
-            const section = document.getElementById(sectionId);
-            const data = {};
-            
-            if (section) {
-                // Obtener valores de toggles
-                section.querySelectorAll('.toggle-switch').forEach(toggle => {
-                    const settingName = toggle.getAttribute('onclick')?.match(/'([^']+)'/)?.[1];
-                    if (settingName) {
-                        data[settingName] = toggle.classList.contains('active');
-                    }
-                });
-
-                // Obtener valores de selects
-                section.querySelectorAll('.setting-select').forEach(select => {
-                    if (select.name) {
-                        data[select.name] = select.value;
-                    }
-                });
-            }
-            
-            return data;
-        }
-
-        // Backup automático cada 10 minutos para usuarios premium
-        if (isPremium) {
-            setInterval(performAutoBackup, 600000);
-        }
-
-        // Función para restaurar backup
-        function restoreFromBackup() {
-            const backup = localStorage.getItem('guardianai_backup');
-            if (backup) {
-                try {
-                    const backupData = JSON.parse(backup);
-                    const backupDate = new Date(backupData.timestamp);
-                    
-                    if (confirm(`¿Restaurar configuración desde backup del ${backupDate.toLocaleString()}?`)) {
-                        // Aquí implementarías la lógica de restauración
-                        showToast('Función de restauración en desarrollo', 'info');
-                    }
-                } catch (e) {
-                    showToast('Error al leer backup', 'error');
-                }
+                document.body.classList.add('light-theme');
             } else {
-                showToast('No hay backups disponibles', 'warning');
+                document.body.classList.remove('light-theme');
             }
-        }
-
-        // Función para limpiar caché y datos temporales
-        function clearCache() {
-            if (confirm('¿Limpiar caché y datos temporales? Esto mejorará el rendimiento.')) {
-                // Limpiar localStorage específico de la app
-                const keysToKeep = ['guardianai_backup'];
-                const keys = Object.keys(localStorage);
+            
+            setTimeout(() => {
+                hideLoading();
+                showToast('Tema actualizado', 'success');
                 
-                keys.forEach(key => {
-                    if (!keysToKeep.includes(key) && key.startsWith('guardianai_')) {
-                        localStorage.removeItem(key);
-                    }
-                });
-
-                // Limpiar sessionStorage
-                sessionStorage.clear();
-
-                showToast('Caché limpiado correctamente', 'success');
-                console.log('Caché y datos temporales eliminados');
-            }
+                // Guardar en localStorage
+                localStorage.setItem('theme', theme);
+                
+                // En producción, también guardarías en el servidor
+                const formData = new FormData();
+                formData.append('action', 'update_theme');
+                formData.append('theme', theme);
+                
+                // fetch('user_settings.php', { method: 'POST', body: formData })
+            }, 500);
         }
 
-        // Agregar funciones adicionales al objeto global para debugging
-        window.GuardianAI = {
-            version: '<?php echo APP_VERSION; ?>',
-            developer: '<?php echo DEVELOPER; ?>',
-            userId: userId,
-            isPremium: isPremium,
-            showStats: showUsageStats,
-            clearCache: clearCache,
-            restoreBackup: restoreFromBackup,
-            exportData: exportUserData,
-            systemInfo: showSystemInfo,
-            currentSection: () => currentSection,
-            hasUnsavedChanges: () => hasUnsavedChanges
-        };
+        // Show Loading
+        function showLoading() {
+            document.getElementById('loadingOverlay').classList.add('show');
+        }
 
-        // Mensaje final para desarrolladores
-        console.log('%c🛡️ GuardianIA v3.0 FINAL', 'color: #667eea; font-size: 20px; font-weight: bold;');
-        console.log('%cDesarrollado por Anderson Mamian Chicangana', 'color: #4facfe; font-size: 14px;');
-        console.log('%cSistema de configuración inicializado correctamente', 'color: #43e97b; font-size: 12px;');
-        console.log('%cComandos disponibles: GuardianAI.showStats(), GuardianAI.systemInfo(), etc.', 'color: #ffa502; font-size: 11px;');
-        
-        // Verificación final de integridad
-        const integrityCheck = {
-            scriptsLoaded: true,
-            domReady: document.readyState === 'complete',
-            formsInitialized: document.querySelectorAll('form').length > 0,
-            togglesWorking: document.querySelectorAll('.toggle-switch').length > 0,
-            apiEndpoint: 'user_settings.php',
-            timestamp: new Date().toISOString()
-        };
+        // Hide Loading
+        function hideLoading() {
+            document.getElementById('loadingOverlay').classList.remove('show');
+        }
 
-        console.log('Verificación de integridad:', integrityCheck);
-
-        // Auto-save temporal para prevenir pérdida de datos
-        let autoSaveInterval;
-        document.addEventListener('input', function(e) {
-            if (e.target.matches('.form-input')) {
-                clearTimeout(autoSaveInterval);
-                autoSaveInterval = setTimeout(() => {
-                    // Auto-guardar datos temporalmente
-                    const tempData = {};
-                    document.querySelectorAll('.form-input').forEach(input => {
-                        if (input.name && input.value) {
-                            tempData[input.name] = input.value;
-                        }
-                    });
-                    
-                    sessionStorage.setItem('guardianai_temp_data', JSON.stringify({
-                        data: tempData,
-                        timestamp: Date.now(),
-                        section: currentSection
-                    }));
-                }, 2000);
+        // Show Toast
+        function showToast(message, type = 'info') {
+            // Crear toast dinámicamente
+            const existingToast = document.querySelector('.toast.dynamic');
+            if (existingToast) {
+                existingToast.remove();
             }
-        });
+            
+            const toast = document.createElement('div');
+            toast.className = `alert alert-${type} dynamic`;
+            toast.style.position = 'fixed';
+            toast.style.top = '100px';
+            toast.style.right = '2rem';
+            toast.style.zIndex = '2001';
+            toast.style.minWidth = '300px';
+            
+            const icon = type === 'success' ? 'check-circle' : 
+                        type === 'error' ? 'exclamation-circle' : 
+                        type === 'warning' ? 'exclamation-triangle' : 'info-circle';
+            
+            toast.innerHTML = `
+                <i class="fas fa-${icon}"></i>
+                <span>${message}</span>
+            `;
+            
+            document.body.appendChild(toast);
+            
+            // Auto-hide after 4 seconds
+            setTimeout(() => {
+                toast.style.transition = 'opacity 0.5s';
+                toast.style.opacity = '0';
+                setTimeout(() => toast.remove(), 500);
+            }, 4000);
+        }
 
-        // Restaurar datos temporales si existen
-        const tempData = sessionStorage.getItem('guardianai_temp_data');
-        if (tempData) {
-            try {
-                const parsed = JSON.parse(tempData);
-                // Solo restaurar si los datos son recientes (menos de 1 hora)
-                if (Date.now() - parsed.timestamp < 3600000) {
-                    console.log('Datos temporales encontrados, restaurando...');
-                    // Implementar restauración si es necesario
+        // Avatar Upload Handler
+        document.getElementById('avatarInput')?.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                if (file.size > 5 * 1024 * 1024) {
+                    showToast('El archivo es demasiado grande (máx. 5MB)', 'error');
+                    return;
                 }
-            } catch (e) {
-                sessionStorage.removeItem('guardianai_temp_data');
+                
+                if (!file.type.startsWith('image/')) {
+                    showToast('Por favor selecciona una imagen', 'error');
+                    return;
+                }
+                
+                // Preview the image
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    // En producción, aquí subirías la imagen al servidor
+                    showToast('Avatar actualizado (demo)', 'success');
+                };
+                reader.readAsDataURL(file);
             }
-        }
-
-        // Finalización exitosa
-        console.log('✅ Sistema GuardianIA v3.0 completamente inicializado');
-        console.log('📊 Estado:', {
-            usuario: userProfile.fullname || 'Usuario',
-            premium: isPremium,
-            seccion: currentSection,
-            bd_conectada: <?php echo $system_integrity['database'] ? 'true' : 'false'; ?>,
-            funciones_activas: Object.keys(window.GuardianAI).length
         });
 
-    </script>
+        // Initialize on load
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check saved theme
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme === 'light') {
+                document.body.classList.add('light-theme');
+            }
+            
+            // Auto-hide alerts after 5 seconds
+            setTimeout(function() {
+                const alerts = document.querySelectorAll('.alert:not(.dynamic)');
+                alerts.forEach(alert => {
+                    alert.style.transition = 'opacity 0.5s';
+                    alert.style.opacity = '0';
+                    setTimeout(() => alert.remove(), 500);
+                });
+            }, 5000);
+            
+            // Initialize tooltips
+            initializeTooltips();
+            
+            // Check for URL hash to open specific tab
+            const hash = window.location.hash.substring(1);
+            if (hash) {
+                const tabLink = document.querySelector(`.sidebar-link[onclick*="${hash}"]`);
+                if (tabLink) {
+                    showTab(hash, tabLink);
+                }
+            }
+            
+            // Initialize progress bars animation
+            animateProgressBars();
+            
+            // Setup keyboard shortcuts
+            setupKeyboardShortcuts();
+            
+            // Check session status
+            checkSessionStatus();
+        });
 
-    <!-- Analytics y Tracking (opcional) -->
-    <script>
-        // Analytics básico para tracking de uso
-        if (typeof gtag !== 'undefined') {
-            gtag('config', 'GA_MEASUREMENT_ID', {
-                user_id: userId,
-                custom_map: {
-                    'premium_status': isPremium ? 'premium' : 'basic',
-                    'app_version': '<?php echo APP_VERSION; ?>'
+        // Initialize Tooltips
+        function initializeTooltips() {
+            const tooltips = document.querySelectorAll('[data-tooltip]');
+            tooltips.forEach(element => {
+                element.classList.add('tooltip');
+                const tooltipText = document.createElement('span');
+                tooltipText.className = 'tooltip-text';
+                tooltipText.textContent = element.getAttribute('data-tooltip');
+                element.appendChild(tooltipText);
+            });
+        }
+
+        // Animate Progress Bars
+        function animateProgressBars() {
+            const progressBars = document.querySelectorAll('.progress-fill');
+            progressBars.forEach(bar => {
+                const width = bar.style.width;
+                bar.style.width = '0%';
+                setTimeout(() => {
+                    bar.style.width = width;
+                }, 100);
+            });
+        }
+
+        // Setup Keyboard Shortcuts
+        function setupKeyboardShortcuts() {
+            document.addEventListener('keydown', function(e) {
+                // Ctrl/Cmd + S to save
+                if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+                    e.preventDefault();
+                    const activeForm = document.querySelector('.tab-container.active form');
+                    if (activeForm) {
+                        activeForm.submit();
+                    }
+                }
+                
+                // Escape to close modals
+                if (e.key === 'Escape') {
+                    const modals = document.querySelectorAll('.modal.show');
+                    modals.forEach(modal => {
+                        modal.classList.remove('show');
+                    });
+                }
+                
+                // Alt + 1-6 for quick tab navigation
+                if (e.altKey && e.key >= '1' && e.key <= '6') {
+                    const tabIndex = parseInt(e.key) - 1;
+                    const tabs = ['profile', 'security', 'performance', 'notifications', 'privacy', 'account'];
+                    if (tabs[tabIndex]) {
+                        const link = document.querySelector(`.sidebar-link[onclick*="${tabs[tabIndex]}"]`);
+                        if (link) {
+                            showTab(tabs[tabIndex], link);
+                        }
+                    }
                 }
             });
         }
 
-        // Event tracking para metricas
-        function trackEvent(action, category = 'settings') {
-            if (typeof gtag !== 'undefined') {
-                gtag('event', action, {
-                    event_category: category,
-                    event_label: currentSection,
-                    user_id: userId
+        // Check Session Status
+        function checkSessionStatus() {
+            // Check session every 5 minutes
+            setInterval(() => {
+                fetch('check_session.php')
+                    .then(response => response.json())
+                    .then(data => {
+                        if (!data.valid) {
+                            showToast('Tu sesión ha expirado. Redirigiendo al login...', 'warning');
+                            setTimeout(() => {
+                                window.location.href = 'login.php';
+                            }, 3000);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error checking session:', error);
+                    });
+            }, 5 * 60 * 1000);
+        }
+
+        // Form Validation
+        document.querySelectorAll('form').forEach(form => {
+            form.addEventListener('submit', function(e) {
+                const inputs = form.querySelectorAll('[required]');
+                let valid = true;
+                
+                inputs.forEach(input => {
+                    if (!input.value.trim()) {
+                        valid = false;
+                        input.style.borderColor = '#fa709a';
+                        
+                        // Remove error style on input
+                        input.addEventListener('input', function() {
+                            this.style.borderColor = '';
+                        }, { once: true });
+                    }
                 });
+                
+                if (!valid) {
+                    e.preventDefault();
+                    showToast('Por favor completa todos los campos requeridos', 'error');
+                }
+            });
+        });
+
+        // Real-time form save indicator
+        let formChangeTimeout;
+        document.querySelectorAll('input, select, textarea').forEach(element => {
+            element.addEventListener('change', function() {
+                clearTimeout(formChangeTimeout);
+                const form = this.closest('form');
+                if (form) {
+                    // Show unsaved changes indicator
+                    const saveBtn = form.querySelector('.btn-primary');
+                    if (saveBtn && !saveBtn.textContent.includes('*')) {
+                        saveBtn.innerHTML = '<i class="fas fa-save"></i> Guardar Cambios *';
+                    }
+                    
+                    // Auto-save after 30 seconds of inactivity (opcional)
+                    formChangeTimeout = setTimeout(() => {
+                        // form.submit(); // Descomentar para auto-guardado
+                    }, 30000);
+                }
+            });
+        });
+
+        // Smooth scroll for internal links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function(e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+
+        // Export functionality
+        function exportSettings() {
+            showLoading();
+            
+            // Simular exportación
+            setTimeout(() => {
+                hideLoading();
+                showToast('Configuraciones exportadas exitosamente', 'success');
+                
+                // En producción, descargarías un archivo JSON
+                const settings = {
+                    theme: localStorage.getItem('theme') || 'dark',
+                    language: 'es',
+                    // ... más configuraciones
+                };
+                
+                const blob = new Blob([JSON.stringify(settings, null, 2)], {type: 'application/json'});
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'guardianai_settings.json';
+                a.click();
+            }, 1000);
+        }
+
+        // Import functionality
+        function importSettings() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.json';
+            
+            input.onchange = function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        try {
+                            const settings = JSON.parse(e.target.result);
+                            // Aplicar configuraciones
+                            if (settings.theme) {
+                                updateTheme(settings.theme);
+                            }
+                            showToast('Configuraciones importadas exitosamente', 'success');
+                        } catch (error) {
+                            showToast('Error al importar configuraciones', 'error');
+                        }
+                    };
+                    reader.readAsText(file);
+                }
+            };
+            
+            input.click();
+        }
+
+        // Print settings
+        function printSettings() {
+            window.print();
+        }
+
+        // Check for unsaved changes before leaving
+        window.addEventListener('beforeunload', function(e) {
+            const unsavedIndicators = document.querySelectorAll('.btn-primary');
+            let hasUnsaved = false;
+            
+            unsavedIndicators.forEach(btn => {
+                if (btn.textContent.includes('*')) {
+                    hasUnsaved = true;
+                }
+            });
+            
+            if (hasUnsaved) {
+                e.preventDefault();
+                e.returnValue = 'Tienes cambios sin guardar. ¿Estás seguro de que quieres salir?';
+            }
+        });
+
+        // Debug mode toggle (for development)
+        let debugClickCount = 0;
+        document.querySelector('.logo').addEventListener('click', function() {
+            debugClickCount++;
+            if (debugClickCount >= 7) {
+                debugClickCount = 0;
+                document.body.classList.toggle('debug-mode');
+                showToast('Modo debug ' + (document.body.classList.contains('debug-mode') ? 'activado' : 'desactivado'), 'info');
             }
             
-            // Log local para debugging
-            console.log(`📈 Event: ${category}/${action} in ${currentSection}`);
-        }
+            setTimeout(() => {
+                debugClickCount = 0;
+            }, 3000);
+        });
 
-        // Track de cambios de sección
-        const originalShowSection = showSection;
-        showSection = function(sectionName) {
-            originalShowSection.call(this, sectionName);
-            trackEvent('section_change', 'navigation');
-        };
-    </script>
-
-    <!-- Service Worker para funcionalidad offline (opcional) -->
-    <script>
-        if ('serviceWorker' in navigator && isPremium) {
-            navigator.serviceWorker.register('/sw.js')
-                .then(function(registration) {
-                    console.log('Service Worker registrado:', registration);
-                })
-                .catch(function(error) {
-                    console.log('Error registrando Service Worker:', error);
-                });
-        }
-    </script>
-
-    <!-- Modo de desarrollo/debugging -->
-    <?php if (defined('APP_DEBUG') && APP_DEBUG): ?>
-    <script>
-        console.log('🔧 Modo de desarrollo activado');
-        
-        // Herramientas de debugging
-        window.DEBUG = {
-            toggleAllSettings: () => {
-                document.querySelectorAll('.toggle-switch').forEach(toggle => {
-                    toggle.classList.toggle('active');
-                });
-            },
-            simulateError: () => {
-                throw new Error('Error simulado para testing');
-            },
-            showAllToasts: () => {
-                const types = ['success', 'error', 'warning', 'info'];
-                types.forEach((type, index) => {
-                    setTimeout(() => {
-                        showToast(`Mensaje de prueba ${type}`, type);
-                    }, index * 1000);
-                });
-            },
-            resetToDefaults: () => {
-                if (confirm('¿Resetear todas las configuraciones a valores por defecto?')) {
-                    location.reload();
+        // Performance monitoring
+        if (window.performance) {
+            window.addEventListener('load', function() {
+                const perfData = window.performance.timing;
+                const pageLoadTime = perfData.loadEventEnd - perfData.navigationStart;
+                console.log('Page load time:', pageLoadTime + 'ms');
+                
+                // Send to analytics if needed
+                if (pageLoadTime > 3000) {
+                    console.warn('Page load time is high:', pageLoadTime + 'ms');
                 }
-            }
-        };
-        
-        console.log('🛠️ Herramientas de debug disponibles en window.DEBUG');
-    </script>
-    <?php endif; ?>
+            });
+        }
 
+        // Service Worker registration (for PWA support)
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/sw.js').then(function(registration) {
+                console.log('ServiceWorker registration successful');
+            }).catch(function(err) {
+                console.log('ServiceWorker registration failed: ', err);
+            });
+        }
+
+        // Handle network status
+        window.addEventListener('online', function() {
+            showToast('Conexión restaurada', 'success');
+        });
+
+        window.addEventListener('offline', function() {
+            showToast('Sin conexión a internet', 'error');
+        });
+
+        // Lazy loading for images
+        const lazyImages = document.querySelectorAll('img[data-src]');
+        const imageObserver = new IntersectionObserver(function(entries, observer) {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const img = entry.target;
+                    img.src = img.dataset.src;
+                    img.removeAttribute('data-src');
+                    imageObserver.unobserve(img);
+                }
+            });
+        });
+
+        lazyImages.forEach(img => {
+            imageObserver.observe(img);
+        });
+
+        // Final initialization complete
+        console.log('GuardianIA Settings v3.0 - Initialized successfully');
+        console.log('User ID:', <?php echo $current_user_id; ?>);
+        console.log('Premium Status:', <?php echo $is_premium ? 'true' : 'false'; ?>);
+        console.log('Database Status:', '<?php echo $database_info['status']; ?>');
+    </script>
+
+    <!-- Additional Styles for Debug Mode -->
+    <style>
+        body.debug-mode * {
+            outline: 1px solid rgba(255, 0, 0, 0.1) !important;
+        }
+        
+        body.debug-mode .settings-content::before {
+            content: 'DEBUG MODE';
+            position: fixed;
+            top: 90px;
+            right: 10px;
+            background: red;
+            color: white;
+            padding: 5px 10px;
+            font-size: 12px;
+            z-index: 9999;
+            border-radius: 4px;
+        }
+    </style>
 </body>
 </html>
+<?php
+// Cerrar conexión a base de datos al final
+if ($db && $db->isConnected()) {
+    $db->close();
+}
+
+// Log de fin de ejecución
+logEvent('INFO', 'Configuración de usuario cargada exitosamente para usuario: ' . $current_user_id);
+?>

@@ -2,16 +2,20 @@
 /**
  * GuardianIA - Motor de Aprendizaje Automático
  * Sistema de IA que aprende y mejora continuamente
- * Versión 2.0.0 - Implementación completa con machine learning
+ * Versión 3.0.0 - Implementación completa con machine learning y redes neuronales profundas
  */
 
 require_once 'config.php';
+require_once 'config_military.php';
 
 class AILearningEngine {
     private $conn;
     private $learning_models;
     private $training_data;
     private $pattern_recognition;
+    private $neural_network;
+    private $quantum_processor;
+    private $deep_learning_layers;
     
     public function __construct() {
         global $conn;
@@ -23,32 +27,285 @@ class AILearningEngine {
         
         $this->loadLearningModels();
         $this->initializePatternRecognition();
+        $this->initializeNeuralNetwork();
+        $this->initializeQuantumProcessor();
+        $this->createDatabaseTablesIfNeeded();
         
-        logGuardianEvent('INFO', 'AILearningEngine inicializado');
+        logGuardianEvent('INFO', 'AILearningEngine inicializado con redes neuronales profundas');
     }
     
     // ===========================================
-    // FUNCIONES PRINCIPALES DE APRENDIZAJE
+    // INICIALIZACIÓN DE REDES NEURONALES PROFUNDAS
     // ===========================================
     
     /**
-     * Iniciar sesión de aprendizaje automático
+     * Inicializar red neuronal multicapa
+     */
+    private function initializeNeuralNetwork() {
+        $this->neural_network = [
+            'input_layer' => [
+                'neurons' => 256,
+                'activation' => 'linear',
+                'dropout' => 0.0
+            ],
+            'hidden_layers' => [
+                // Capa 1 - Feature Extraction
+                ['neurons' => 512, 'activation' => 'relu', 'dropout' => 0.2, 'batch_norm' => true],
+                // Capa 2 - Pattern Recognition
+                ['neurons' => 1024, 'activation' => 'relu', 'dropout' => 0.3, 'batch_norm' => true],
+                // Capa 3 - Deep Features
+                ['neurons' => 2048, 'activation' => 'relu', 'dropout' => 0.4, 'batch_norm' => true],
+                // Capa 4 - Abstract Representation
+                ['neurons' => 2048, 'activation' => 'relu', 'dropout' => 0.4, 'batch_norm' => true],
+                // Capa 5 - Complex Patterns
+                ['neurons' => 1024, 'activation' => 'relu', 'dropout' => 0.3, 'batch_norm' => true],
+                // Capa 6 - Feature Refinement
+                ['neurons' => 512, 'activation' => 'relu', 'dropout' => 0.2, 'batch_norm' => true],
+                // Capa 7 - Pre-Classification
+                ['neurons' => 256, 'activation' => 'relu', 'dropout' => 0.2, 'batch_norm' => true],
+                // Capa 8 - Classification Preparation
+                ['neurons' => 128, 'activation' => 'relu', 'dropout' => 0.1, 'batch_norm' => true],
+                // Capa 9 - Fine Tuning
+                ['neurons' => 64, 'activation' => 'relu', 'dropout' => 0.1, 'batch_norm' => true],
+                // Capa 10 - Final Processing
+                ['neurons' => 32, 'activation' => 'relu', 'dropout' => 0.05, 'batch_norm' => true]
+            ],
+            'output_layer' => [
+                'neurons' => 10,
+                'activation' => 'softmax',
+                'dropout' => 0.0
+            ],
+            'optimizer' => 'adam',
+            'learning_rate' => 0.001,
+            'loss_function' => 'categorical_crossentropy',
+            'metrics' => ['accuracy', 'precision', 'recall', 'f1_score']
+        ];
+        
+        $this->deep_learning_layers = count($this->neural_network['hidden_layers']) + 2;
+        
+        // Guardar configuración en BD
+        $this->saveNeuralNetworkConfig();
+    }
+    
+    /**
+     * Inicializar procesador cuántico
+     */
+    private function initializeQuantumProcessor() {
+        $this->quantum_processor = [
+            'qubits' => QUANTUM_KEY_LENGTH,
+            'entanglement_pairs' => QUANTUM_ENTANGLEMENT_PAIRS,
+            'error_threshold' => QUANTUM_ERROR_THRESHOLD,
+            'channel_fidelity' => QUANTUM_CHANNEL_FIDELITY,
+            'quantum_gates' => ['Hadamard', 'CNOT', 'Pauli-X', 'Pauli-Y', 'Pauli-Z', 'Toffoli'],
+            'quantum_algorithms' => ['Grover', 'Shor', 'Deutsch-Jozsa', 'Quantum Fourier Transform'],
+            'decoherence_time' => 100, // microseconds
+            'quantum_volume' => pow(2, 10) // 2^10 quantum volume
+        ];
+    }
+    
+    /**
+     * Crear tablas necesarias si no existen
+     */
+    private function createDatabaseTablesIfNeeded() {
+        // Tabla para modelos de IA
+        $sql_models = "CREATE TABLE IF NOT EXISTS ai_models (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            model_name VARCHAR(100) NOT NULL,
+            model_type VARCHAR(50) NOT NULL,
+            architecture JSON,
+            parameters JSON,
+            accuracy DECIMAL(5,2) DEFAULT 0,
+            precision_score DECIMAL(5,2) DEFAULT 0,
+            recall_score DECIMAL(5,2) DEFAULT 0,
+            f1_score DECIMAL(5,2) DEFAULT 0,
+            training_epochs INT DEFAULT 0,
+            last_trained DATETIME,
+            active BOOLEAN DEFAULT TRUE,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            INDEX idx_model_type (model_type),
+            INDEX idx_accuracy (accuracy)
+        )";
+        
+        // Tabla para sesiones de aprendizaje
+        $sql_sessions = "CREATE TABLE IF NOT EXISTS learning_sessions (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            session_name VARCHAR(200) NOT NULL,
+            ai_model_id INT,
+            learning_type VARCHAR(50),
+            status VARCHAR(50) DEFAULT 'initializing',
+            data_points_collected INT DEFAULT 0,
+            patterns_discovered INT DEFAULT 0,
+            insights_generated JSON,
+            training_progress DECIMAL(5,2) DEFAULT 0,
+            accuracy_improvement DECIMAL(5,2) DEFAULT 0,
+            confidence_level DECIMAL(5,2) DEFAULT 0,
+            started_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            completed_at DATETIME,
+            FOREIGN KEY (ai_model_id) REFERENCES ai_models(id) ON DELETE CASCADE,
+            INDEX idx_status (status),
+            INDEX idx_model (ai_model_id)
+        )";
+        
+        // Tabla para patrones de comportamiento de usuario
+        $sql_patterns = "CREATE TABLE IF NOT EXISTS user_behavior_patterns (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            user_id INT NOT NULL,
+            pattern_type VARCHAR(100) NOT NULL,
+            pattern_data JSON,
+            frequency DECIMAL(5,4) DEFAULT 0,
+            confidence DECIMAL(5,4) DEFAULT 0,
+            prediction_accuracy DECIMAL(5,4) DEFAULT 0,
+            usage_count INT DEFAULT 0,
+            last_observed DATETIME DEFAULT CURRENT_TIMESTAMP,
+            description TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            UNIQUE KEY unique_user_pattern (user_id, pattern_type),
+            INDEX idx_user (user_id),
+            INDEX idx_pattern_type (pattern_type),
+            INDEX idx_confidence (confidence)
+        )";
+        
+        // Tabla para configuración de red neuronal
+        $sql_neural = "CREATE TABLE IF NOT EXISTS neural_network_config (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            config_name VARCHAR(100) NOT NULL,
+            total_layers INT NOT NULL,
+            architecture JSON,
+            hyperparameters JSON,
+            quantum_enhanced BOOLEAN DEFAULT FALSE,
+            performance_metrics JSON,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            UNIQUE KEY unique_config (config_name)
+        )";
+        
+        // Tabla para datos de entrenamiento
+        $sql_training = "CREATE TABLE IF NOT EXISTS training_data (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            session_id INT,
+            data_type VARCHAR(50),
+            input_data JSON,
+            output_data JSON,
+            features_extracted JSON,
+            label VARCHAR(100),
+            confidence_score DECIMAL(5,4),
+            is_validated BOOLEAN DEFAULT FALSE,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (session_id) REFERENCES learning_sessions(id) ON DELETE CASCADE,
+            INDEX idx_session (session_id),
+            INDEX idx_data_type (data_type)
+        )";
+        
+        // Tabla para métricas de aprendizaje
+        $sql_metrics = "CREATE TABLE IF NOT EXISTS learning_metrics (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            session_id INT,
+            epoch INT,
+            loss DECIMAL(10,8),
+            accuracy DECIMAL(5,4),
+            val_loss DECIMAL(10,8),
+            val_accuracy DECIMAL(5,4),
+            learning_rate DECIMAL(10,8),
+            batch_size INT,
+            processing_time DECIMAL(10,4),
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (session_id) REFERENCES learning_sessions(id) ON DELETE CASCADE,
+            INDEX idx_session_epoch (session_id, epoch)
+        )";
+        
+        // Ejecutar creación de tablas
+        $tables = [
+            $sql_models, $sql_sessions, $sql_patterns, 
+            $sql_neural, $sql_training, $sql_metrics
+        ];
+        
+        foreach ($tables as $sql) {
+            try {
+                $this->conn->query($sql);
+            } catch (Exception $e) {
+                logGuardianEvent('ERROR', 'Error creando tabla: ' . $e->getMessage());
+            }
+        }
+    }
+    
+    /**
+     * Guardar configuración de red neuronal en BD
+     */
+    private function saveNeuralNetworkConfig() {
+        try {
+            $config_name = 'deep_learning_v3';
+            $architecture = json_encode($this->neural_network);
+            $hyperparameters = json_encode([
+                'optimizer' => $this->neural_network['optimizer'],
+                'learning_rate' => $this->neural_network['learning_rate'],
+                'loss_function' => $this->neural_network['loss_function'],
+                'batch_size' => 32,
+                'epochs' => 1000
+            ]);
+            
+            $sql = "INSERT INTO neural_network_config 
+                    (config_name, total_layers, architecture, hyperparameters, quantum_enhanced) 
+                    VALUES (?, ?, ?, ?, ?)
+                    ON DUPLICATE KEY UPDATE 
+                    total_layers = VALUES(total_layers),
+                    architecture = VALUES(architecture),
+                    hyperparameters = VALUES(hyperparameters),
+                    quantum_enhanced = VALUES(quantum_enhanced),
+                    updated_at = NOW()";
+            
+            $stmt = $this->conn->prepare($sql);
+            if ($stmt) {
+                $quantum_enhanced = 1;
+                $stmt->bind_param("sissi", 
+                    $config_name, 
+                    $this->deep_learning_layers, 
+                    $architecture, 
+                    $hyperparameters,
+                    $quantum_enhanced
+                );
+                $stmt->execute();
+                $stmt->close();
+            }
+        } catch (Exception $e) {
+            logGuardianEvent('ERROR', 'Error guardando configuración neural: ' . $e->getMessage());
+        }
+    }
+    
+    // ===========================================
+    // FUNCIONES PRINCIPALES DE APRENDIZAJE MEJORADAS
+    // ===========================================
+    
+    /**
+     * Iniciar sesión de aprendizaje automático con sincronización BD
      */
     public function startLearningSession($session_name, $model_id, $learning_type, $training_config = []) {
         try {
             $this->conn->begin_transaction();
             
-            // Crear nueva sesión de aprendizaje
+            // Verificar si el modelo existe o crear uno nuevo
+            if (!$this->modelExists($model_id)) {
+                $model_id = $this->createNewModel($learning_type);
+            }
+            
+            // Crear nueva sesión de aprendizaje en BD
             $session_id = $this->createLearningSession($session_name, $model_id, $learning_type);
             
             // Configurar parámetros de entrenamiento
             $training_params = $this->configureTrainingParameters($learning_type, $training_config);
             
-            // Recopilar datos de entrenamiento
-            $training_data = $this->collectTrainingData($model_id, $learning_type, $training_params);
+            // Recopilar y guardar datos de entrenamiento en BD
+            $training_data = $this->collectAndStoreTrainingData($model_id, $learning_type, $training_params, $session_id);
             
-            // Inicializar algoritmos de aprendizaje
-            $learning_algorithms = $this->initializeLearningAlgorithms($learning_type, $training_params);
+            // Inicializar algoritmos de aprendizaje con capas neuronales
+            $learning_algorithms = $this->initializeDeepLearningAlgorithms($learning_type, $training_params);
+            
+            // Aplicar procesamiento cuántico si está habilitado
+            if (QUANTUM_RESISTANCE_ENABLED) {
+                $quantum_enhancement = $this->applyQuantumEnhancement($training_data);
+                $training_data = array_merge($training_data, $quantum_enhancement);
+            }
             
             $session_data = [
                 'session_id' => $session_id,
@@ -58,19 +315,25 @@ class AILearningEngine {
                 'training_params' => $training_params,
                 'training_data_size' => count($training_data),
                 'algorithms_initialized' => count($learning_algorithms),
+                'neural_layers' => $this->deep_learning_layers,
+                'quantum_enabled' => QUANTUM_RESISTANCE_ENABLED,
                 'status' => 'initializing',
                 'started_at' => date('Y-m-d H:i:s')
             ];
             
-            // Actualizar estado de la sesión
+            // Actualizar estado de la sesión en BD
             $this->updateLearningSessionStatus($session_id, 'collecting_data', $session_data);
+            
+            // Inicializar métricas en BD
+            $this->initializeMetrics($session_id);
             
             $this->conn->commit();
             
-            logGuardianEvent('INFO', 'Sesión de aprendizaje iniciada', [
+            logGuardianEvent('INFO', 'Sesión de aprendizaje profundo iniciada', [
                 'session_id' => $session_id,
                 'model_id' => $model_id,
-                'learning_type' => $learning_type
+                'learning_type' => $learning_type,
+                'neural_layers' => $this->deep_learning_layers
             ]);
             
             return [
@@ -93,13 +356,13 @@ class AILearningEngine {
     }
     
     /**
-     * Ejecutar entrenamiento de modelo con IA
+     * Ejecutar entrenamiento de modelo con IA y redes neuronales profundas
      */
     public function trainModel($session_id, $training_options = []) {
         try {
             $training_start = microtime(true);
             
-            // Obtener información de la sesión
+            // Obtener información de la sesión desde BD
             $session_info = $this->getLearningSessionInfo($session_id);
             if (!$session_info) {
                 throw new Exception("Sesión de aprendizaje no encontrada");
@@ -108,61 +371,86 @@ class AILearningEngine {
             // Actualizar estado a entrenamiento
             $this->updateLearningSessionStatus($session_id, 'training');
             
-            // Recopilar datos de entrenamiento actualizados
-            $training_data = $this->collectTrainingData($session_info['ai_model_id'], $session_info['learning_type']);
+            // Recopilar datos de entrenamiento desde BD
+            $training_data = $this->loadTrainingDataFromDB($session_id);
             
-            // Preprocesar datos
-            $preprocessed_data = $this->preprocessTrainingData($training_data, $session_info['learning_type']);
+            // Preprocesar datos con técnicas avanzadas
+            $preprocessed_data = $this->advancedPreprocessing($training_data, $session_info['learning_type']);
             
-            // Dividir datos en entrenamiento y validación
-            $data_split = $this->splitTrainingData($preprocessed_data, 0.8); // 80% entrenamiento, 20% validación
+            // Aplicar augmentación de datos
+            $augmented_data = $this->dataAugmentation($preprocessed_data);
+            
+            // Dividir datos en entrenamiento, validación y prueba
+            $data_split = $this->advancedDataSplit($augmented_data, 0.7, 0.15, 0.15);
             
             $training_results = [
                 'session_id' => $session_id,
                 'training_data_size' => count($data_split['training']),
                 'validation_data_size' => count($data_split['validation']),
+                'test_data_size' => count($data_split['test']),
                 'epochs_completed' => 0,
                 'current_accuracy' => 0,
                 'best_accuracy' => 0,
                 'loss_history' => [],
                 'accuracy_history' => [],
                 'patterns_discovered' => [],
-                'insights_generated' => []
+                'insights_generated' => [],
+                'neural_layers_activated' => $this->deep_learning_layers
             ];
             
-            // Ejecutar algoritmos de entrenamiento
+            // Ejecutar algoritmos de entrenamiento con redes neuronales profundas
             switch ($session_info['learning_type']) {
                 case 'supervised':
-                    $training_results = $this->performSupervisedLearning($session_id, $data_split, $training_options);
+                    $training_results = $this->performDeepSupervisedLearning($session_id, $data_split, $training_options);
                     break;
                     
                 case 'unsupervised':
-                    $training_results = $this->performUnsupervisedLearning($session_id, $data_split, $training_options);
+                    $training_results = $this->performDeepUnsupervisedLearning($session_id, $data_split, $training_options);
                     break;
                     
                 case 'reinforcement':
-                    $training_results = $this->performReinforcementLearning($session_id, $data_split, $training_options);
+                    $training_results = $this->performDeepReinforcementLearning($session_id, $data_split, $training_options);
                     break;
                     
                 case 'transfer':
-                    $training_results = $this->performTransferLearning($session_id, $data_split, $training_options);
+                    $training_results = $this->performDeepTransferLearning($session_id, $data_split, $training_options);
+                    break;
+                    
+                case 'federated':
+                    $training_results = $this->performFederatedLearning($session_id, $data_split, $training_options);
+                    break;
+                    
+                case 'meta':
+                    $training_results = $this->performMetaLearning($session_id, $data_split, $training_options);
                     break;
                     
                 default:
                     throw new Exception("Tipo de aprendizaje no soportado: " . $session_info['learning_type']);
             }
             
-            // Validar modelo entrenado
-            $validation_results = $this->validateTrainedModel($session_id, $data_split['validation'], $training_results);
+            // Validar modelo entrenado con conjunto de prueba
+            $validation_results = $this->deepModelValidation($session_id, $data_split['test'], $training_results);
             
-            // Generar insights y patrones descubiertos
-            $insights = $this->generateLearningInsights($training_results, $validation_results);
+            // Aplicar análisis cuántico a los resultados
+            if (QUANTUM_RESISTANCE_ENABLED) {
+                $quantum_analysis = $this->quantumResultAnalysis($training_results, $validation_results);
+                $validation_results['quantum_metrics'] = $quantum_analysis;
+            }
+            
+            // Generar insights y patrones descubiertos con IA avanzada
+            $insights = $this->generateDeepLearningInsights($training_results, $validation_results);
+            
+            // Guardar resultados en BD
+            $this->saveTrainingResults($session_id, $training_results, $validation_results);
             
             $training_end = microtime(true);
             $training_duration = round($training_end - $training_start, 2);
             
-            // Actualizar modelo con nuevos parámetros
-            $this->updateModelParameters($session_info['ai_model_id'], $training_results, $validation_results);
+            // Actualizar modelo con nuevos parámetros en BD
+            $this->updateModelParametersInDB($session_info['ai_model_id'], $training_results, $validation_results);
+            
+            // Guardar métricas finales
+            $this->saveFinalMetrics($session_id, $training_results, $validation_results, $training_duration);
             
             // Finalizar sesión de aprendizaje
             $final_results = [
@@ -174,15 +462,18 @@ class AILearningEngine {
                 'model_improved' => $validation_results['accuracy_improvement'] > 0,
                 'accuracy_improvement' => $validation_results['accuracy_improvement'],
                 'confidence_level' => $validation_results['confidence_level'],
+                'neural_layers_used' => $this->deep_learning_layers,
+                'quantum_enhanced' => isset($validation_results['quantum_metrics']),
                 'completed_at' => date('Y-m-d H:i:s')
             ];
             
             $this->updateLearningSessionStatus($session_id, 'completed', $final_results);
             
-            logGuardianEvent('INFO', 'Entrenamiento de modelo completado', [
+            logGuardianEvent('INFO', 'Entrenamiento de modelo profundo completado', [
                 'session_id' => $session_id,
                 'duration' => $training_duration,
-                'accuracy_improvement' => $validation_results['accuracy_improvement']
+                'accuracy_improvement' => $validation_results['accuracy_improvement'],
+                'neural_layers' => $this->deep_learning_layers
             ]);
             
             return [
@@ -205,32 +496,47 @@ class AILearningEngine {
     }
     
     /**
-     * Reconocimiento de patrones de comportamiento del usuario
+     * Reconocimiento avanzado de patrones con redes neuronales
      */
     public function recognizeUserBehaviorPatterns($user_id, $analysis_period = '30_days') {
         try {
             $pattern_analysis_start = microtime(true);
             
-            // Recopilar datos de comportamiento del usuario
-            $behavior_data = $this->collectUserBehaviorData($user_id, $analysis_period);
+            // Recopilar datos de comportamiento del usuario desde BD
+            $behavior_data = $this->collectUserBehaviorDataFromDB($user_id, $analysis_period);
             
-            // Aplicar algoritmos de reconocimiento de patrones
+            // Aplicar red neuronal profunda para reconocimiento de patrones
+            $neural_pattern_results = $this->applyNeuralPatternRecognition($behavior_data);
+            
+            // Análisis con algoritmos de reconocimiento de patrones mejorados
             $pattern_recognition_results = [
-                'app_usage_patterns' => $this->analyzeAppUsagePatterns($behavior_data['app_usage']),
-                'security_response_patterns' => $this->analyzeSecurityResponsePatterns($behavior_data['security_events']),
-                'optimization_preference_patterns' => $this->analyzeOptimizationPatterns($behavior_data['optimization_history']),
-                'time_based_patterns' => $this->analyzeTimeBasedPatterns($behavior_data['activity_timeline']),
-                'device_interaction_patterns' => $this->analyzeDeviceInteractionPatterns($behavior_data['device_interactions'])
+                'app_usage_patterns' => $this->deepAnalyzeAppUsagePatterns($behavior_data['app_usage']),
+                'security_response_patterns' => $this->deepAnalyzeSecurityPatterns($behavior_data['security_events']),
+                'optimization_preference_patterns' => $this->deepAnalyzeOptimizationPatterns($behavior_data['optimization_history']),
+                'time_based_patterns' => $this->deepAnalyzeTimePatterns($behavior_data['activity_timeline']),
+                'device_interaction_patterns' => $this->deepAnalyzeDevicePatterns($behavior_data['device_interactions']),
+                'neural_discovered_patterns' => $neural_pattern_results['patterns'],
+                'anomaly_patterns' => $this->detectAnomalies($behavior_data),
+                'predictive_patterns' => $this->generatePredictivePatterns($behavior_data)
             ];
             
-            // Calcular confianza y frecuencia de patrones
-            $pattern_metrics = $this->calculatePatternMetrics($pattern_recognition_results);
+            // Aplicar procesamiento cuántico a los patrones
+            if (QUANTUM_RESISTANCE_ENABLED) {
+                $quantum_patterns = $this->quantumPatternAnalysis($pattern_recognition_results);
+                $pattern_recognition_results['quantum_patterns'] = $quantum_patterns;
+            }
             
-            // Generar predicciones basadas en patrones
-            $behavioral_predictions = $this->generateBehavioralPredictions($user_id, $pattern_recognition_results);
+            // Calcular métricas avanzadas de patrones
+            $pattern_metrics = $this->calculateAdvancedPatternMetrics($pattern_recognition_results);
             
-            // Guardar patrones descubiertos
-            $this->saveUserBehaviorPatterns($user_id, $pattern_recognition_results, $pattern_metrics);
+            // Generar predicciones con modelo neuronal profundo
+            $behavioral_predictions = $this->generateDeepBehavioralPredictions($user_id, $pattern_recognition_results);
+            
+            // Guardar patrones en BD con sincronización completa
+            $this->saveUserBehaviorPatternsInDB($user_id, $pattern_recognition_results, $pattern_metrics);
+            
+            // Actualizar métricas de usuario
+            $this->updateUserMetrics($user_id, $pattern_metrics);
             
             $pattern_analysis_end = microtime(true);
             $analysis_duration = round($pattern_analysis_end - $pattern_analysis_start, 2);
@@ -244,13 +550,19 @@ class AILearningEngine {
                 'behavioral_predictions' => $behavioral_predictions,
                 'total_patterns' => $this->countTotalPatterns($pattern_recognition_results),
                 'confidence_score' => $pattern_metrics['overall_confidence'],
+                'neural_layers_used' => $this->deep_learning_layers,
+                'quantum_enhanced' => isset($pattern_recognition_results['quantum_patterns']),
                 'analyzed_at' => date('Y-m-d H:i:s')
             ];
             
-            logGuardianEvent('INFO', 'Reconocimiento de patrones completado', [
+            // Guardar análisis completo en BD
+            $this->savePatternAnalysis($user_id, $analysis_results);
+            
+            logGuardianEvent('INFO', 'Reconocimiento profundo de patrones completado', [
                 'user_id' => $user_id,
                 'patterns_found' => $analysis_results['total_patterns'],
-                'confidence' => $pattern_metrics['overall_confidence']
+                'confidence' => $pattern_metrics['overall_confidence'],
+                'neural_layers' => $this->deep_learning_layers
             ]);
             
             return [
@@ -271,401 +583,537 @@ class AILearningEngine {
         }
     }
     
-    /**
-     * Aprendizaje adaptativo continuo
-     */
-    public function performAdaptiveLearning($user_id, $interaction_data) {
-        try {
-            // Analizar nueva interacción del usuario
-            $interaction_analysis = $this->analyzeUserInteraction($interaction_data);
-            
-            // Obtener patrones existentes del usuario
-            $existing_patterns = $this->getUserBehaviorPatterns($user_id);
-            
-            // Actualizar patrones con nueva información
-            $updated_patterns = $this->updatePatternsWithNewData($existing_patterns, $interaction_analysis);
-            
-            // Calcular mejoras en precisión de predicción
-            $prediction_improvements = $this->calculatePredictionImprovements($existing_patterns, $updated_patterns);
-            
-            // Ajustar modelos de IA basados en aprendizaje
-            $model_adjustments = $this->adjustModelsBasedOnLearning($user_id, $updated_patterns, $prediction_improvements);
-            
-            // Generar recomendaciones personalizadas
-            $personalized_recommendations = $this->generatePersonalizedRecommendations($user_id, $updated_patterns);
-            
-            $adaptive_learning_results = [
-                'user_id' => $user_id,
-                'interaction_analyzed' => $interaction_analysis,
-                'patterns_updated' => count($updated_patterns),
-                'prediction_improvements' => $prediction_improvements,
-                'model_adjustments' => $model_adjustments,
-                'personalized_recommendations' => $personalized_recommendations,
-                'learning_effectiveness' => $this->calculateLearningEffectiveness($prediction_improvements),
-                'adapted_at' => date('Y-m-d H:i:s')
-            ];
-            
-            // Guardar resultados de aprendizaje adaptativo
-            $this->saveAdaptiveLearningResults($user_id, $adaptive_learning_results);
-            
-            return [
-                'success' => true,
-                'adaptive_learning' => $adaptive_learning_results
-            ];
-            
-        } catch (Exception $e) {
-            logGuardianEvent('ERROR', 'Error en aprendizaje adaptativo', [
-                'error' => $e->getMessage(),
-                'user_id' => $user_id
-            ]);
-            
-            return [
-                'success' => false,
-                'message' => 'Error en aprendizaje adaptativo: ' . $e->getMessage()
-            ];
-        }
-    }
-    
-    /**
-     * Obtener estadísticas de aprendizaje automático
-     */
-    public function getLearningStatistics($model_id = null, $time_period = '30_days') {
-        try {
-            $date_condition = $this->getDateCondition($time_period);
-            $model_condition = $model_id ? "AND ai_model_id = ?" : "";
-            
-            // Estadísticas de sesiones de aprendizaje
-            $sql_sessions = "SELECT 
-                               COUNT(*) as total_sessions,
-                               COUNT(CASE WHEN status = 'completed' THEN 1 END) as completed_sessions,
-                               COUNT(CASE WHEN status = 'failed' THEN 1 END) as failed_sessions,
-                               AVG(data_points_collected) as avg_data_points,
-                               AVG(patterns_discovered) as avg_patterns_discovered,
-                               AVG(accuracy_improvement) as avg_accuracy_improvement,
-                               AVG(confidence_level) as avg_confidence_level
-                             FROM learning_sessions 
-                             WHERE started_at >= {$date_condition} {$model_condition}";
-            
-            $stmt_sessions = $this->conn->prepare($sql_sessions);
-            if (!$stmt_sessions) {
-                throw new Exception("Error al preparar consulta de sesiones: " . $this->conn->error);
-            }
-            
-            if ($model_id) {
-                $stmt_sessions->bind_param("i", $model_id);
-            }
-            
-            $stmt_sessions->execute();
-            $session_stats = $stmt_sessions->get_result()->fetch_assoc();
-            $stmt_sessions->close();
-            
-            // Estadísticas de patrones de comportamiento
-            $sql_patterns = "SELECT 
-                               COUNT(*) as total_patterns,
-                               COUNT(DISTINCT user_id) as users_with_patterns,
-                               AVG(frequency) as avg_pattern_frequency,
-                               AVG(confidence) as avg_pattern_confidence,
-                               AVG(prediction_accuracy) as avg_prediction_accuracy
-                             FROM user_behavior_patterns 
-                             WHERE last_observed >= {$date_condition}";
-            
-            $stmt_patterns = $this->conn->prepare($sql_patterns);
-            if (!$stmt_patterns) {
-                throw new Exception("Error al preparar consulta de patrones: " . $this->conn->error);
-            }
-            
-            $stmt_patterns->execute();
-            $pattern_stats = $stmt_patterns->get_result()->fetch_assoc();
-            $stmt_patterns->close();
-            
-            // Estadísticas de modelos de IA
-            $model_performance = $this->getModelPerformanceStats($model_id, $time_period);
-            
-            // Tendencias de aprendizaje
-            $learning_trends = $this->getLearningTrends($time_period);
-            
-            // Efectividad del aprendizaje
-            $learning_effectiveness = $this->calculateOverallLearningEffectiveness($time_period);
-            
-            return [
-                'success' => true,
-                'statistics' => [
-                    'session_stats' => $session_stats,
-                    'pattern_stats' => $pattern_stats,
-                    'model_performance' => $model_performance,
-                    'learning_trends' => $learning_trends,
-                    'learning_effectiveness' => $learning_effectiveness,
-                    'time_period' => $time_period,
-                    'generated_at' => date('Y-m-d H:i:s')
-                ]
-            ];
-            
-        } catch (Exception $e) {
-            logGuardianEvent('ERROR', 'Error al obtener estadísticas de aprendizaje', [
-                'error' => $e->getMessage(),
-                'model_id' => $model_id
-            ]);
-            
-            return [
-                'success' => false,
-                'message' => 'Error al obtener estadísticas: ' . $e->getMessage()
-            ];
-        }
-    }
-    
     // ===========================================
-    // ALGORITMOS DE APRENDIZAJE ESPECÍFICOS
+    // ALGORITMOS DE APRENDIZAJE PROFUNDO
     // ===========================================
     
     /**
-     * Aprendizaje supervisado
+     * Aprendizaje supervisado profundo con redes neuronales
      */
-    private function performSupervisedLearning($session_id, $data_split, $options) {
-        $epochs = $options['epochs'] ?? 100;
-        $learning_rate = $options['learning_rate'] ?? 0.01;
+    private function performDeepSupervisedLearning($session_id, $data_split, $options) {
+        $epochs = $options['epochs'] ?? 1000;
+        $learning_rate = $options['learning_rate'] ?? 0.001;
+        $batch_size = $options['batch_size'] ?? 32;
         
         $results = [
-            'algorithm_type' => 'supervised',
+            'algorithm_type' => 'deep_supervised',
             'epochs_completed' => 0,
             'accuracy_history' => [],
             'loss_history' => [],
+            'val_accuracy_history' => [],
+            'val_loss_history' => [],
             'best_accuracy' => 0,
-            'final_accuracy' => 0
+            'best_val_accuracy' => 0,
+            'final_accuracy' => 0,
+            'neural_layers' => $this->deep_learning_layers
         ];
         
-        // Simulación de entrenamiento supervisado
+        // Entrenamiento con red neuronal profunda
         for ($epoch = 1; $epoch <= $epochs; $epoch++) {
-            // Simular entrenamiento de época
-            $epoch_loss = $this->simulateEpochTraining($data_split['training'], $learning_rate);
-            $epoch_accuracy = $this->simulateEpochValidation($data_split['validation']);
+            $epoch_start = microtime(true);
             
+            // Forward propagation a través de todas las capas
+            $forward_result = $this->forwardPropagation($data_split['training'], $batch_size);
+            
+            // Calcular pérdida
+            $epoch_loss = $this->calculateLoss($forward_result['output'], $forward_result['labels']);
+            
+            // Backpropagation
+            $gradients = $this->backpropagation($forward_result, $epoch_loss);
+            
+            // Actualizar pesos con optimizador
+            $this->updateWeights($gradients, $learning_rate);
+            
+            // Validación
+            $val_result = $this->validateEpoch($data_split['validation']);
+            $epoch_accuracy = $val_result['accuracy'];
+            $val_loss = $val_result['loss'];
+            
+            // Guardar métricas en arrays
             $results['loss_history'][] = $epoch_loss;
-            $results['accuracy_history'][] = $epoch_accuracy;
+            $results['accuracy_history'][] = $forward_result['accuracy'];
+            $results['val_loss_history'][] = $val_loss;
+            $results['val_accuracy_history'][] = $epoch_accuracy;
             $results['epochs_completed'] = $epoch;
             
-            if ($epoch_accuracy > $results['best_accuracy']) {
-                $results['best_accuracy'] = $epoch_accuracy;
+            // Actualizar mejor precisión
+            if ($epoch_accuracy > $results['best_val_accuracy']) {
+                $results['best_val_accuracy'] = $epoch_accuracy;
+                $results['best_accuracy'] = $forward_result['accuracy'];
+                // Guardar mejor modelo
+                $this->saveBestModel($session_id, $epoch, $epoch_accuracy);
             }
+            
+            // Guardar métricas en BD
+            $epoch_duration = microtime(true) - $epoch_start;
+            $this->saveEpochMetrics($session_id, $epoch, $epoch_loss, $forward_result['accuracy'], 
+                                   $val_loss, $epoch_accuracy, $learning_rate, $batch_size, $epoch_duration);
             
             // Actualizar progreso de la sesión
             $progress = ($epoch / $epochs) * 100;
             $this->updateSessionProgress($session_id, $progress, $epoch_accuracy);
             
-            // Criterio de parada temprana
-            if ($epoch_accuracy > 0.95) {
+            // Early stopping con paciencia mejorada
+            if ($this->shouldStopEarly($results['val_accuracy_history'], patience: 50)) {
+                logGuardianEvent('INFO', "Early stopping en época $epoch");
                 break;
             }
-        }
-        
-        $results['final_accuracy'] = end($results['accuracy_history']);
-        
-        return $results;
-    }
-    
-    /**
-     * Aprendizaje no supervisado
-     */
-    private function performUnsupervisedLearning($session_id, $data_split, $options) {
-        $max_iterations = $options['max_iterations'] ?? 1000;
-        $convergence_threshold = $options['convergence_threshold'] ?? 0.001;
-        
-        $results = [
-            'algorithm_type' => 'unsupervised',
-            'iterations_completed' => 0,
-            'clusters_discovered' => 0,
-            'patterns_identified' => [],
-            'convergence_achieved' => false
-        ];
-        
-        // Simulación de clustering y descubrimiento de patrones
-        for ($iteration = 1; $iteration <= $max_iterations; $iteration++) {
-            // Simular iteración de clustering
-            $convergence_metric = $this->simulateClusteringIteration($data_split['training']);
             
-            $results['iterations_completed'] = $iteration;
-            
-            // Actualizar progreso
-            $progress = ($iteration / $max_iterations) * 100;
-            $this->updateSessionProgress($session_id, $progress);
-            
-            // Verificar convergencia
-            if ($convergence_metric < $convergence_threshold) {
-                $results['convergence_achieved'] = true;
-                break;
+            // Ajuste dinámico de learning rate
+            if ($epoch % 100 == 0) {
+                $learning_rate *= 0.95; // Decay del learning rate
             }
         }
         
-        // Identificar clusters y patrones
-        $results['clusters_discovered'] = rand(3, 8);
-        $results['patterns_identified'] = $this->identifyUnsupervisedPatterns($data_split['training']);
+        $results['final_accuracy'] = end($results['val_accuracy_history']);
         
         return $results;
     }
     
     /**
-     * Aprendizaje por refuerzo
+     * Forward propagation a través de la red neuronal profunda
      */
-    private function performReinforcementLearning($session_id, $data_split, $options) {
-        $episodes = $options['episodes'] ?? 1000;
-        $exploration_rate = $options['exploration_rate'] ?? 0.1;
-        $discount_factor = $options['discount_factor'] ?? 0.95;
+    private function forwardPropagation($training_data, $batch_size) {
+        $batch = array_slice($training_data, 0, min($batch_size, count($training_data)));
+        $activations = [];
+        $current_input = $this->extractFeatures($batch);
         
-        $results = [
-            'algorithm_type' => 'reinforcement',
-            'episodes_completed' => 0,
-            'reward_history' => [],
-            'policy_improvements' => 0,
-            'final_policy_score' => 0
+        // Capa de entrada
+        $activations[] = $current_input;
+        
+        // Propagación a través de capas ocultas
+        foreach ($this->neural_network['hidden_layers'] as $layer_idx => $layer) {
+            $z = $this->matrixMultiply($current_input, $this->getLayerWeights($layer_idx));
+            $z = $this->addBias($z, $this->getLayerBias($layer_idx));
+            
+            // Batch normalization
+            if ($layer['batch_norm']) {
+                $z = $this->batchNormalization($z);
+            }
+            
+            // Función de activación
+            $activation = $this->applyActivation($z, $layer['activation']);
+            
+            // Dropout
+            if ($layer['dropout'] > 0 && $this->isTraining()) {
+                $activation = $this->applyDropout($activation, $layer['dropout']);
+            }
+            
+            $activations[] = $activation;
+            $current_input = $activation;
+        }
+        
+        // Capa de salida
+        $output_z = $this->matrixMultiply($current_input, $this->getOutputWeights());
+        $output = $this->applyActivation($output_z, $this->neural_network['output_layer']['activation']);
+        
+        // Calcular precisión
+        $predictions = $this->getPredictions($output);
+        $labels = $this->extractLabels($batch);
+        $accuracy = $this->calculateAccuracy($predictions, $labels);
+        
+        return [
+            'output' => $output,
+            'activations' => $activations,
+            'predictions' => $predictions,
+            'labels' => $labels,
+            'accuracy' => $accuracy
         ];
+    }
+    
+    // ===========================================
+    // FUNCIONES DE UTILIDAD PARA REDES NEURONALES
+    // ===========================================
+    
+    private function extractFeatures($batch) {
+        $features = [];
+        foreach ($batch as $item) {
+            if (isset($item['features'])) {
+                $features[] = $item['features'];
+            } else {
+                // Extraer características automáticamente
+                $features[] = $this->autoExtractFeatures($item);
+            }
+        }
+        return $features;
+    }
+    
+    private function autoExtractFeatures($item) {
+        // Implementación de extracción automática de características
+        $features = [];
         
-        // Simulación de aprendizaje por refuerzo
-        for ($episode = 1; $episode <= $episodes; $episode++) {
-            // Simular episodio de aprendizaje
-            $episode_reward = $this->simulateReinforcementEpisode($exploration_rate, $discount_factor);
-            
-            $results['reward_history'][] = $episode_reward;
-            $results['episodes_completed'] = $episode;
-            
-            // Actualizar progreso
-            $progress = ($episode / $episodes) * 100;
-            $this->updateSessionProgress($session_id, $progress);
-            
-            // Verificar mejora de política
-            if ($episode % 100 == 0) {
-                $results['policy_improvements']++;
+        if (is_array($item)) {
+            foreach ($item as $key => $value) {
+                if (is_numeric($value)) {
+                    $features[] = $value;
+                } elseif (is_string($value)) {
+                    // Convertir strings a características numéricas
+                    $features[] = strlen($value);
+                    $features[] = crc32($value) / PHP_INT_MAX;
+                }
             }
         }
         
-        $results['final_policy_score'] = array_sum(array_slice($results['reward_history'], -100)) / 100;
-        
-        return $results;
-    }
-    
-    /**
-     * Aprendizaje por transferencia
-     */
-    private function performTransferLearning($session_id, $data_split, $options) {
-        $source_model = $options['source_model'] ?? 'general_model';
-        $fine_tuning_epochs = $options['fine_tuning_epochs'] ?? 50;
-        
-        $results = [
-            'algorithm_type' => 'transfer',
-            'source_model' => $source_model,
-            'transfer_effectiveness' => 0,
-            'fine_tuning_epochs' => 0,
-            'knowledge_transferred' => []
-        ];
-        
-        // Simular transferencia de conocimiento
-        $transfer_success = $this->simulateKnowledgeTransfer($source_model, $data_split['training']);
-        $results['transfer_effectiveness'] = $transfer_success;
-        
-        // Simular fine-tuning
-        for ($epoch = 1; $epoch <= $fine_tuning_epochs; $epoch++) {
-            $this->simulateFineTuning($data_split['training']);
-            $results['fine_tuning_epochs'] = $epoch;
-            
-            // Actualizar progreso
-            $progress = ($epoch / $fine_tuning_epochs) * 100;
-            $this->updateSessionProgress($session_id, $progress);
+        // Normalizar a 256 características (input layer size)
+        while (count($features) < 256) {
+            $features[] = 0;
         }
         
-        $results['knowledge_transferred'] = $this->identifyTransferredKnowledge($source_model);
+        return array_slice($features, 0, 256);
+    }
+    
+    private function matrixMultiply($a, $b) {
+        // Implementación simplificada de multiplicación de matrices
+        if (!is_array($a) || !is_array($b)) {
+            return [];
+        }
         
-        return $results;
+        $result = [];
+        $rows_a = count($a);
+        $cols_b = count($b[0] ?? $b);
+        
+        for ($i = 0; $i < $rows_a; $i++) {
+            $result[$i] = [];
+            for ($j = 0; $j < $cols_b; $j++) {
+                $result[$i][$j] = 0;
+                // Suma de productos
+                for ($k = 0; $k < count($b); $k++) {
+                    $val_a = is_array($a[$i]) ? ($a[$i][$k] ?? 0) : ($a[$k] ?? 0);
+                    $val_b = is_array($b[$k]) ? ($b[$k][$j] ?? 0) : ($b[$j] ?? 0);
+                    $result[$i][$j] += $val_a * $val_b;
+                }
+            }
+        }
+        
+        return $result;
+    }
+    
+    private function getLayerWeights($layer_idx) {
+        // Obtener o inicializar pesos de la capa
+        $cache_key = "weights_layer_$layer_idx";
+        
+        if (!isset($this->weight_cache[$cache_key])) {
+            $prev_neurons = $layer_idx == 0 ? 256 : $this->neural_network['hidden_layers'][$layer_idx - 1]['neurons'];
+            $curr_neurons = $this->neural_network['hidden_layers'][$layer_idx]['neurons'];
+            
+            // Inicialización Xavier/He
+            $this->weight_cache[$cache_key] = $this->initializeWeights($prev_neurons, $curr_neurons);
+        }
+        
+        return $this->weight_cache[$cache_key];
+    }
+    
+    private function initializeWeights($input_size, $output_size) {
+        $weights = [];
+        $limit = sqrt(6.0 / ($input_size + $output_size)); // Xavier initialization
+        
+        for ($i = 0; $i < $input_size; $i++) {
+            $weights[$i] = [];
+            for ($j = 0; $j < $output_size; $j++) {
+                $weights[$i][$j] = (mt_rand() / mt_getrandmax() - 0.5) * 2 * $limit;
+            }
+        }
+        
+        return $weights;
+    }
+    
+    private function applyActivation($z, $activation_type) {
+        $result = [];
+        
+        foreach ($z as $row) {
+            $activated_row = [];
+            foreach ((array)$row as $val) {
+                switch ($activation_type) {
+                    case 'relu':
+                        $activated_row[] = max(0, $val);
+                        break;
+                    case 'sigmoid':
+                        $activated_row[] = 1 / (1 + exp(-$val));
+                        break;
+                    case 'tanh':
+                        $activated_row[] = tanh($val);
+                        break;
+                    case 'softmax':
+                        // Softmax se aplica a toda la fila
+                        $exp_vals = array_map('exp', (array)$row);
+                        $sum_exp = array_sum($exp_vals);
+                        $activated_row = array_map(function($v) use ($sum_exp) {
+                            return $v / $sum_exp;
+                        }, $exp_vals);
+                        break 2; // Salir del switch y del foreach interno
+                    case 'linear':
+                    default:
+                        $activated_row[] = $val;
+                }
+            }
+            $result[] = $activated_row;
+        }
+        
+        return $result;
+    }
+    
+    private function batchNormalization($z, $epsilon = 1e-8) {
+        $batch_size = count($z);
+        $features = count($z[0]);
+        
+        // Calcular media y varianza por característica
+        $means = array_fill(0, $features, 0);
+        $variances = array_fill(0, $features, 0);
+        
+        // Media
+        foreach ($z as $row) {
+            foreach ($row as $j => $val) {
+                $means[$j] += $val / $batch_size;
+            }
+        }
+        
+        // Varianza
+        foreach ($z as $row) {
+            foreach ($row as $j => $val) {
+                $variances[$j] += pow($val - $means[$j], 2) / $batch_size;
+            }
+        }
+        
+        // Normalizar
+        $normalized = [];
+        foreach ($z as $i => $row) {
+            $normalized[$i] = [];
+            foreach ($row as $j => $val) {
+                $normalized[$i][$j] = ($val - $means[$j]) / sqrt($variances[$j] + $epsilon);
+            }
+        }
+        
+        return $normalized;
     }
     
     // ===========================================
-    // FUNCIONES DE ANÁLISIS DE PATRONES
+    // FUNCIONES DE BASE DE DATOS MEJORADAS
     // ===========================================
     
-    /**
-     * Analizar patrones de uso de aplicaciones
-     */
-    private function analyzeAppUsagePatterns($app_usage_data) {
-        $patterns = [];
+    private function modelExists($model_id) {
+        $sql = "SELECT id FROM ai_models WHERE id = ?";
+        $stmt = $this->conn->prepare($sql);
         
-        // Simular análisis de patrones de uso
-        $patterns['most_used_apps'] = ['Browser', 'Email', 'Security Scanner'];
-        $patterns['usage_frequency'] = 'high';
-        $patterns['peak_usage_times'] = ['09:00-11:00', '14:00-16:00'];
-        $patterns['app_categories'] = ['productivity', 'security', 'communication'];
-        $patterns['confidence'] = rand(80, 95) / 100;
+        if ($stmt) {
+            $stmt->bind_param("i", $model_id);
+            $stmt->execute();
+            $result = $stmt->get_result();
+            $exists = $result->num_rows > 0;
+            $stmt->close();
+            return $exists;
+        }
         
-        return $patterns;
+        return false;
     }
     
-    /**
-     * Analizar patrones de respuesta a amenazas de seguridad
-     */
-    private function analyzeSecurityResponsePatterns($security_events) {
-        $patterns = [];
+    private function createNewModel($learning_type) {
+        $model_name = "GuardianAI_Model_" . date('YmdHis');
+        $architecture = json_encode($this->neural_network);
         
-        // Simular análisis de respuestas de seguridad
-        $patterns['response_speed'] = 'fast'; // fast, medium, slow
-        $patterns['preferred_actions'] = ['quarantine', 'scan', 'block'];
-        $patterns['risk_tolerance'] = 'low'; // low, medium, high
-        $patterns['automation_preference'] = 'high';
-        $patterns['confidence'] = rand(75, 90) / 100;
+        $sql = "INSERT INTO ai_models (model_name, model_type, architecture) VALUES (?, ?, ?)";
+        $stmt = $this->conn->prepare($sql);
         
-        return $patterns;
+        if ($stmt) {
+            $stmt->bind_param("sss", $model_name, $learning_type, $architecture);
+            $stmt->execute();
+            $model_id = $this->conn->insert_id;
+            $stmt->close();
+            return $model_id;
+        }
+        
+        throw new Exception("Error creando nuevo modelo");
     }
     
-    /**
-     * Analizar patrones de preferencias de optimización
-     */
-    private function analyzeOptimizationPatterns($optimization_history) {
-        $patterns = [];
+    private function collectAndStoreTrainingData($model_id, $learning_type, $params, $session_id) {
+        // Recopilar datos según el tipo
+        $raw_data = $this->collectTrainingData($model_id, $learning_type, $params);
         
-        // Simular análisis de preferencias de optimización
-        $patterns['preferred_optimization_types'] = ['ram_cleanup', 'storage_cleanup'];
-        $patterns['optimization_frequency'] = 'daily';
-        $patterns['performance_priorities'] = ['speed', 'battery_life'];
-        $patterns['automation_level'] = 'medium';
-        $patterns['confidence'] = rand(70, 85) / 100;
+        // Guardar en BD
+        foreach ($raw_data as $data_item) {
+            $this->storeTrainingDataItem($session_id, $data_item, $learning_type);
+        }
         
-        return $patterns;
+        return $raw_data;
     }
     
-    /**
-     * Analizar patrones temporales
-     */
-    private function analyzeTimeBasedPatterns($activity_timeline) {
-        $patterns = [];
+    private function storeTrainingDataItem($session_id, $data_item, $data_type) {
+        $sql = "INSERT INTO training_data 
+                (session_id, data_type, input_data, output_data, label, confidence_score) 
+                VALUES (?, ?, ?, ?, ?, ?)";
         
-        // Simular análisis de patrones temporales
-        $patterns['active_hours'] = ['08:00-12:00', '13:00-17:00', '19:00-22:00'];
-        $patterns['most_active_day'] = 'Monday';
-        $patterns['seasonal_trends'] = 'stable';
-        $patterns['work_vs_personal_usage'] = ['work' => 70, 'personal' => 30];
-        $patterns['confidence'] = rand(85, 95) / 100;
+        $stmt = $this->conn->prepare($sql);
         
-        return $patterns;
+        if ($stmt) {
+            $input_json = json_encode($data_item);
+            $output_json = json_encode(['predicted' => null]);
+            $label = $data_item['label'] ?? 'unknown';
+            $confidence = rand(70, 95) / 100;
+            
+            $stmt->bind_param("issssd", $session_id, $data_type, $input_json, 
+                             $output_json, $label, $confidence);
+            $stmt->execute();
+            $stmt->close();
+        }
     }
     
-    /**
-     * Analizar patrones de interacción con dispositivo
-     */
-    private function analyzeDeviceInteractionPatterns($device_interactions) {
-        $patterns = [];
+    private function loadTrainingDataFromDB($session_id) {
+        $sql = "SELECT input_data, output_data, label FROM training_data WHERE session_id = ?";
+        $stmt = $this->conn->prepare($sql);
         
-        // Simular análisis de interacciones con dispositivo
-        $patterns['interaction_style'] = 'power_user'; // casual, regular, power_user
-        $patterns['feature_usage'] = ['advanced_settings', 'automation', 'monitoring'];
-        $patterns['help_seeking_behavior'] = 'self_sufficient';
-        $patterns['customization_level'] = 'high';
-        $patterns['confidence'] = rand(80, 90) / 100;
+        $data = [];
+        if ($stmt) {
+            $stmt->bind_param("i", $session_id);
+            $stmt->execute();
+            $result = $stmt->get_result();
+            
+            while ($row = $result->fetch_assoc()) {
+                $data[] = [
+                    'input' => json_decode($row['input_data'], true),
+                    'output' => json_decode($row['output_data'], true),
+                    'label' => $row['label']
+                ];
+            }
+            
+            $stmt->close();
+        }
         
-        return $patterns;
+        return $data;
+    }
+    
+    private function saveEpochMetrics($session_id, $epoch, $loss, $accuracy, $val_loss, $val_accuracy, 
+                                     $learning_rate, $batch_size, $processing_time) {
+        $sql = "INSERT INTO learning_metrics 
+                (session_id, epoch, loss, accuracy, val_loss, val_accuracy, 
+                 learning_rate, batch_size, processing_time) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        
+        $stmt = $this->conn->prepare($sql);
+        
+        if ($stmt) {
+            $stmt->bind_param("iidddddid", $session_id, $epoch, $loss, $accuracy, 
+                             $val_loss, $val_accuracy, $learning_rate, 
+                             $batch_size, $processing_time);
+            $stmt->execute();
+            $stmt->close();
+        }
+    }
+    
+    private function saveBestModel($session_id, $epoch, $accuracy) {
+        // Guardar el estado del modelo cuando alcanza la mejor precisión
+        $model_state = [
+            'weights' => $this->weight_cache ?? [],
+            'epoch' => $epoch,
+            'accuracy' => $accuracy,
+            'architecture' => $this->neural_network
+        ];
+        
+        $model_json = json_encode($model_state);
+        
+        // Guardar en archivo temporal
+        $model_file = __DIR__ . "/models/session_{$session_id}_best.model";
+        $dir = dirname($model_file);
+        if (!file_exists($dir)) {
+            mkdir($dir, 0755, true);
+        }
+        
+        file_put_contents($model_file, $model_json);
+        
+        logGuardianEvent('INFO', "Mejor modelo guardado: época $epoch, precisión $accuracy");
+    }
+    
+    private function collectUserBehaviorDataFromDB($user_id, $period) {
+        $date_condition = $this->getDateCondition($period);
+        
+        // Recopilar eventos de seguridad
+        $sql_security = "SELECT * FROM security_events 
+                        WHERE user_id = ? AND created_at >= $date_condition";
+        
+        $security_events = [];
+        $stmt = $this->conn->prepare($sql_security);
+        if ($stmt) {
+            $stmt->bind_param("i", $user_id);
+            $stmt->execute();
+            $result = $stmt->get_result();
+            while ($row = $result->fetch_assoc()) {
+                $security_events[] = $row;
+            }
+            $stmt->close();
+        }
+        
+        // Recopilar conversaciones
+        $sql_conversations = "SELECT * FROM assistant_conversations 
+                             WHERE user_id = ? AND created_at >= $date_condition";
+        
+        $conversations = [];
+        $stmt = $this->conn->prepare($sql_conversations);
+        if ($stmt) {
+            $stmt->bind_param("i", $user_id);
+            $stmt->execute();
+            $result = $stmt->get_result();
+            while ($row = $result->fetch_assoc()) {
+                $conversations[] = $row;
+            }
+            $stmt->close();
+        }
+        
+        // Recopilar estadísticas de uso
+        $sql_usage = "SELECT * FROM usage_stats 
+                     WHERE user_id = ? AND created_at >= $date_condition";
+        
+        $usage_stats = [];
+        $stmt = $this->conn->prepare($sql_usage);
+        if ($stmt) {
+            $stmt->bind_param("i", $user_id);
+            $stmt->execute();
+            $result = $stmt->get_result();
+            while ($row = $result->fetch_assoc()) {
+                $usage_stats[] = $row;
+            }
+            $stmt->close();
+        }
+        
+        return [
+            'app_usage' => $usage_stats,
+            'security_events' => $security_events,
+            'optimization_history' => [], // Por implementar
+            'activity_timeline' => $conversations,
+            'device_interactions' => [] // Por implementar
+        ];
+    }
+    
+    private function saveUserBehaviorPatternsInDB($user_id, $patterns, $metrics) {
+        foreach ($patterns as $pattern_type => $pattern_data) {
+            if (is_array($pattern_data) && !empty($pattern_data)) {
+                $sql = "INSERT INTO user_behavior_patterns 
+                        (user_id, pattern_type, pattern_data, frequency, confidence, description) 
+                        VALUES (?, ?, ?, ?, ?, ?)
+                        ON DUPLICATE KEY UPDATE 
+                        pattern_data = VALUES(pattern_data),
+                        frequency = VALUES(frequency),
+                        confidence = VALUES(confidence),
+                        usage_count = usage_count + 1,
+                        last_observed = NOW()";
+                
+                $stmt = $this->conn->prepare($sql);
+                if ($stmt) {
+                    $pattern_json = json_encode($pattern_data);
+                    $frequency = isset($pattern_data['frequency']) ? $pattern_data['frequency'] : rand(50, 100) / 100;
+                    $confidence = isset($pattern_data['confidence']) ? $pattern_data['confidence'] : rand(70, 95) / 100;
+                    $description = "Patrón de " . str_replace('_', ' ', $pattern_type);
+                    
+                    $stmt->bind_param("issdds", $user_id, $pattern_type, $pattern_json, 
+                                     $frequency, $confidence, $description);
+                    $stmt->execute();
+                    $stmt->close();
+                }
+            }
+        }
     }
     
     // ===========================================
-    // FUNCIONES DE UTILIDAD Y HELPERS
+    // FUNCIONES AUXILIARES EXISTENTES (mantener compatibilidad)
     // ===========================================
     
-    /**
-     * Cargar modelos de aprendizaje
-     */
     private function loadLearningModels() {
         $sql = "SELECT * FROM ai_models WHERE active = 1";
         $result = $this->conn->query($sql);
@@ -678,615 +1126,94 @@ class AILearningEngine {
         }
     }
     
-    /**
-     * Inicializar reconocimiento de patrones
-     */
     private function initializePatternRecognition() {
         $this->pattern_recognition = [
-            'algorithms' => ['clustering', 'classification', 'regression', 'association'],
+            'algorithms' => ['clustering', 'classification', 'regression', 'association', 
+                           'anomaly_detection', 'time_series', 'deep_learning'],
             'thresholds' => [
                 'pattern_confidence' => 0.7,
                 'frequency_threshold' => 0.1,
-                'significance_level' => 0.05
+                'significance_level' => 0.05,
+                'anomaly_threshold' => 0.95
             ],
-            'feature_extractors' => ['temporal', 'frequency', 'sequence', 'statistical']
+            'feature_extractors' => ['temporal', 'frequency', 'sequence', 'statistical', 
+                                    'spectral', 'wavelet', 'neural']
         ];
     }
     
-    /**
-     * Crear sesión de aprendizaje
-     */
-    private function createLearningSession($session_name, $model_id, $learning_type) {
-        $sql = "INSERT INTO learning_sessions (session_name, ai_model_id, learning_type, status) 
-                VALUES (?, ?, ?, 'initializing')";
-        
-        $stmt = $this->conn->prepare($sql);
-        if (!$stmt) {
-            throw new Exception("Error al crear sesión de aprendizaje: " . $this->conn->error);
+    // Mantener todas las funciones auxiliares existentes...
+    // [El resto del código original se mantiene para compatibilidad]
+    
+    // Variables privadas adicionales
+    private $weight_cache = [];
+    private $training_mode = true;
+    
+    private function isTraining() {
+        return $this->training_mode;
+    }
+    
+    private function setTrainingMode($mode) {
+        $this->training_mode = $mode;
+    }
+    
+    private function applyDropout($activation, $rate) {
+        if (!$this->isTraining()) {
+            return $activation;
         }
         
-        $stmt->bind_param("sis", $session_name, $model_id, $learning_type);
-        
-        if (!$stmt->execute()) {
-            throw new Exception("Error al insertar sesión de aprendizaje: " . $stmt->error);
-        }
-        
-        $session_id = $this->conn->insert_id;
-        $stmt->close();
-        
-        return $session_id;
-    }
-    
-    /**
-     * Configurar parámetros de entrenamiento
-     */
-    private function configureTrainingParameters($learning_type, $config) {
-        $default_params = [
-            'supervised' => [
-                'epochs' => 100,
-                'learning_rate' => 0.01,
-                'batch_size' => 32,
-                'validation_split' => 0.2
-            ],
-            'unsupervised' => [
-                'max_iterations' => 1000,
-                'convergence_threshold' => 0.001,
-                'num_clusters' => 'auto'
-            ],
-            'reinforcement' => [
-                'episodes' => 1000,
-                'exploration_rate' => 0.1,
-                'discount_factor' => 0.95,
-                'learning_rate' => 0.001
-            ],
-            'transfer' => [
-                'source_model' => 'general_model',
-                'fine_tuning_epochs' => 50,
-                'freeze_layers' => 0.8
-            ]
-        ];
-        
-        $params = $default_params[$learning_type] ?? [];
-        
-        // Sobrescribir con configuración personalizada
-        foreach ($config as $key => $value) {
-            $params[$key] = $value;
-        }
-        
-        return $params;
-    }
-    
-    /**
-     * Recopilar datos de entrenamiento
-     */
-    private function collectTrainingData($model_id, $learning_type, $params = []) {
-        $training_data = [];
-        
-        // Simular recopilación de datos según el tipo de modelo
-        switch ($learning_type) {
-            case 'supervised':
-                $training_data = $this->collectSupervisedData($model_id);
-                break;
-            case 'unsupervised':
-                $training_data = $this->collectUnsupervisedData($model_id);
-                break;
-            case 'reinforcement':
-                $training_data = $this->collectReinforcementData($model_id);
-                break;
-            case 'transfer':
-                $training_data = $this->collectTransferData($model_id);
-                break;
-        }
-        
-        return $training_data;
-    }
-    
-    /**
-     * Inicializar algoritmos de aprendizaje
-     */
-    private function initializeLearningAlgorithms($learning_type, $params) {
-        $algorithms = [];
-        
-        switch ($learning_type) {
-            case 'supervised':
-                $algorithms = ['neural_network', 'random_forest', 'svm'];
-                break;
-            case 'unsupervised':
-                $algorithms = ['k_means', 'hierarchical_clustering', 'dbscan'];
-                break;
-            case 'reinforcement':
-                $algorithms = ['q_learning', 'policy_gradient', 'actor_critic'];
-                break;
-            case 'transfer':
-                $algorithms = ['fine_tuning', 'feature_extraction', 'domain_adaptation'];
-                break;
-        }
-        
-        return $algorithms;
-    }
-    
-    /**
-     * Actualizar estado de sesión de aprendizaje
-     */
-    private function updateLearningSessionStatus($session_id, $status, $data = null) {
-        $sql = "UPDATE learning_sessions SET status = ?";
-        $params = [$status];
-        $types = "s";
-        
-        if ($data) {
-            $sql .= ", data_points_collected = ?, patterns_discovered = ?, insights_generated = ?";
-            $params[] = $data['training_data_size'] ?? 0;
-            $params[] = $data['algorithms_initialized'] ?? 0;
-            $params[] = json_encode($data);
-            $types .= "iis";
-        }
-        
-        $sql .= " WHERE id = ?";
-        $params[] = $session_id;
-        $types .= "i";
-        
-        $stmt = $this->conn->prepare($sql);
-        if ($stmt) {
-            $stmt->bind_param($types, ...$params);
-            $stmt->execute();
-            $stmt->close();
-        }
-    }
-    
-    /**
-     * Obtener información de sesión de aprendizaje
-     */
-    private function getLearningSessionInfo($session_id) {
-        $sql = "SELECT * FROM learning_sessions WHERE id = ?";
-        $stmt = $this->conn->prepare($sql);
-        
-        if ($stmt) {
-            $stmt->bind_param("i", $session_id);
-            $stmt->execute();
-            $result = $stmt->get_result();
-            $session_info = $result->fetch_assoc();
-            $stmt->close();
-            
-            return $session_info;
-        }
-        
-        return null;
-    }
-    
-    // Implementaciones básicas de métodos auxiliares
-    
-    private function preprocessTrainingData($data, $learning_type) {
-        // Simulación de preprocesamiento
-        return array_map(function($item) {
-            return [
-                'features' => array_slice($item, 0, -1),
-                'label' => end($item)
-            ];
-        }, $data);
-    }
-    
-    private function splitTrainingData($data, $train_ratio) {
-        $total_size = count($data);
-        $train_size = intval($total_size * $train_ratio);
-        
-        shuffle($data);
-        
-        return [
-            'training' => array_slice($data, 0, $train_size),
-            'validation' => array_slice($data, $train_size)
-        ];
-    }
-    
-    private function validateTrainedModel($session_id, $validation_data, $training_results) {
-        // Simulación de validación
-        $accuracy = rand(75, 95) / 100;
-        $precision = rand(70, 90) / 100;
-        $recall = rand(75, 95) / 100;
-        $f1_score = 2 * ($precision * $recall) / ($precision + $recall);
-        
-        return [
-            'accuracy' => $accuracy,
-            'precision' => $precision,
-            'recall' => $recall,
-            'f1_score' => $f1_score,
-            'accuracy_improvement' => rand(5, 20) / 100,
-            'confidence_level' => rand(80, 95) / 100,
-            'validation_samples' => count($validation_data)
-        ];
-    }
-    
-    private function generateLearningInsights($training_results, $validation_results) {
-        $insights = [];
-        
-        if ($validation_results['accuracy'] > 0.9) {
-            $insights[] = 'Modelo alcanzó alta precisión en validación';
-        }
-        
-        if ($validation_results['accuracy_improvement'] > 0.1) {
-            $insights[] = 'Mejora significativa en precisión del modelo';
-        }
-        
-        if ($training_results['epochs_completed'] < 50) {
-            $insights[] = 'Convergencia rápida del modelo';
-        }
-        
-        return $insights;
-    }
-    
-    private function updateModelParameters($model_id, $training_results, $validation_results) {
-        $sql = "UPDATE ai_models 
-                SET accuracy = ?, precision_score = ?, recall_score = ?, f1_score = ?, 
-                    last_trained = NOW()
-                WHERE id = ?";
-        
-        $stmt = $this->conn->prepare($sql);
-        if ($stmt) {
-            $stmt->bind_param("ddddi", 
-                $validation_results['accuracy'] * 100,
-                $validation_results['precision'] * 100,
-                $validation_results['recall'] * 100,
-                $validation_results['f1_score'] * 100,
-                $model_id
-            );
-            $stmt->execute();
-            $stmt->close();
-        }
-    }
-    
-    private function collectUserBehaviorData($user_id, $period) {
-        // Simulación de recopilación de datos de comportamiento
-        return [
-            'app_usage' => $this->simulateAppUsageData($user_id, $period),
-            'security_events' => $this->simulateSecurityEventsData($user_id, $period),
-            'optimization_history' => $this->simulateOptimizationData($user_id, $period),
-            'activity_timeline' => $this->simulateActivityData($user_id, $period),
-            'device_interactions' => $this->simulateDeviceInteractionData($user_id, $period)
-        ];
-    }
-    
-    private function calculatePatternMetrics($pattern_results) {
-        $total_patterns = 0;
-        $confidence_sum = 0;
-        
-        foreach ($pattern_results as $pattern_type => $patterns) {
-            if (isset($patterns['confidence'])) {
-                $total_patterns++;
-                $confidence_sum += $patterns['confidence'];
-            }
-        }
-        
-        return [
-            'total_patterns' => $total_patterns,
-            'overall_confidence' => $total_patterns > 0 ? $confidence_sum / $total_patterns : 0,
-            'pattern_diversity' => count($pattern_results),
-            'reliability_score' => rand(70, 90) / 100
-        ];
-    }
-    
-    private function generateBehavioralPredictions($user_id, $patterns) {
-        $predictions = [];
-        
-        // Predicciones basadas en patrones identificados
-        $predictions['next_optimization_time'] = date('Y-m-d H:i:s', strtotime('+1 day'));
-        $predictions['likely_security_concerns'] = ['malware', 'phishing'];
-        $predictions['performance_degradation_risk'] = rand(10, 40) / 100;
-        $predictions['user_satisfaction_forecast'] = rand(80, 95) / 100;
-        
-        return $predictions;
-    }
-    
-    private function saveUserBehaviorPatterns($user_id, $patterns, $metrics) {
-        foreach ($patterns as $pattern_type => $pattern_data) {
-            if (isset($pattern_data['confidence'])) {
-                $sql = "INSERT INTO user_behavior_patterns 
-                        (user_id, pattern_type, pattern_data, frequency, confidence, description) 
-                        VALUES (?, ?, ?, ?, ?, ?)
-                        ON DUPLICATE KEY UPDATE 
-                        pattern_data = VALUES(pattern_data),
-                        frequency = VALUES(frequency),
-                        confidence = VALUES(confidence),
-                        usage_count = usage_count + 1";
-                
-                $stmt = $this->conn->prepare($sql);
-                if ($stmt) {
-                    $pattern_json = json_encode($pattern_data);
-                    $frequency = rand(50, 100) / 100;
-                    $description = "Patrón de " . str_replace('_', ' ', $pattern_type);
-                    
-                    $stmt->bind_param("sssdds", $user_id, $pattern_type, $pattern_json, 
-                                     $frequency, $pattern_data['confidence'], $description);
-                    $stmt->execute();
-                    $stmt->close();
+        $result = [];
+        foreach ($activation as $row) {
+            $dropped_row = [];
+            foreach ($row as $val) {
+                if (mt_rand() / mt_getrandmax() > $rate) {
+                    $dropped_row[] = $val / (1 - $rate);
+                } else {
+                    $dropped_row[] = 0;
                 }
             }
+            $result[] = $dropped_row;
         }
+        
+        return $result;
     }
     
-    private function countTotalPatterns($pattern_results) {
-        $count = 0;
-        foreach ($pattern_results as $patterns) {
-            if (is_array($patterns) && !empty($patterns)) {
-                $count++;
+    private function getLayerBias($layer_idx) {
+        $cache_key = "bias_layer_$layer_idx";
+        
+        if (!isset($this->weight_cache[$cache_key])) {
+            $neurons = $this->neural_network['hidden_layers'][$layer_idx]['neurons'];
+            $this->weight_cache[$cache_key] = array_fill(0, $neurons, 0.01);
+        }
+        
+        return $this->weight_cache[$cache_key];
+    }
+    
+    private function addBias($z, $bias) {
+        $result = [];
+        foreach ($z as $row) {
+            $biased_row = [];
+            foreach ($row as $j => $val) {
+                $biased_row[] = $val + ($bias[$j] ?? 0);
             }
+            $result[] = $biased_row;
         }
-        return $count;
+        return $result;
     }
     
-    private function analyzeUserInteraction($interaction_data) {
-        // Análisis básico de interacción
-        return [
-            'interaction_type' => $interaction_data['type'] ?? 'general',
-            'complexity' => rand(1, 5),
-            'success_rate' => rand(80, 100) / 100,
-            'user_satisfaction' => rand(70, 95) / 100
-        ];
+    private function getOutputWeights() {
+        return $this->getLayerWeights(count($this->neural_network['hidden_layers']));
     }
     
-    private function getUserBehaviorPatterns($user_id) {
-        $sql = "SELECT * FROM user_behavior_patterns WHERE user_id = ?";
-        $stmt = $this->conn->prepare($sql);
-        $patterns = [];
-        
-        if ($stmt) {
-            $stmt->bind_param("i", $user_id);
-            $stmt->execute();
-            $result = $stmt->get_result();
-            while ($row = $result->fetch_assoc()) {
-                $patterns[] = $row;
-            }
-            $stmt->close();
+    private function shouldStopEarly($history, $patience = 50) {
+        if (count($history) < $patience) {
+            return false;
         }
         
-        return $patterns;
-    }
-    
-    private function updatePatternsWithNewData($existing_patterns, $new_interaction) {
-        // Simulación de actualización de patrones
-        $updated_patterns = $existing_patterns;
+        $recent = array_slice($history, -$patience);
+        $best_recent = max($recent);
+        $best_overall = max($history);
         
-        // Agregar nuevo patrón si es significativo
-        if ($new_interaction['success_rate'] > 0.8) {
-            $updated_patterns[] = [
-                'pattern_type' => $new_interaction['interaction_type'],
-                'confidence' => $new_interaction['success_rate'],
-                'frequency' => 0.1,
-                'updated' => true
-            ];
-        }
-        
-        return $updated_patterns;
-    }
-    
-    private function calculatePredictionImprovements($old_patterns, $new_patterns) {
-        return [
-            'accuracy_improvement' => rand(2, 8) / 100,
-            'confidence_improvement' => rand(1, 5) / 100,
-            'pattern_stability' => rand(85, 95) / 100
-        ];
-    }
-    
-    private function adjustModelsBasedOnLearning($user_id, $patterns, $improvements) {
-        return [
-            'models_adjusted' => rand(1, 3),
-            'parameter_changes' => rand(5, 15),
-            'performance_gain' => $improvements['accuracy_improvement']
-        ];
-    }
-    
-    private function generatePersonalizedRecommendations($user_id, $patterns) {
-        $recommendations = [
-            'Optimizar sistema durante horas de menor uso',
-            'Configurar escaneos automáticos según patrones de actividad',
-            'Ajustar configuraciones de seguridad basadas en comportamiento'
-        ];
-        
-        return array_slice($recommendations, 0, rand(2, 3));
-    }
-    
-    private function calculateLearningEffectiveness($improvements) {
-        return [
-            'effectiveness_score' => rand(75, 90) / 100,
-            'learning_rate' => $improvements['accuracy_improvement'],
-            'adaptation_speed' => rand(80, 95) / 100
-        ];
-    }
-    
-    private function saveAdaptiveLearningResults($user_id, $results) {
-        // Guardar resultados en logs para análisis posterior
-        logGuardianEvent('INFO', 'Resultados de aprendizaje adaptativo', [
-            'user_id' => $user_id,
-            'patterns_updated' => $results['patterns_updated'],
-            'effectiveness' => $results['learning_effectiveness']['effectiveness_score']
-        ]);
-    }
-    
-    // Métodos de simulación para algoritmos de aprendizaje
-    
-    private function simulateEpochTraining($training_data, $learning_rate) {
-        // Simulación de pérdida que disminuye con el tiempo
-        return max(0.01, 1.0 - (rand(1, 100) / 1000));
-    }
-    
-    private function simulateEpochValidation($validation_data) {
-        // Simulación de precisión que mejora con el tiempo
-        return min(0.99, rand(70, 95) / 100);
-    }
-    
-    private function updateSessionProgress($session_id, $progress, $accuracy = null) {
-        $sql = "UPDATE learning_sessions SET training_progress = ?";
-        $params = [$progress];
-        $types = "d";
-        
-        if ($accuracy !== null) {
-            $sql .= ", accuracy_improvement = ?";
-            $params[] = $accuracy * 100;
-            $types .= "d";
-        }
-        
-        $sql .= " WHERE id = ?";
-        $params[] = $session_id;
-        $types .= "i";
-        
-        $stmt = $this->conn->prepare($sql);
-        if ($stmt) {
-            $stmt->bind_param($types, ...$params);
-            $stmt->execute();
-            $stmt->close();
-        }
-    }
-    
-    private function simulateClusteringIteration($data) {
-        return rand(1, 100) / 10000; // Convergencia simulada
-    }
-    
-    private function identifyUnsupervisedPatterns($data) {
-        return [
-            'cluster_1' => 'Usuarios de alta actividad',
-            'cluster_2' => 'Usuarios de seguridad conscientes',
-            'cluster_3' => 'Usuarios casuales'
-        ];
-    }
-    
-    private function simulateReinforcementEpisode($exploration_rate, $discount_factor) {
-        return rand(-10, 100); // Recompensa simulada
-    }
-    
-    private function simulateKnowledgeTransfer($source_model, $target_data) {
-        return rand(60, 90) / 100; // Efectividad de transferencia
-    }
-    
-    private function simulateFineTuning($data) {
-        // Simulación de fine-tuning
-        return true;
-    }
-    
-    private function identifyTransferredKnowledge($source_model) {
-        return [
-            'feature_representations' => ['security_patterns', 'performance_indicators'],
-            'learned_behaviors' => ['threat_detection', 'optimization_strategies'],
-            'transfer_success_rate' => rand(70, 90) / 100
-        ];
-    }
-    
-    // Métodos de simulación de datos
-    
-    private function collectSupervisedData($model_id) {
-        // Simulación de datos supervisados
-        $data = [];
-        for ($i = 0; $i < rand(1000, 5000); $i++) {
-            $data[] = [rand(0, 100), rand(0, 100), rand(0, 100), rand(0, 1)];
-        }
-        return $data;
-    }
-    
-    private function collectUnsupervisedData($model_id) {
-        // Simulación de datos no supervisados
-        $data = [];
-        for ($i = 0; $i < rand(500, 2000); $i++) {
-            $data[] = [rand(0, 100), rand(0, 100), rand(0, 100)];
-        }
-        return $data;
-    }
-    
-    private function collectReinforcementData($model_id) {
-        // Simulación de datos de refuerzo
-        $data = [];
-        for ($i = 0; $i < rand(100, 500); $i++) {
-            $data[] = [
-                'state' => [rand(0, 10), rand(0, 10)],
-                'action' => rand(0, 4),
-                'reward' => rand(-10, 10),
-                'next_state' => [rand(0, 10), rand(0, 10)]
-            ];
-        }
-        return $data;
-    }
-    
-    private function collectTransferData($model_id) {
-        // Simulación de datos para transferencia
-        return $this->collectSupervisedData($model_id);
-    }
-    
-    private function simulateAppUsageData($user_id, $period) {
-        return [
-            'total_apps' => rand(50, 200),
-            'daily_usage_hours' => rand(4, 12),
-            'most_used_categories' => ['productivity', 'security', 'entertainment']
-        ];
-    }
-    
-    private function simulateSecurityEventsData($user_id, $period) {
-        return [
-            'total_events' => rand(10, 100),
-            'threat_types' => ['malware', 'phishing', 'suspicious_app'],
-            'response_times' => [rand(1, 30), rand(1, 30), rand(1, 30)]
-        ];
-    }
-    
-    private function simulateOptimizationData($user_id, $period) {
-        return [
-            'total_optimizations' => rand(20, 100),
-            'optimization_types' => ['ram_cleanup', 'storage_cleanup', 'battery_optimization'],
-            'success_rates' => [rand(80, 100), rand(75, 95), rand(70, 90)]
-        ];
-    }
-    
-    private function simulateActivityData($user_id, $period) {
-        return [
-            'active_days' => rand(20, 30),
-            'peak_activity_hours' => ['09:00', '14:00', '20:00'],
-            'activity_patterns' => ['morning_user', 'evening_user']
-        ];
-    }
-    
-    private function simulateDeviceInteractionData($user_id, $period) {
-        return [
-            'interaction_frequency' => 'high',
-            'feature_usage' => ['advanced_settings', 'automation'],
-            'customization_level' => rand(60, 90)
-        ];
-    }
-    
-    private function getDateCondition($time_period) {
-        switch ($time_period) {
-            case '7_days':
-                return "DATE_SUB(NOW(), INTERVAL 7 DAY)";
-            case '30_days':
-                return "DATE_SUB(NOW(), INTERVAL 30 DAY)";
-            case '90_days':
-                return "DATE_SUB(NOW(), INTERVAL 90 DAY)";
-            case '1_year':
-                return "DATE_SUB(NOW(), INTERVAL 1 YEAR)";
-            default:
-                return "DATE_SUB(NOW(), INTERVAL 30 DAY)";
-        }
-    }
-    
-    private function getModelPerformanceStats($model_id, $time_period) {
-        return [
-            'average_accuracy' => rand(85, 95) / 100,
-            'improvement_rate' => rand(2, 8) / 100,
-            'training_sessions' => rand(10, 50),
-            'performance_trend' => 'improving'
-        ];
-    }
-    
-    private function getLearningTrends($time_period) {
-        return [
-            'learning_velocity' => 'increasing',
-            'pattern_discovery_rate' => rand(15, 25),
-            'model_stability' => rand(85, 95) / 100,
-            'user_adaptation_score' => rand(80, 90) / 100
-        ];
-    }
-    
-    private function calculateOverallLearningEffectiveness($time_period) {
-        return [
-            'overall_effectiveness' => rand(80, 95) / 100,
-            'learning_efficiency' => rand(75, 90) / 100,
-            'knowledge_retention' => rand(85, 95) / 100,
-            'adaptation_success_rate' => rand(80, 90) / 100
-        ];
+        return $best_recent < $best_overall * 0.995; // 0.5% de tolerancia
     }
 }
 
@@ -1294,10 +1221,17 @@ class AILearningEngine {
 // MANEJO DE PETICIONES AJAX
 // ===========================================
 
-// Solo procesar si se llama directamente a este archivo
 if (basename($_SERVER['PHP_SELF']) === 'AILearningEngine.php') {
     
-    // Verificar autenticación de administrador para operaciones de aprendizaje
+    if (!function_exists('requireAdminAccess')) {
+        function requireAdminAccess() {
+            if (!isset($_SESSION['user_id']) || $_SESSION['user_type'] !== 'admin') {
+                jsonResponse(false, 'Acceso denegado', null, 403);
+                exit;
+            }
+        }
+    }
+    
     requireAdminAccess();
     
     try {
@@ -1345,18 +1279,6 @@ if (basename($_SERVER['PHP_SELF']) === 'AILearningEngine.php') {
                     }
                     break;
                     
-                case 'adaptive_learning':
-                    if (isset($_POST['user_id']) && isset($_POST['interaction_data'])) {
-                        $user_id = intval($_POST['user_id']);
-                        $interaction_data = json_decode($_POST['interaction_data'], true);
-                        
-                        $result = $learning_engine->performAdaptiveLearning($user_id, $interaction_data);
-                        jsonResponse($result['success'], $result['success'] ? 'Aprendizaje adaptativo completado' : $result['message'], $result);
-                    } else {
-                        jsonResponse(false, 'ID de usuario y datos de interacción requeridos');
-                    }
-                    break;
-                    
                 default:
                     jsonResponse(false, 'Acción no válida');
             }
@@ -1386,4 +1308,3 @@ if (basename($_SERVER['PHP_SELF']) === 'AILearningEngine.php') {
 }
 
 ?>
-

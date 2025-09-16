@@ -18,7 +18,8 @@ function authenticateUser($username, $password) {
     // Intentar autenticacion con base de datos
     if ($db && $db->isConnected()) {
         try {
-            $result = $db->query("SELECT * FROM users WHERE username = ? AND status = 'active'", [$username]);
+            // CORRECCIÓN: Agregar LIMIT 1 a la consulta
+            $result = $db->query("SELECT * FROM users WHERE username = ? AND status = 'active' LIMIT 1", [$username]);
             
             if ($result && $result->num_rows > 0) {
                 $user = $result->fetch_assoc();
@@ -32,11 +33,12 @@ function authenticateUser($username, $password) {
                 }
                 
                 if ($password_valid) {
-                    // Actualizar ultimo login
-                    $db->query("UPDATE users SET last_login = NOW(), login_attempts = 0 WHERE id = ?", [$user['id']]);
+                    // Actualizar ultimo login - CORRECCIÓN: Agregar LIMIT
+                    $db->query("UPDATE users SET last_login = NOW(), login_attempts = 0 WHERE id = ? LIMIT 1", [$user['id']]);
                     
-                    // Log de acceso militar
-                    logMilitaryEvent('USER_LOGIN_SUCCESS', "Usuario autenticado: {$username}", $user['security_clearance'] ?? 'UNCLASSIFIED');
+                    // Log de acceso militar - CORRECCIÓN: Verificar que existe el campo
+                    $security_clearance = isset($user['security_clearance']) ? $user['security_clearance'] : 'UNCLASSIFIED';
+                    logMilitaryEvent('USER_LOGIN_SUCCESS', "Usuario autenticado: {$username}", $security_clearance);
                     
                     return [
                         'success' => true,
@@ -45,8 +47,8 @@ function authenticateUser($username, $password) {
                         'connection' => $db->getConnectionInfo()
                     ];
                 } else {
-                    // Incrementar intentos fallidos
-                    $db->query("UPDATE users SET login_attempts = login_attempts + 1 WHERE username = ?", [$username]);
+                    // Incrementar intentos fallidos - CORRECCIÓN: Agregar LIMIT
+                    $db->query("UPDATE users SET login_attempts = login_attempts + 1 WHERE username = ? LIMIT 1", [$username]);
                     logMilitaryEvent('USER_LOGIN_FAILED', "Intento de acceso fallido: {$username}", 'SECURITY_ALERT');
                 }
             }
@@ -56,12 +58,14 @@ function authenticateUser($username, $password) {
         }
     }
     
+    // CORRECCIÓN: Verificar que el array existe antes de acceder
     // Fallback a usuarios por defecto
-    if (isset($DEFAULT_USERS[$username])) {
+    if (isset($DEFAULT_USERS) && is_array($DEFAULT_USERS) && isset($DEFAULT_USERS[$username])) {
         $user = $DEFAULT_USERS[$username];
         
         if ($password === $user['password'] || password_verify($password, $user['password_hash'])) {
-            logMilitaryEvent('USER_LOGIN_SUCCESS', "Usuario por defecto autenticado: {$username}", $user['security_clearance']);
+            $security_clearance = isset($user['security_clearance']) ? $user['security_clearance'] : 'UNCLASSIFIED';
+            logMilitaryEvent('USER_LOGIN_SUCCESS', "Usuario por defecto autenticado: {$username}", $security_clearance);
             
             return [
                 'success' => true,
@@ -86,10 +90,11 @@ function authenticateUser($username, $password) {
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     header('Content-Type: application/json');
     
-    $action = $_POST['action'] ?? '';
+    // CORRECCIÓN: Verificar que existe antes de acceder
+    $action = isset($_POST['action']) ? $_POST['action'] : '';
     
-    // Validar token CSRF
-    $csrf_token = $_POST['csrf_token'] ?? '';
+    // Validar token CSRF - CORRECCIÓN: Verificar que existe
+    $csrf_token = isset($_POST['csrf_token']) ? $_POST['csrf_token'] : '';
     if (!validateCSRFToken($csrf_token)) {
         echo json_encode([
             'success' => false,
@@ -99,8 +104,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
     
     if ($action === 'login') {
-        $username = sanitizeInput($_POST['username'] ?? '');
-        $password = $_POST['password'] ?? '';
+        // CORRECCIÓN: Verificar que existen los campos
+        $username = isset($_POST['username']) ? sanitizeInput($_POST['username']) : '';
+        $password = isset($_POST['password']) ? $_POST['password'] : '';
         
         if (empty($username) || empty($password)) {
             echo json_encode([
@@ -116,27 +122,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             
             if ($result['success']) {
                 // IMPORTANTE: Establecer TODAS las variables de sesion correctamente
+                // CORRECCIÓN: Verificar que todos los campos existen antes de acceder
                 $_SESSION['user'] = $result['user'];
-                $_SESSION['user_id'] = $result['user']['id'];
+                $_SESSION['user_id'] = isset($result['user']['id']) ? $result['user']['id'] : null;
                 $_SESSION['logged_in'] = true;
                 $_SESSION['login_time'] = time();
-                $_SESSION['username'] = $result['user']['username'];
-                $_SESSION['email'] = $result['user']['email'] ?? '';
-                $_SESSION['fullname'] = $result['user']['fullname'] ?? $result['user']['username'];
+                $_SESSION['username'] = isset($result['user']['username']) ? $result['user']['username'] : $username;
+                $_SESSION['email'] = isset($result['user']['email']) ? $result['user']['email'] : '';
+                $_SESSION['fullname'] = isset($result['user']['fullname']) ? $result['user']['fullname'] : $username;
                 
                 // CRITICO: Establecer user_type correctamente
-                $_SESSION['user_type'] = $result['user']['user_type'] ?? 'user';
+                $_SESSION['user_type'] = isset($result['user']['user_type']) ? $result['user']['user_type'] : 'user';
                 
                 // Establecer permisos premium y militares
-                $_SESSION['premium_status'] = $result['user']['premium_status'] ?? 'basic';
-                $_SESSION['security_clearance'] = $result['user']['security_clearance'] ?? 'UNCLASSIFIED';
-                $_SESSION['military_access'] = $result['user']['military_access'] ?? false;
+                $_SESSION['premium_status'] = isset($result['user']['premium_status']) ? $result['user']['premium_status'] : 'basic';
+                $_SESSION['security_clearance'] = isset($result['user']['security_clearance']) ? $result['user']['security_clearance'] : 'UNCLASSIFIED';
+                $_SESSION['military_access'] = isset($result['user']['military_access']) ? $result['user']['military_access'] : false;
                 
                 // Regenerar ID de sesion por seguridad
                 session_regenerate_id(true);
                 
                 // Log del login exitoso
-                logSecurityEvent('LOGIN_SUCCESS', "Usuario {$username} inicio sesion exitosamente", 'info', $result['user']['id']);
+                logSecurityEvent('LOGIN_SUCCESS', "Usuario {$username} inicio sesion exitosamente", 'info', $_SESSION['user_id']);
                 
                 // Determinar la redireccion correcta
                 $redirect = ($_SESSION['user_type'] === 'admin') ? 'admin_dashboard.php' : 'user_dashboard.php';
@@ -146,22 +153,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     'message' => 'Login exitoso',
                     'redirect' => $redirect,
                     'user' => [
-                        'username' => $result['user']['username'],
+                        'username' => $_SESSION['username'],
                         'user_type' => $_SESSION['user_type'],
                         'premium_status' => $_SESSION['premium_status'],
                         'fullname' => $_SESSION['fullname'],
                         'security_clearance' => $_SESSION['security_clearance']
                     ],
-                    'source' => $result['source'] ?? 'unknown',
-                    'connection' => $result['connection'] ?? null
+                    'source' => isset($result['source']) ? $result['source'] : 'unknown',
+                    'connection' => isset($result['connection']) ? $result['connection'] : null
                 ]);
             } else {
                 // Log del intento fallido
-                logSecurityEvent('LOGIN_FAILED', "Intento fallido para usuario: {$username} desde IP: " . ($_SERVER['REMOTE_ADDR'] ?? 'unknown'), 'warning');
+                $remote_addr = isset($_SERVER['REMOTE_ADDR']) ? $_SERVER['REMOTE_ADDR'] : 'unknown';
+                logSecurityEvent('LOGIN_FAILED', "Intento fallido para usuario: {$username} desde IP: {$remote_addr}", 'warning');
                 
                 echo json_encode([
                     'success' => false,
-                    'message' => $result['message'] ?? 'Credenciales incorrectas'
+                    'message' => isset($result['message']) ? $result['message'] : 'Credenciales incorrectas'
                 ]);
             }
         } catch (Exception $e) {
@@ -178,11 +186,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
     
     if ($action === 'register') {
+        // CORRECCIÓN: Verificar que existen todos los campos
         $data = [
-            'username' => sanitizeInput($_POST['username'] ?? ''),
-            'email' => sanitizeInput($_POST['email'] ?? ''),
-            'password' => $_POST['password'] ?? '',
-            'fullname' => sanitizeInput($_POST['fullname'] ?? '')
+            'username' => isset($_POST['username']) ? sanitizeInput($_POST['username']) : '',
+            'email' => isset($_POST['email']) ? sanitizeInput($_POST['email']) : '',
+            'password' => isset($_POST['password']) ? $_POST['password'] : '',
+            'fullname' => isset($_POST['fullname']) ? sanitizeInput($_POST['fullname']) : ''
         ];
         
         // Validar datos
@@ -226,9 +235,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
         if ($db && $db->isConnected()) {
             try {
+                // CORRECCIÓN: Agregar LIMIT a la consulta de verificación
                 // Verificar si el usuario ya existe
                 $result = $db->query(
-                    "SELECT id FROM users WHERE username = ? OR email = ?",
+                    "SELECT id FROM users WHERE username = ? OR email = ? LIMIT 1",
                     [$data['username'], $data['email']]
                 );
                 
@@ -270,9 +280,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 // Insertar nuevo usuario
                 $hashedPassword = password_hash($data['password'], PASSWORD_DEFAULT);
                 
+                // CORRECCIÓN: Agregar LIMIT y verificar resultado
                 // Determinar si es el primer usuario (sera admin)
-                $countResult = $db->query("SELECT COUNT(*) as total FROM users");
-                $count = $countResult ? $countResult->fetch_assoc()['total'] : 0;
+                $countResult = $db->query("SELECT COUNT(*) as total FROM users LIMIT 1");
+                $count = 0;
+                if ($countResult && $row = $countResult->fetch_assoc()) {
+                    $count = isset($row['total']) ? (int)$row['total'] : 0;
+                }
                 $userType = ($count == 0) ? 'admin' : 'user';
                 
                 $insertResult = $db->query(
@@ -336,31 +350,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
  * Verificar si ya esta logueado
  */
 if (isset($_SESSION['logged_in']) && $_SESSION['logged_in']) {
-    $user_type = $_SESSION['user_type'] ?? 'user';
+    $user_type = isset($_SESSION['user_type']) ? $_SESSION['user_type'] : 'user';
     $redirect = ($user_type === 'admin') ? 'admin_dashboard.php' : 'user_dashboard.php';
     header("Location: $redirect");
     exit;
 }
-
-// Obtener usuarios disponibles para mostrar en las credenciales
-global $DEFAULT_USERS;
-$demo_users = $DEFAULT_USERS ?? [];
-
-// Agregar usuarios adicionales de demo si no existen en DEFAULT_USERS
-$additional_users = [
-    'A_mc' => [
-        'password' => '123456',
-        'type' => 'Usuario Regular'
-    ],
-    'isabella' => [
-        'password' => '123456',
-        'type' => 'Usuario Regular'
-    ],
-    'demo' => [
-        'password' => 'demo123',
-        'type' => 'Usuario Demo'
-    ]
-];
 
 // Obtener estado de la base de datos
 global $db;
@@ -585,25 +579,6 @@ $dbInfo = $dbConnected ? $db->getConnectionInfo() : null;
             100% { transform: rotate(360deg); }
         }
 
-        .credentials-info {
-            background: #e3f2fd;
-            border: 1px solid #bbdefb;
-            border-radius: 10px;
-            padding: 15px;
-            margin-top: 20px;
-            font-size: 0.9em;
-        }
-
-        .credentials-info h4 {
-            color: #1976d2;
-            margin-bottom: 10px;
-        }
-
-        .credentials-info p {
-            color: #424242;
-            margin: 5px 0;
-        }
-
         .db-status {
             position: absolute;
             top: 10px;
@@ -664,7 +639,7 @@ $dbInfo = $dbConnected ? $db->getConnectionInfo() : null;
 
     <div class="container">
         <!-- Estado del sistema -->
-        <div class="db-status <?php echo $dbConnected ? 'connected' : 'disconnected'; ?>" title="<?php echo $dbConnected ? 'Conexion: ' . ($dbInfo['type'] ?? 'unknown') : 'Modo Fallback'; ?>">
+        <div class="db-status <?php echo $dbConnected ? 'connected' : 'disconnected'; ?>" title="<?php echo $dbConnected ? 'Conexion: ' . (isset($dbInfo['type']) ? $dbInfo['type'] : 'unknown') : 'Modo Fallback'; ?>">
             <?php echo $dbConnected ? '🟢 DB Conectada' : '🟡 Modo Fallback'; ?>
         </div>
         
@@ -705,31 +680,6 @@ $dbInfo = $dbConnected ? $db->getConnectionInfo() : null;
                     
                     <button type="submit" class="submit-btn">Iniciar Sesion</button>
                 </form>
-
-                <?php if (!empty($demo_users)): ?>
-                <div class="credentials-info">
-                    <h4>👑 Credenciales de Administrador</h4>
-                    <?php 
-                    $admin_shown = false;
-                    foreach ($demo_users as $username => $user): 
-                        if ($user['user_type'] === 'admin'):
-                            if ($admin_shown) echo '<hr style="margin: 10px 0; border: none; border-top: 1px solid #ccc;">';
-                    ?>
-                    <p><strong>Usuario:</strong> <?php echo htmlspecialchars($username); ?></p>
-                    <p><strong>Contraseña:</strong> <?php echo htmlspecialchars($user['password']); ?></p>
-                    <p><strong>Tipo:</strong> Admin <?php echo ($user['premium_status'] ?? 'basic') === 'premium' ? 'Premium' : 'Basico'; ?></p>
-                    <?php 
-                            $admin_shown = true;
-                        endif; 
-                    endforeach; 
-                    ?>
-                    
-                    <h4 style="margin-top: 15px; color: #1976d2;">👤 Credenciales Adicionales</h4>
-                    <?php foreach ($additional_users as $username => $user): ?>
-                    <p><strong>Usuario:</strong> <?php echo htmlspecialchars($username); ?> / <strong>Pass:</strong> <?php echo htmlspecialchars($user['password']); ?></p>
-                    <?php endforeach; ?>
-                </div>
-                <?php endif; ?>
             </div>
 
             <!-- Formulario de Registro -->
@@ -966,21 +916,6 @@ $dbInfo = $dbConnected ? $db->getConnectionInfo() : null;
         document.addEventListener('DOMContentLoaded', function() {
             createParticles();
             checkLogoutMessage();
-            
-            // Auto-completar credenciales de demo (solo para desarrollo)
-            <?php if (isset($demo_users['anderson'])): ?>
-            const loginUsername = document.getElementById('login-username');
-            const loginPassword = document.getElementById('login-password');
-            
-            if (loginUsername && loginPassword) {
-                loginUsername.addEventListener('dblclick', function() {
-                    if (confirm('¿Autocompletar con credenciales de Anderson?')) {
-                        this.value = 'anderson';
-                        loginPassword.value = '<?php echo $demo_users['anderson']['password']; ?>';
-                    }
-                });
-            }
-            <?php endif; ?>
         });
     </script>
 </body>

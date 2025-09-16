@@ -359,7 +359,9 @@ function checkModuleAccess($module_name, $user_id) {
         'user_performance' => ['premium_required' => false, 'file' => 'user_performance.php'],
         'user_settings' => ['premium_required' => false, 'file' => 'user_settings.php'],
         'user_permissions' => ['premium_required' => true, 'file' => 'user_permissions.php'],
-        'user_assistant' => ['premium_required' => false, 'file' => 'user_assistant.php']
+        'user_assistant' => ['premium_required' => true, 'file' => 'GuardianAIChatbot.php'],
+        'performance' => ['premium_required' => false, 'file' => 'performance.php'],
+        'threat_center' => ['premium_required' => false, 'file' => 'threat_center.php']
     ];
     
     if (!isset($modules_config[$module_name])) {
@@ -845,7 +847,7 @@ $system_stats = getSystemStats();
         }
 
         .module-features li::before {
-            content: '✓';
+            content: '✔';
             color: #2ed573;
             font-weight: bold;
         }
@@ -1302,13 +1304,11 @@ $system_stats = getSystemStats();
             </div>
             <ul class="nav-menu">
                 <li><a href="#" class="nav-link active">Mi Seguridad</a></li>
-                <li><a href="javascript:navigateToModule('user_assistant')" class="nav-link">Asistente IA</a></li>
+                <li><a href="performance.php" class="nav-link">Rendimiento</a></li>
+                <li><a href="threat_center.php" class="nav-link">Centro de Amenazas</a></li>
                 <li><a href="javascript:navigateToModule('user_settings')" class="nav-link">Configuración</a></li>
                 <?php if ($is_admin): ?>
                 <li><a href="admin_dashboard.php" class="nav-link">Panel Admin</a></li>
-                <?php endif; ?>
-                <?php if ($has_military_access): ?>
-                <li><a href="military_dashboard.php" class="nav-link" style="background: var(--military-gradient); color: white;">Militar</a></li>
                 <?php endif; ?>
             </ul>
             <div class="user-profile">
@@ -1515,15 +1515,15 @@ $system_stats = getSystemStats();
                 </ul>
             </div>
 
-            <div class="module-card" onclick="navigateToModule('user_assistant')">
+            <div class="module-card premium" onclick="navigateToModule('user_assistant')">
                 <div class="module-header">
                     <div class="module-icon" style="background: var(--warning-gradient);">
                         <i class="fas fa-robot"></i>
                     </div>
                     <div>
-                        <div class="module-title">Asistente IA</div>
+                        <div class="module-title">Asistente IA Premium</div>
                         <div class="module-description">
-                            Tu asistente inteligente para resolver problemas
+                            Tu asistente inteligente avanzado para resolver problemas
                         </div>
                     </div>
                 </div>
@@ -1598,19 +1598,19 @@ $system_stats = getSystemStats();
 
             <div class="action-card">
                 <div class="action-header">
-                    <div class="action-icon" style="background: var(--primary-gradient);">
-                        <i class="fas fa-robot"></i>
+                    <div class="action-icon" style="background: var(--danger-gradient);">
+                        <i class="fas fa-shield-alt"></i>
                     </div>
                     <div>
-                        <div class="action-title">Asistente IA</div>
+                        <div class="action-title">Centro de Amenazas</div>
                         <div class="action-description">
-                            Pregunta cualquier cosa sobre la seguridad de tu sistema
+                            Monitorea y responde a amenazas en tiempo real
                         </div>
                     </div>
                 </div>
-                <button class="action-button" onclick="navigateToModule('user_assistant')">
-                    <i class="fas fa-comments"></i>
-                    Hablar con IA
+                <button class="action-button" onclick="window.location.href='threat_center.php'" style="background: var(--danger-gradient);">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    Ir al Centro
                 </button>
             </div>
 
@@ -1728,9 +1728,6 @@ $system_stats = getSystemStats();
         <button class="quick-action-btn optimize" onclick="autoOptimize()" title="Optimización Rápida">
             <i class="fas fa-bolt"></i>
         </button>
-        <button class="quick-action-btn chat" onclick="navigateToModule('user_assistant')" title="Asistente IA">
-            <i class="fas fa-robot"></i>
-        </button>
     </div>
 
     <!-- Toast Notification -->
@@ -1844,7 +1841,9 @@ $system_stats = getSystemStats();
                     'user_performance': { premium_required: false, file: 'user_performance.php' },
                     'user_settings': { premium_required: false, file: 'user_settings.php' },
                     'user_permissions': { premium_required: true, file: 'user_permissions.php' },
-                    'user_assistant': { premium_required: false, file: 'user_assistant.php' }
+                    'user_assistant': { premium_required: true, file: 'GuardianAIChatbot.php' },
+                    'performance': { premium_required: false, file: 'performance.php' },
+                    'threat_center': { premium_required: false, file: 'threat_center.php' }
                 };
 
                 setTimeout(() => {

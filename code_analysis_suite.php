@@ -3,6 +3,7 @@
  * GuardianIA v3.0 - Análisis de Código y Detección de Errores
  * Suite completa para identificar problemas y mejoras necesarias
  * Anderson Mamian Chicangana
+ * Versión mejorada con correcciones de seguridad
  */
 
 error_reporting(E_ALL);
@@ -203,6 +204,13 @@ class CodeAnalysisSuite {
             border-radius: 5px;
             transition: width 0.3s;
         }
+        .file-location {
+            background: #1a1a1a;
+            color: #ffa500;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 0.9em;
+        }
     </style>
 </head>
 <body>
@@ -225,7 +233,9 @@ class CodeAnalysisSuite {
                 $this->addCritical(
                     "Credenciales en código",
                     "La contraseña de base de datos está hardcodeada en config.php",
-                    "Usar variables de entorno: \$_ENV['DB_PASSWORD'] o archivo .env"
+                    "Usar variables de entorno: \$_ENV['DB_PASSWORD'] o archivo .env",
+                    "// En config.php, línea donde define DB_PASSWORD:\ndefine('DB_PASSWORD', getenv('DB_PASSWORD') ?: 'default_password');\n\n// Crear archivo .env:\nDB_PASSWORD=Soyelmejor2025",
+                    "config.php"
                 );
             }
             
@@ -234,7 +244,8 @@ class CodeAnalysisSuite {
                 $this->addWarning(
                     "SSL no verificado",
                     "La conexión a base de datos no verifica certificados SSL",
-                    "Agregar verificación SSL para conexiones seguras"
+                    "Agregar verificación SSL para conexiones seguras en config.php",
+                    "config.php"
                 );
             }
             
@@ -243,7 +254,8 @@ class CodeAnalysisSuite {
                 $this->addError(
                     "Generación de claves débil",
                     "Uso de SHA256 simple para generar claves de encriptación",
-                    "Usar PBKDF2 o Argon2 para derivación de claves"
+                    "Usar PBKDF2 o Argon2 para derivación de claves en config.php",
+                    "config.php"
                 );
             }
             
@@ -252,14 +264,17 @@ class CodeAnalysisSuite {
                 $this->addWarning(
                     "Rotación de claves",
                     "Intervalo de rotación de claves muy largo o no definido",
-                    "Reducir KEY_ROTATION_INTERVAL a máximo 3600 segundos"
+                    "Reducir KEY_ROTATION_INTERVAL a máximo 3600 segundos en config.php",
+                    "config.php"
                 );
             }
         } else {
             $this->addCritical(
                 "Archivo faltante",
                 "config.php no encontrado",
-                "Crear archivo de configuración con las credenciales necesarias"
+                "Crear archivo de configuración con las credenciales necesarias",
+                "// Crear config.php con:\n<?php\ndefine('DB_HOST', 'localhost');\ndefine('DB_NAME', 'guardiana_db');\ndefine('DB_USER', 'root');\ndefine('DB_PASSWORD', getenv('DB_PASSWORD'));\n?>",
+                "config.php"
             );
         }
         
@@ -268,7 +283,8 @@ class CodeAnalysisSuite {
             $this->addSuggestion(
                 "Variables de entorno",
                 "No se están usando variables de entorno para configuración sensible",
-                "Implementar dotenv para manejar configuración sensible"
+                "Implementar dotenv para manejar configuración sensible",
+                "Todos los archivos de configuración"
             );
         }
     }
@@ -298,7 +314,9 @@ class CodeAnalysisSuite {
             $this->addCritical(
                 "Vulnerabilidad XSS",
                 "Archivos con posible XSS: " . implode(', ', $files_with_xss),
-                "Usar htmlspecialchars() o htmlentities() para todo output de usuario"
+                "Usar htmlspecialchars() o htmlentities() para todo output de usuario",
+                "// En " . implode(', ', $files_with_xss) . ":\n// Cambiar:\necho \$_POST['input'];\n// Por:\necho htmlspecialchars(\$_POST['input'], ENT_QUOTES, 'UTF-8');",
+                implode(', ', $files_with_xss)
             );
         }
         
@@ -321,30 +339,49 @@ class CodeAnalysisSuite {
         }
         
         if (!empty($files_with_sqli)) {
-            $this->addCritical(
-                "Vulnerabilidad SQL Injection",
-                "Archivos con posible SQLi: " . implode(', ', $files_with_sqli),
-                "Usar prepared statements con bind_param()"
-            );
-        }
-        
-        // CSRF Protection
-        $csrf_protected = false;
-        foreach ($this->files_to_analyze as $file) {
-            if (file_exists($file)) {
-                $content = file_get_contents($file);
-                if (strpos($content, 'csrf_token') !== false) {
-                    $csrf_protected = true;
-                    break;
+            foreach ($files_with_sqli as $file) {
+                if ($file === 'code_analysis_suite.php') {
+                    $this->addCritical(
+                        "Vulnerabilidad SQL Injection",
+                        "Archivo code_analysis_suite.php contiene posible SQL Injection - concatenación directa de variables en consultas SQL",
+                        "Usar prepared statements con bind_param()",
+                        "// En code_analysis_suite.php:\n// Cambiar:\n\$query = \"SELECT * FROM users WHERE id = \" . \$_GET['id'];\n// Por:\n\$stmt = \$mysqli->prepare(\"SELECT * FROM users WHERE id = ?\");\n\$stmt->bind_param(\"i\", \$_GET['id']);\n\$stmt->execute();",
+                        "code_analysis_suite.php"
+                    );
+                } else {
+                    $this->addCritical(
+                        "Vulnerabilidad SQL Injection",
+                        "Archivo $file contiene posible SQL Injection",
+                        "Usar prepared statements con bind_param()",
+                        "// En $file:\n// Cambiar consultas concatenadas por prepared statements",
+                        $file
+                    );
                 }
             }
         }
         
-        if (!$csrf_protected) {
+        // CSRF Protection
+        $csrf_protected = false;
+        $files_without_csrf = [];
+        foreach ($this->files_to_analyze as $file) {
+            if (file_exists($file)) {
+                $content = file_get_contents($file);
+                if (strpos($content, '<form') !== false && strpos($content, 'csrf_token') === false) {
+                    $files_without_csrf[] = $file;
+                }
+                if (strpos($content, 'csrf_token') !== false) {
+                    $csrf_protected = true;
+                }
+            }
+        }
+        
+        if (!$csrf_protected && !empty($files_without_csrf)) {
             $this->addError(
                 "Sin protección CSRF",
-                "No se detectó implementación de tokens CSRF",
-                "Implementar tokens CSRF en todos los formularios"
+                "No se detectó implementación de tokens CSRF en formularios",
+                "Implementar tokens CSRF en todos los formularios",
+                "// En " . implode(', ', $files_without_csrf) . ":\n// Agregar en cada formulario:\n<input type=\"hidden\" name=\"csrf_token\" value=\"<?php echo \$_SESSION['csrf_token']; ?>\">",
+                implode(', ', $files_without_csrf)
             );
         }
         
@@ -370,7 +407,8 @@ class CodeAnalysisSuite {
                 $this->addError(
                     "Header de seguridad faltante",
                     "No se encontró el header: $header",
-                    "Agregar: header('$header: $value');"
+                    "Agregar en config.php o en un archivo security_headers.php incluido en todos los scripts",
+                    "config.php o security_headers.php"
                 );
             }
         }
@@ -380,7 +418,8 @@ class CodeAnalysisSuite {
             $this->addCritical(
                 "Sin HTTPS",
                 "El sitio no está usando HTTPS",
-                "Configurar certificado SSL y forzar HTTPS"
+                "Configurar certificado SSL y forzar HTTPS en .htaccess",
+                ".htaccess"
             );
         }
     }
@@ -397,34 +436,53 @@ class CodeAnalysisSuite {
                     $this->addCritical(
                         "Sin conexión a BD",
                         "No se puede conectar a la base de datos",
-                        "Verificar credenciales y servidor MySQL"
+                        "Verificar credenciales y servidor MySQL en config.php",
+                        "config.php"
                     );
                 } else {
-                    // Verificar tablas faltantes
+                    // Verificar tablas faltantes - CORRECIÓN DE SEGURIDAD
                     $required_tables = [
                         'users', 'conversations', 'conversation_messages',
                         'security_events', 'system_logs', 'ai_detections'
                     ];
                     
                     foreach ($required_tables as $table) {
-                        $result = $db->query("SHOW TABLES LIKE '$table'");
-                        if (!$result || $result->num_rows == 0) {
-                            $this->addError(
-                                "Tabla faltante",
-                                "La tabla '$table' no existe en la base de datos",
-                                "Ejecutar el script SQL de creación de tablas"
-                            );
+                        // Usar prepared statement para evitar SQL injection
+                        $stmt = $db->prepare("SHOW TABLES LIKE ?");
+                        if ($stmt) {
+                            $stmt->bind_param("s", $table);
+                            $stmt->execute();
+                            $result = $stmt->get_result();
+                            
+                            if (!$result || $result->num_rows == 0) {
+                                $this->addError(
+                                    "Tabla faltante",
+                                    "La tabla '$table' no existe en la base de datos",
+                                    "Ejecutar el script SQL de creación de tablas en database_setup.sql",
+                                    "database_setup.sql"
+                                );
+                            }
+                            $stmt->close();
                         }
                     }
                     
-                    // Verificar índices
-                    $result = $db->query("SHOW INDEX FROM users WHERE Key_name != 'PRIMARY'");
-                    if (!$result || $result->num_rows < 2) {
-                        $this->addWarning(
-                            "Índices faltantes",
-                            "La tabla 'users' tiene pocos índices",
-                            "Agregar índices en username, email para mejorar rendimiento"
-                        );
+                    // Verificar índices - También corregido
+                    $stmt = $db->prepare("SHOW INDEX FROM users WHERE Key_name != ?");
+                    if ($stmt) {
+                        $primary = 'PRIMARY';
+                        $stmt->bind_param("s", $primary);
+                        $stmt->execute();
+                        $result = $stmt->get_result();
+                        
+                        if (!$result || $result->num_rows < 2) {
+                            $this->addWarning(
+                                "Índices faltantes",
+                                "La tabla 'users' tiene pocos índices",
+                                "Agregar índices en username, email para mejorar rendimiento en database_setup.sql",
+                                "database_setup.sql"
+                            );
+                        }
+                        $stmt->close();
                     }
                 }
             }
@@ -432,7 +490,8 @@ class CodeAnalysisSuite {
             $this->addCritical(
                 "Error de BD",
                 "Error al analizar base de datos: " . $e->getMessage(),
-                "Revisar la configuración de base de datos"
+                "Revisar la configuración de base de datos en config.php",
+                "config.php"
             );
         }
         
@@ -446,7 +505,8 @@ class CodeAnalysisSuite {
                     $this->addWarning(
                         "Query sin límite",
                         "Archivo $file tiene SELECT * sin LIMIT",
-                        "Agregar LIMIT a las consultas para evitar sobrecarga"
+                        "Agregar LIMIT a las consultas para evitar sobrecarga",
+                        $file
                     );
                 }
             }
@@ -461,7 +521,8 @@ class CodeAnalysisSuite {
             $this->addCritical(
                 "PHP obsoleto",
                 "Versión de PHP: " . PHP_VERSION . " (requiere >= 7.4)",
-                "Actualizar a PHP 7.4 o superior"
+                "Actualizar a PHP 7.4 o superior en el servidor",
+                "Configuración del servidor"
             );
         }
         
@@ -485,10 +546,20 @@ class CodeAnalysisSuite {
                 
                 foreach ($dangerous_functions as $func => $risk) {
                     if (strpos($content, $func . '(') !== false) {
+                        // Encontrar línea exacta
+                        $line_num = 0;
+                        foreach ($lines as $num => $line) {
+                            if (strpos($line, $func . '(') !== false) {
+                                $line_num = $num + 1;
+                                break;
+                            }
+                        }
+                        
                         $this->addWarning(
                             "Función peligrosa",
-                            "Uso de $func() en $file - $risk",
-                            "Evitar o sanitizar el uso de $func()"
+                            "Uso de $func() en $file (línea $line_num) - $risk",
+                            "Evitar o sanitizar el uso de $func() en el archivo especificado",
+                            "$file (línea $line_num)"
                         );
                         $this->problematic_lines++;
                     }
@@ -499,7 +570,8 @@ class CodeAnalysisSuite {
                     $this->addWarning(
                         "Variable sin verificar",
                         "Posible uso de array sin verificar en $file",
-                        "Usar isset() o empty() antes de acceder a arrays"
+                        "Usar isset() o empty() antes de acceder a arrays",
+                        $file
                     );
                 }
                 
@@ -509,7 +581,8 @@ class CodeAnalysisSuite {
                     $this->addWarning(
                         "Supresión de errores excesiva",
                         "Archivo $file usa @ para suprimir errores ($error_suppression_count veces)",
-                        "Manejar errores apropiadamente en lugar de suprimirlos"
+                        "Manejar errores apropiadamente en lugar de suprimirlos",
+                        $file
                     );
                 }
             }
@@ -535,7 +608,8 @@ class CodeAnalysisSuite {
                 $this->addError(
                     "Extensión faltante",
                     "PHP extension '$ext' no está instalada ($description)",
-                    "Instalar: sudo apt-get install php-$ext"
+                    "Instalar en el servidor: sudo apt-get install php-$ext",
+                    "Configuración del servidor"
                 );
             }
         }
@@ -545,7 +619,8 @@ class CodeAnalysisSuite {
             $this->addSuggestion(
                 "Sin Composer",
                 "No se usa Composer para manejo de dependencias",
-                "Inicializar Composer y usar autoloading PSR-4"
+                "Inicializar Composer: composer init y usar autoloading PSR-4",
+                "Raíz del proyecto"
             );
         }
     }
@@ -561,7 +636,8 @@ class CodeAnalysisSuite {
                 $this->addWarning(
                     "Límite de memoria bajo",
                     "memory_limit = $memory_limit (recomendado: 256M mínimo)",
-                    "Aumentar memory_limit en php.ini"
+                    "Aumentar memory_limit en php.ini del servidor",
+                    "php.ini"
                 );
             }
         }
@@ -572,7 +648,8 @@ class CodeAnalysisSuite {
             $this->addWarning(
                 "Tiempo de ejecución corto",
                 "max_execution_time = $max_time segundos",
-                "Aumentar a 30 o más para operaciones complejas"
+                "Aumentar a 30 o más para operaciones complejas en php.ini",
+                "php.ini"
             );
         }
         
@@ -581,15 +658,17 @@ class CodeAnalysisSuite {
             $this->addError(
                 "Sin OPcache",
                 "OPcache no está habilitado",
-                "Habilitar OPcache para mejorar rendimiento"
+                "Habilitar OPcache en php.ini para mejorar rendimiento",
+                "php.ini"
             );
         } else {
-            $status = opcache_get_status();
-            if (!$status['opcache_enabled']) {
+            $status = @opcache_get_status();
+            if ($status && !$status['opcache_enabled']) {
                 $this->addError(
                     "OPcache deshabilitado",
                     "OPcache está instalado pero no activo",
-                    "Habilitar opcache.enable=1 en php.ini"
+                    "Habilitar opcache.enable=1 en php.ini",
+                    "php.ini"
                 );
             }
         }
@@ -604,7 +683,8 @@ class CodeAnalysisSuite {
                     $this->addError(
                         "N+1 Query Problem",
                         "Posible N+1 query problem en $file",
-                        "Usar JOINs en lugar de queries en loops"
+                        "Usar JOINs en lugar de queries en loops",
+                        $file
                     );
                 }
                 
@@ -613,7 +693,8 @@ class CodeAnalysisSuite {
                     $this->addWarning(
                         "I/O en loop",
                         "file_get_contents dentro de loop en $file",
-                        "Cargar archivos fuera del loop"
+                        "Cargar archivos fuera del loop",
+                        $file
                     );
                 }
             }
@@ -638,14 +719,16 @@ class CodeAnalysisSuite {
                 $this->addError(
                     "Directorio faltante",
                     "El directorio '$dir' no existe",
-                    "mkdir -p $dir && chmod $perms $dir"
+                    "Crear en la raíz del proyecto: mkdir -p $dir && chmod $perms $dir",
+                    "Raíz del proyecto"
                 );
             } else {
                 if (!is_writable($path)) {
                     $this->addError(
                         "Sin permisos de escritura",
                         "No se puede escribir en '$dir'",
-                        "chmod $perms $dir"
+                        "Ejecutar: chmod $perms $dir",
+                        "Directorio $dir"
                     );
                 }
                 
@@ -655,7 +738,8 @@ class CodeAnalysisSuite {
                     $this->addWarning(
                         "Permisos muy abiertos",
                         "Directorio '$dir' tiene permisos 777",
-                        "Cambiar a 755: chmod 755 $dir"
+                        "Cambiar a 755: chmod 755 $dir",
+                        "Directorio $dir"
                     );
                 }
             }
@@ -666,14 +750,17 @@ class CodeAnalysisSuite {
         foreach ($sensitive_files as $file) {
             if (file_exists($file)) {
                 // Verificar si es accesible desde web
-                $url = "http://{$_SERVER['HTTP_HOST']}/$file";
-                $headers = @get_headers($url);
-                if ($headers && strpos($headers[0], '200') !== false) {
-                    $this->addCritical(
-                        "Archivo sensible expuesto",
-                        "El archivo '$file' es accesible públicamente",
-                        "Configurar .htaccess para denegar acceso"
-                    );
+                if (isset($_SERVER['HTTP_HOST'])) {
+                    $url = "http://{$_SERVER['HTTP_HOST']}/$file";
+                    $headers = @get_headers($url);
+                    if ($headers && strpos($headers[0], '200') !== false) {
+                        $this->addCritical(
+                            "Archivo sensible expuesto",
+                            "El archivo '$file' es accesible públicamente",
+                            "Configurar .htaccess para denegar acceso a archivos sensibles",
+                            ".htaccess"
+                        );
+                    }
                 }
             }
         }
@@ -687,7 +774,8 @@ class CodeAnalysisSuite {
             $this->addError(
                 "Cookies sin HttpOnly",
                 "Las cookies de sesión son accesibles por JavaScript",
-                "Configurar: session.cookie_httponly = 1"
+                "Configurar en php.ini: session.cookie_httponly = 1",
+                "php.ini"
             );
         }
         
@@ -695,7 +783,8 @@ class CodeAnalysisSuite {
             $this->addError(
                 "Cookies sin Secure flag",
                 "Las cookies no tienen flag Secure en HTTPS",
-                "Configurar: session.cookie_secure = 1"
+                "Configurar en php.ini: session.cookie_secure = 1",
+                "php.ini"
             );
         }
         
@@ -704,27 +793,31 @@ class CodeAnalysisSuite {
             $this->addWarning(
                 "Sin SameSite",
                 "Cookies sin protección SameSite",
-                "Configurar: session.cookie_samesite = 'Strict'"
+                "Configurar en php.ini: session.cookie_samesite = 'Strict'",
+                "php.ini"
             );
         }
         
         // Session fixation
         $session_regenerate_found = false;
+        $files_need_regenerate = [];
         foreach ($this->files_to_analyze as $file) {
             if (file_exists($file)) {
                 $content = file_get_contents($file);
                 if (strpos($content, 'session_regenerate_id') !== false) {
                     $session_regenerate_found = true;
-                    break;
+                } else if (strpos($content, 'login') !== false && strpos($content, 'SESSION') !== false) {
+                    $files_need_regenerate[] = $file;
                 }
             }
         }
         
-        if (!$session_regenerate_found) {
+        if (!$session_regenerate_found && !empty($files_need_regenerate)) {
             $this->addError(
                 "Sin regeneración de ID",
                 "No se regenera el ID de sesión después del login",
-                "Usar session_regenerate_id(true) después de autenticación"
+                "Usar session_regenerate_id(true) después de autenticación",
+                implode(', ', $files_need_regenerate)
             );
         }
     }
@@ -751,7 +844,8 @@ class CodeAnalysisSuite {
                         $this->addError(
                             "Función deprecada",
                             "Uso de $old() en $file",
-                            "Reemplazar con $new"
+                            "Reemplazar con $new en el archivo especificado",
+                            $file
                         );
                     }
                 }
@@ -761,7 +855,8 @@ class CodeAnalysisSuite {
                     $this->addError(
                         "Magic quotes",
                         "Referencia a magic quotes en $file",
-                        "Magic quotes fue removido, eliminar estas verificaciones"
+                        "Magic quotes fue removido, eliminar estas verificaciones del archivo",
+                        $file
                     );
                 }
             }
@@ -780,9 +875,9 @@ class CodeAnalysisSuite {
                 $lines = explode("\n", $content);
                 
                 // Verificar indentación (PSR-2: 4 espacios)
-                foreach ($lines as $line) {
+                foreach ($lines as $line_num => $line) {
                     if (preg_match('/^\t/', $line)) {
-                        $psr_issues[] = "Uso de tabs en lugar de espacios en $file";
+                        $psr_issues[] = "Uso de tabs en lugar de espacios en $file (línea " . ($line_num + 1) . ")";
                         break;
                     }
                 }
@@ -797,7 +892,8 @@ class CodeAnalysisSuite {
                     $this->addSuggestion(
                         "Sin documentación",
                         "Archivo $file no tiene comentarios PHPDoc",
-                        "Agregar documentación PHPDoc a clases y métodos"
+                        "Agregar documentación PHPDoc a clases y métodos",
+                        $file
                     );
                 }
             }
@@ -805,31 +901,39 @@ class CodeAnalysisSuite {
         
         if (!empty($psr_issues)) {
             foreach ($psr_issues as $issue) {
+                $file_match = [];
+                preg_match('/en (\S+)/', $issue, $file_match);
+                $affected_file = isset($file_match[1]) ? $file_match[1] : 'archivo afectado';
+                
                 $this->addSuggestion(
                     "PSR Standard",
                     $issue,
-                    "Seguir estándares PSR-1 y PSR-2"
+                    "Seguir estándares PSR-1 y PSR-2",
+                    $affected_file
                 );
             }
         }
         
         // Verificar uso de namespaces
         $uses_namespaces = false;
+        $files_without_namespace = [];
         foreach ($this->files_to_analyze as $file) {
             if (file_exists($file)) {
                 $content = file_get_contents($file);
                 if (strpos($content, 'namespace ') !== false) {
                     $uses_namespaces = true;
-                    break;
+                } else if (strpos($content, 'class ') !== false) {
+                    $files_without_namespace[] = $file;
                 }
             }
         }
         
-        if (!$uses_namespaces) {
+        if (!$uses_namespaces && !empty($files_without_namespace)) {
             $this->addSuggestion(
                 "Sin namespaces",
                 "El proyecto no usa namespaces",
-                "Implementar namespaces siguiendo PSR-4"
+                "Implementar namespaces siguiendo PSR-4",
+                implode(', ', $files_without_namespace)
             );
         }
         
@@ -838,7 +942,8 @@ class CodeAnalysisSuite {
             $this->addSuggestion(
                 "Sin tests",
                 "No se encontraron tests unitarios",
-                "Implementar PHPUnit para testing"
+                "Implementar PHPUnit para testing en directorio tests/",
+                "Raíz del proyecto"
             );
         }
     }
@@ -885,7 +990,8 @@ class CodeAnalysisSuite {
                 echo "<div class='critical'>";
                 echo "<strong>{$issue['title']}</strong><br>";
                 echo "Problema: {$issue['description']}<br>";
-                echo "Solución: {$issue['solution']}";
+                echo "Solución: {$issue['solution']}<br>";
+                echo "Ubicación: <span class='file-location'>{$issue['location']}</span>";
                 if (isset($issue['code'])) {
                     echo "<div class='fix-code'>{$issue['code']}</div>";
                 }
@@ -902,7 +1008,8 @@ class CodeAnalysisSuite {
                 echo "<div class='error'>";
                 echo "<strong>{$issue['title']}</strong><br>";
                 echo "Problema: {$issue['description']}<br>";
-                echo "Solución: {$issue['solution']}";
+                echo "Solución: {$issue['solution']}<br>";
+                echo "Ubicación: <span class='file-location'>{$issue['location']}</span>";
                 echo "</div>";
             }
             echo "</div>";
@@ -916,7 +1023,8 @@ class CodeAnalysisSuite {
                 echo "<div class='warning'>";
                 echo "<strong>{$issue['title']}</strong><br>";
                 echo "Problema: {$issue['description']}<br>";
-                echo "Solución: {$issue['solution']}";
+                echo "Solución: {$issue['solution']}<br>";
+                echo "Ubicación: <span class='file-location'>{$issue['location']}</span>";
                 echo "</div>";
             }
             echo "</div>";
@@ -930,7 +1038,8 @@ class CodeAnalysisSuite {
                 echo "<div class='suggestion'>";
                 echo "<strong>{$issue['title']}</strong><br>";
                 echo "Mejora: {$issue['description']}<br>";
-                echo "Recomendación: {$issue['solution']}";
+                echo "Recomendación: {$issue['solution']}<br>";
+                echo "Ubicación: <span class='file-location'>{$issue['location']}</span>";
                 echo "</div>";
             }
             echo "</div>";
@@ -942,30 +1051,30 @@ class CodeAnalysisSuite {
         echo "<ol>";
         echo "<li><strong>Fase 1 - Crítico (Inmediato):</strong>";
         echo "<ul>";
-        echo "<li>Configurar HTTPS con certificado SSL</li>";
-        echo "<li>Mover credenciales a variables de entorno</li>";
-        echo "<li>Corregir vulnerabilidades XSS y SQL Injection</li>";
+        echo "<li>Configurar HTTPS con certificado SSL (.htaccess)</li>";
+        echo "<li>Mover credenciales a variables de entorno (config.php)</li>";
+        echo "<li>Corregir vulnerabilidades XSS y SQL Injection (archivos especificados)</li>";
         echo "</ul></li>";
         
         echo "<li><strong>Fase 2 - Seguridad (Esta semana):</strong>";
         echo "<ul>";
-        echo "<li>Implementar tokens CSRF</li>";
-        echo "<li>Agregar headers de seguridad</li>";
-        echo "<li>Configurar sesiones seguras</li>";
+        echo "<li>Implementar tokens CSRF (formularios)</li>";
+        echo "<li>Agregar headers de seguridad (config.php)</li>";
+        echo "<li>Configurar sesiones seguras (php.ini)</li>";
         echo "</ul></li>";
         
         echo "<li><strong>Fase 3 - Rendimiento (Este mes):</strong>";
         echo "<ul>";
-        echo "<li>Habilitar OPcache</li>";
-        echo "<li>Optimizar queries de base de datos</li>";
-        echo "<li>Implementar caché</li>";
+        echo "<li>Habilitar OPcache (php.ini)</li>";
+        echo "<li>Optimizar queries de base de datos (archivos especificados)</li>";
+        echo "<li>Implementar caché (crear sistema de cache)</li>";
         echo "</ul></li>";
         
         echo "<li><strong>Fase 4 - Calidad (Continuo):</strong>";
         echo "<ul>";
-        echo "<li>Implementar PSR standards</li>";
-        echo "<li>Agregar tests unitarios</li>";
-        echo "<li>Documentar código con PHPDoc</li>";
+        echo "<li>Implementar PSR standards (todos los archivos)</li>";
+        echo "<li>Agregar tests unitarios (directorio tests/)</li>";
+        echo "<li>Documentar código con PHPDoc (todos los archivos)</li>";
         echo "</ul></li>";
         echo "</ol>";
         echo "</div>";
@@ -986,36 +1095,40 @@ class CodeAnalysisSuite {
         echo "</body></html>";
     }
     
-    private function addCritical($title, $description, $solution, $code = null) {
+    private function addCritical($title, $description, $solution, $code = null, $location = '') {
         $this->critical_issues[] = [
             'title' => $title,
             'description' => $description,
             'solution' => $solution,
-            'code' => $code
+            'code' => $code,
+            'location' => $location ?: 'No especificado'
         ];
     }
     
-    private function addError($title, $description, $solution) {
+    private function addError($title, $description, $solution, $location = '') {
         $this->errors[] = [
             'title' => $title,
             'description' => $description,
-            'solution' => $solution
+            'solution' => $solution,
+            'location' => $location ?: 'No especificado'
         ];
     }
     
-    private function addWarning($title, $description, $solution) {
+    private function addWarning($title, $description, $solution, $location = '') {
         $this->warnings[] = [
             'title' => $title,
             'description' => $description,
-            'solution' => $solution
+            'solution' => $solution,
+            'location' => $location ?: 'No especificado'
         ];
     }
     
-    private function addSuggestion($title, $description, $solution) {
+    private function addSuggestion($title, $description, $solution, $location = '') {
         $this->suggestions[] = [
             'title' => $title,
             'description' => $description,
-            'solution' => $solution
+            'solution' => $solution,
+            'location' => $location ?: 'No especificado'
         ];
     }
     
