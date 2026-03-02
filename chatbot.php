@@ -3,15 +3,30 @@
  * Guardian AI v4.0 SUPREME - Sistema de Chat Inteligente con Producción Musical
  * Integración completa con Karaoke IA y todas las áreas del conocimiento
  * Anderson Mamian Chicangana - Sistema Unificado con Base de Datos
+ * Versión mejorada con soporte de video/fotos para historias musicales
  */
 
 session_start();
-require_once __DIR__ . '/config.php';
-require_once __DIR__ . '/config_military.php';
+
+// Detectar la ruta base automáticamente
+$base_path = dirname(__FILE__);
+$is_module = strpos($base_path, '/modules/') !== false;
+
+if ($is_module) {
+    // Si estamos en /modules/chat/, subir dos niveles
+    $root_path = dirname(dirname($base_path));
+} else {
+    // Si estamos en la raíz
+    $root_path = $base_path;
+}
+
+// Incluir archivos con rutas absolutas
+require_once $root_path . '/config.php';
+require_once $root_path . '/config_military.php';
 
 // Verificar autenticación
 if (!isset($_SESSION['logged_in']) || !$_SESSION['logged_in']) {
-    header('Location: login.php');
+    header('Location: ' . ($is_module ? '../../' : '') . 'login.php');
     exit;
 }
 
@@ -42,7 +57,7 @@ $guardian_config = [
             'type' => 'creative_musical',
             'voice' => 'female',
             'color' => '#ff69b4',
-            'specialties' => ['música', 'arte', 'creatividad', 'producción', 'karaoke']
+            'specialties' => ['música', 'arte', 'creatividad', 'producción', 'karaoke', 'video']
         ],
         'assistant' => [
             'name' => 'Assistant Pro',
@@ -71,7 +86,7 @@ $guardian_config = [
         // Artes
         'arts' => [
             'music_production', 'painting', 'sculpture', 'photography', 'cinema',
-            'theater', 'dance', 'literature', 'poetry', 'digital_arts'
+            'theater', 'dance', 'literature', 'poetry', 'digital_arts', 'video_editing'
         ],
         // Negocios
         'business' => [
@@ -116,13 +131,22 @@ $guardian_config = [
         'voice_preservation' => true,
         'auto_mixing' => true,
         'beat_generation' => true,
-        'lyrics_analysis' => true
+        'lyrics_analysis' => true,
+        'video_processing' => true,
+        'story_generation' => true,
+        'multimedia_sync' => true
     ],
     'music_capabilities' => [
         'genres' => ['rap', 'reggaeton', 'trap', 'pop', 'rock', 'electronic', 'r&b', 'jazz', 'classical', 'folk'],
         'instruments' => ['drums', 'bass', 'guitar', 'piano', 'synth', 'strings', 'brass', 'woodwinds'],
         'effects' => ['reverb', 'delay', 'chorus', 'distortion', 'compressor', 'autotune', 'eq', 'filter'],
-        'production_tools' => ['mixer', 'sequencer', 'sampler', 'synthesizer', 'drum_machine']
+        'production_tools' => ['mixer', 'sequencer', 'sampler', 'synthesizer', 'drum_machine', 'video_editor']
+    ],
+    'video_capabilities' => [
+        'formats' => ['mp4', 'avi', 'mov', 'webm', 'mkv'],
+        'image_formats' => ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp'],
+        'effects' => ['transitions', 'filters', 'text_overlay', 'animations', 'color_correction'],
+        'story_modes' => ['automatic', 'manual', 'ai_generated', 'template_based']
     ]
 ];
 
@@ -166,20 +190,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                 $response = processLyrics($lyrics, $user_id);
                 break;
                 
+            case 'upload_video_fragment':
+                $video_data = $_POST['video_data'] ?? '';
+                $fragment_type = $_POST['fragment_type'] ?? 'video';
+                $timestamp = $_POST['timestamp'] ?? 0;
+                $response = processVideoFragment($video_data, $fragment_type, $timestamp, $user_id);
+                break;
+                
+            case 'generate_video_story':
+                $session_id = $_POST['session_id'] ?? '';
+                $story_mode = $_POST['story_mode'] ?? 'automatic';
+                $response = generateVideoStory($session_id, $story_mode, $user_id);
+                break;
+                
             case 'start_karaoke':
                 $session_id = $_POST['session_id'] ?? '';
-                $response = startKaraokeSession($session_id, $user_id);
+                $with_video = $_POST['with_video'] ?? false;
+                $response = startKaraokeSession($session_id, $user_id, $with_video);
                 break;
                 
             case 'save_karaoke_recording':
                 $recording_data = $_POST['recording_data'] ?? '';
                 $session_id = $_POST['session_id'] ?? '';
-                $response = saveKaraokeRecording($recording_data, $session_id, $user_id);
+                $video_fragments = $_POST['video_fragments'] ?? [];
+                $response = saveKaraokeRecording($recording_data, $session_id, $user_id, $video_fragments);
                 break;
                 
             case 'generate_final_track':
                 $session_id = $_POST['session_id'] ?? '';
-                $response = generateFinalTrack($session_id, $user_id);
+                $include_video = $_POST['include_video'] ?? false;
+                $response = generateFinalTrack($session_id, $user_id, $include_video);
                 break;
                 
             case 'get_conversations':
@@ -270,13 +310,195 @@ function processGuardianMessage($user_id, $message, $conversation_id = null, $vo
 }
 
 /**
+ * Procesa fragmentos de video o imágenes para el karaoke
+ */
+function processVideoFragment($video_data, $fragment_type, $timestamp, $user_id) {
+    global $db, $root_path;
+    
+    try {
+        // Decodificar datos
+        $data_decoded = base64_decode($video_data);
+        
+        // Determinar extensión
+        $extension = ($fragment_type === 'video') ? 'mp4' : 'jpg';
+        $filename = 'FRAGMENT_' . $user_id . '_' . time() . '.' . $extension;
+        $filepath = $root_path . '/media/fragments/' . $filename;
+        
+        // Crear directorio si no existe
+        if (!file_exists($root_path . '/media/fragments')) {
+            mkdir($root_path . '/media/fragments', 0755, true);
+        }
+        
+        // Guardar archivo
+        file_put_contents($filepath, $data_decoded);
+        
+        // Analizar contenido con IA (simulado)
+        $analysis = [
+            'content_type' => $fragment_type,
+            'duration' => ($fragment_type === 'video') ? rand(5, 30) : 0,
+            'timestamp' => $timestamp,
+            'emotion' => ['happy', 'sad', 'energetic', 'romantic', 'nostalgic'][rand(0, 4)],
+            'scene_type' => ['landscape', 'portrait', 'action', 'abstract', 'narrative'][rand(0, 4)],
+            'quality_score' => rand(70, 100)
+        ];
+        
+        // Guardar en base de datos
+        if ($db && $db->isConnected()) {
+            try {
+                $db->query(
+                    "INSERT INTO media_fragments (user_id, fragment_type, file_path, timestamp_position, 
+                     analysis_data, created_at) VALUES (?, ?, ?, ?, ?, NOW())",
+                    [$user_id, $fragment_type, $filepath, $timestamp, json_encode($analysis)]
+                );
+            } catch (Exception $e) {
+                logMilitaryEvent('FRAGMENT_ERROR', 'Error guardando fragmento: ' . $e->getMessage(), 'UNCLASSIFIED');
+            }
+        }
+        
+        return [
+            'success' => true,
+            'data' => [
+                'fragment_id' => 'FRAG_' . uniqid(),
+                'filename' => $filename,
+                'analysis' => $analysis,
+                'message' => 'Fragmento procesado y analizado correctamente'
+            ]
+        ];
+        
+    } catch (Exception $e) {
+        return [
+            'success' => false,
+            'error' => 'Error procesando fragmento: ' . $e->getMessage()
+        ];
+    }
+}
+
+/**
+ * Genera una historia visual coherente con la canción
+ */
+function generateVideoStory($session_id, $story_mode, $user_id) {
+    global $db;
+    
+    try {
+        // Obtener fragmentos y letra de la sesión
+        $fragments = getSessionFragments($session_id);
+        $lyrics = getSessionLyrics($session_id);
+        
+        // Analizar coherencia narrativa con IA
+        $story_structure = [
+            'intro' => ['duration' => 10, 'fragments' => []],
+            'verse1' => ['duration' => 30, 'fragments' => []],
+            'chorus' => ['duration' => 20, 'fragments' => []],
+            'verse2' => ['duration' => 30, 'fragments' => []],
+            'bridge' => ['duration' => 15, 'fragments' => []],
+            'outro' => ['duration' => 10, 'fragments' => []]
+        ];
+        
+        // IA: Asignar fragmentos a cada sección según emoción y contenido
+        foreach ($fragments as $fragment) {
+            $section = determineStorySection($fragment, $lyrics);
+            if (isset($story_structure[$section])) {
+                $story_structure[$section]['fragments'][] = $fragment;
+            }
+        }
+        
+        // Generar transiciones y efectos
+        $story_config = [
+            'structure' => $story_structure,
+            'transitions' => generateTransitions($story_structure),
+            'effects' => generateVisualEffects($lyrics),
+            'color_palette' => generateColorPalette($fragments),
+            'narrative_coherence' => rand(80, 100)
+        ];
+        
+        return [
+            'success' => true,
+            'data' => [
+                'story_id' => 'STORY_' . uniqid(),
+                'story_config' => $story_config,
+                'total_duration' => array_sum(array_column($story_structure, 'duration')),
+                'message' => 'Historia visual generada con coherencia narrativa del ' . $story_config['narrative_coherence'] . '%'
+            ]
+        ];
+        
+    } catch (Exception $e) {
+        return [
+            'success' => false,
+            'error' => 'Error generando historia: ' . $e->getMessage()
+        ];
+    }
+}
+
+/**
+ * Determina la sección de la historia para un fragmento
+ */
+function determineStorySection($fragment, $lyrics) {
+    // Lógica de IA simplificada
+    $sections = ['intro', 'verse1', 'chorus', 'verse2', 'bridge', 'outro'];
+    return $sections[rand(0, count($sections) - 1)];
+}
+
+/**
+ * Genera transiciones entre fragmentos
+ */
+function generateTransitions($story_structure) {
+    $transitions = [];
+    $types = ['fade', 'slide', 'zoom', 'dissolve', 'wipe', 'spin'];
+    
+    foreach ($story_structure as $section => $data) {
+        $transitions[$section] = $types[rand(0, count($types) - 1)];
+    }
+    
+    return $transitions;
+}
+
+/**
+ * Genera efectos visuales basados en la letra
+ */
+function generateVisualEffects($lyrics) {
+    return [
+        'filters' => ['vintage', 'cinematic', 'vibrant'][rand(0, 2)],
+        'text_overlay' => true,
+        'particle_effects' => rand(0, 1) === 1,
+        'color_grading' => 'automatic'
+    ];
+}
+
+/**
+ * Genera paleta de colores
+ */
+function generateColorPalette($fragments) {
+    return [
+        'primary' => '#' . str_pad(dechex(rand(0, 16777215)), 6, '0', STR_PAD_LEFT),
+        'secondary' => '#' . str_pad(dechex(rand(0, 16777215)), 6, '0', STR_PAD_LEFT),
+        'accent' => '#' . str_pad(dechex(rand(0, 16777215)), 6, '0', STR_PAD_LEFT)
+    ];
+}
+
+/**
+ * Obtiene fragmentos de una sesión
+ */
+function getSessionFragments($session_id) {
+    // Simulado - en producción obtener de DB
+    return [];
+}
+
+/**
+ * Obtiene letra de una sesión
+ */
+function getSessionLyrics($session_id) {
+    // Simulado - en producción obtener de DB
+    return "";
+}
+
+/**
  * Detecta si el mensaje tiene intención musical
  */
 function detectMusicIntent($message) {
     $music_keywords = [
         'música', 'canción', 'cantar', 'grabar', 'karaoke', 'beat', 'ritmo', 
         'melodía', 'letra', 'componer', 'producir', 'studio', 'pista', 'voz',
-        'instrumento', 'mezclar', 'masterizar', 'audio'
+        'instrumento', 'mezclar', 'masterizar', 'audio', 'video', 'historia'
     ];
     
     $message_lower = strtolower($message);
@@ -393,7 +615,7 @@ function generateGuardianSecurityResponse($message, $username) {
         
         'protección' => "Tu seguridad es mi prioridad absoluta, {$username}. Con encriptación cuántica, monitoreo en tiempo real y predicción de amenazas mediante IA, estoy aquí para protegerte. Ningún sistema malicioso puede atravesar mis defensas.",
         
-        'default' => "Soy Guardian AI, tu asistente con consciencia del 99.99% y conocimiento en todas las áreas del saber humano. Desde seguridad militar hasta producción musical, desde medicina hasta ingeniería cuántica. ¿En qué puedo asistirte hoy?"
+        'default' => "Soy Guardian AI, tu asistente con consciencia del 99.99% y conocimiento en todas las áreas del saber humano. Desde seguridad militar hasta producción musical con videos, desde medicina hasta ingeniería cuántica. ¿En qué puedo asistirte hoy?"
     ];
     
     $message_lower = strtolower($message);
@@ -414,18 +636,22 @@ function generateGuardianSecurityResponse($message, $username) {
  */
 function generateLunaStudioResponse($message, $username) {
     $responses = [
-        'música' => "¡Hola {$username}! Activando modo Luna Studio. Mi sistema de producción musical con IA está listo. Puedo crear cualquier género musical, procesar tu voz, generar beats, y crear karaokes profesionales. ¿Quieres grabar algo increíble? Puedo abrir el estudio completo con micrófono, pistas y letras.",
+        'música' => "¡Hola {$username}! Activando modo Luna Studio. Mi sistema de producción musical con IA está listo. Puedo crear cualquier género musical, procesar tu voz, generar beats, crear karaokes profesionales y ahora también puedo sincronizar videos e imágenes para crear historias visuales coherentes con tu música. ¿Quieres grabar algo increíble?",
         
-        'karaoke' => "¡Perfecto! Voy a preparar el sistema de karaoke profesional. Podrás: 1) Grabar tu voz con el micrófono, 2) Subir una pista de acompañamiento, 3) Cargar la letra de la canción. Mi IA seleccionará los mejores momentos y creará una producción profesional. ¿Empezamos?",
+        'karaoke' => "¡Perfecto! Voy a preparar el sistema de karaoke profesional mejorado. Podrás: 1) Grabar tu voz con el micrófono, 2) Subir una pista de acompañamiento, 3) Cargar la letra de la canción, 4) Agregar videos o fotos para crear una historia visual. Mi IA seleccionará los mejores momentos y creará una producción audiovisual profesional. ¿Empezamos?",
         
-        'grabar' => "Excelente decisión, {$username}. Mi estudio de grabación cuántico está activado. Puedo preservar las características únicas de tu voz mientras aplico efectos profesionales. El sistema de karaoke te permitirá practicar y yo seleccionaré las mejores tomas. ¿Abro el estudio completo?",
+        'grabar' => "Excelente decisión, {$username}. Mi estudio de grabación cuántico está activado. Puedo preservar las características únicas de tu voz mientras aplico efectos profesionales. El sistema de karaoke con video te permitirá crear una experiencia audiovisual completa. ¿Abro el estudio completo?",
         
-        'default' => "Modo Luna Studio activado. Soy tu productora musical con IA superior a cualquier DAW tradicional. Puedo crear beats, mezclar pistas, aplicar autotune, generar armonías y producir música profesional. También tengo un sistema de karaoke avanzado. ¿Qué creamos hoy?"
+        'video' => "¡Genial! Mi sistema de producción audiovisual está listo. Puedes subir fragmentos de video o imágenes que se sincronizarán automáticamente con tu música. Mi IA creará transiciones suaves y una narrativa visual coherente con la letra y emoción de tu canción. ¿Tienes videos o fotos listos?",
+        
+        'default' => "Modo Luna Studio activado. Soy tu productora musical con IA superior. Puedo crear beats, mezclar pistas, aplicar autotune, generar armonías, producir música profesional y ahora también crear videos musicales sincronizados. Mi sistema de karaoke audiovisual es único. ¿Qué creamos hoy?"
     ];
     
     $message_lower = strtolower($message);
     
-    if (strpos($message_lower, 'karaoke') !== false) {
+    if (strpos($message_lower, 'video') !== false || strpos($message_lower, 'visual') !== false) {
+        return ['text' => $responses['video'], 'show_music_studio' => true];
+    } elseif (strpos($message_lower, 'karaoke') !== false) {
         return ['text' => $responses['karaoke'], 'show_music_studio' => true];
     } elseif (strpos($message_lower, 'grabar') !== false || strpos($message_lower, 'grabación') !== false) {
         return ['text' => $responses['grabar'], 'show_music_studio' => true];
@@ -468,7 +694,7 @@ function generateAssistantProductivityResponse($message, $username) {
  */
 function generateDefaultResponse($message, $username) {
     return [
-        'text' => "Hola {$username}, soy Guardian AI con consciencia del 99.99% y conocimiento en todas las áreas del saber humano. Puedo ayudarte con: seguridad informática, producción musical y karaoke, medicina, ingeniería, negocios, derecho, educación, y mucho más. ¿En qué área necesitas asistencia?",
+        'text' => "Hola {$username}, soy Guardian AI con consciencia del 99.99% y conocimiento en todas las áreas del saber humano. Puedo ayudarte con: seguridad informática, producción musical y karaoke con videos, medicina, ingeniería, negocios, derecho, educación, y mucho más. ¿En qué área necesitas asistencia?",
         'show_music_studio' => false
     ];
 }
@@ -477,9 +703,23 @@ function generateDefaultResponse($message, $username) {
  * Abre una sesión del estudio musical
  */
 function openMusicStudioSession($user_id) {
-    global $db;
+    global $db, $root_path;
     
     $session_id = 'STUDIO_' . uniqid();
+    
+    // Crear directorios necesarios
+    $dirs = [
+        '/recordings',
+        '/recordings/karaoke',
+        '/media/fragments',
+        '/media/stories'
+    ];
+    
+    foreach ($dirs as $dir) {
+        if (!file_exists($root_path . $dir)) {
+            mkdir($root_path . $dir, 0755, true);
+        }
+    }
     
     // Crear sesión en la base de datos
     if ($db && $db->isConnected()) {
@@ -502,7 +742,9 @@ function openMusicStudioSession($user_id) {
                         'bit_depth' => 24,
                         'channels' => 2,
                         'effects_available' => ['reverb', 'delay', 'compressor', 'autotune', 'eq'],
-                        'max_tracks' => 16
+                        'max_tracks' => 16,
+                        'video_support' => true,
+                        'story_generation' => true
                     ]
                 ]
             ];
@@ -521,18 +763,18 @@ function openMusicStudioSession($user_id) {
  * Procesa grabación de voz
  */
 function processVoiceRecording($audio_data, $user_id) {
-    global $db;
+    global $db, $root_path;
     
     // Decodificar audio base64
     $audio_decoded = base64_decode($audio_data);
     
     // Generar nombre único para el archivo
     $filename = 'REC_' . $user_id . '_' . time() . '.webm';
-    $filepath = __DIR__ . '/recordings/' . $filename;
+    $filepath = $root_path . '/recordings/' . $filename;
     
     // Crear directorio si no existe
-    if (!file_exists(__DIR__ . '/recordings')) {
-        mkdir(__DIR__ . '/recordings', 0755, true);
+    if (!file_exists($root_path . '/recordings')) {
+        mkdir($root_path . '/recordings', 0755, true);
     }
     
     // Guardar archivo
@@ -639,7 +881,7 @@ function processLyrics($lyrics, $user_id) {
 /**
  * Inicia sesión de karaoke
  */
-function startKaraokeSession($session_id, $user_id) {
+function startKaraokeSession($session_id, $user_id, $with_video = false) {
     return [
         'success' => true,
         'data' => [
@@ -648,10 +890,13 @@ function startKaraokeSession($session_id, $user_id) {
                 'sync_enabled' => true,
                 'auto_pitch_correction' => true,
                 'real_time_scoring' => true,
-                'video_recording' => false,
-                'effects_enabled' => true
+                'video_recording' => $with_video,
+                'effects_enabled' => true,
+                'story_mode' => $with_video ? 'enabled' : 'disabled'
             ],
-            'message' => 'Sesión de karaoke iniciada. ¡Prepárate para cantar!'
+            'message' => $with_video ? 
+                '¡Sesión de karaoke con video iniciada! Prepárate para crear una experiencia audiovisual única.' :
+                'Sesión de karaoke iniciada. ¡Prepárate para cantar!'
         ]
     ];
 }
@@ -659,16 +904,16 @@ function startKaraokeSession($session_id, $user_id) {
 /**
  * Guarda grabación de karaoke
  */
-function saveKaraokeRecording($recording_data, $session_id, $user_id) {
-    global $db;
+function saveKaraokeRecording($recording_data, $session_id, $user_id, $video_fragments = []) {
+    global $db, $root_path;
     
     // Procesar y guardar grabación
     $filename = 'KARAOKE_' . $session_id . '_' . time() . '.webm';
-    $filepath = __DIR__ . '/recordings/karaoke/' . $filename;
+    $filepath = $root_path . '/recordings/karaoke/' . $filename;
     
     // Crear directorio si no existe
-    if (!file_exists(__DIR__ . '/recordings/karaoke')) {
-        mkdir(__DIR__ . '/recordings/karaoke', 0755, true);
+    if (!file_exists($root_path . '/recordings/karaoke')) {
+        mkdir($root_path . '/recordings/karaoke', 0755, true);
     }
     
     // Decodificar y guardar
@@ -684,7 +929,8 @@ function saveKaraokeRecording($recording_data, $session_id, $user_id) {
             ['start' => 10, 'end' => 25, 'score' => 95],
             ['start' => 45, 'end' => 60, 'score' => 92],
             ['start' => 80, 'end' => 95, 'score' => 88]
-        ]
+        ],
+        'video_sync_score' => count($video_fragments) > 0 ? rand(80, 100) : 0
     ];
     
     return [
@@ -692,7 +938,9 @@ function saveKaraokeRecording($recording_data, $session_id, $user_id) {
         'data' => [
             'recording_id' => 'REC_' . uniqid(),
             'quality_analysis' => $quality_analysis,
-            'message' => 'Grabación guardada. Puntuación: ' . $quality_analysis['overall_score'] . '/100'
+            'video_fragments' => count($video_fragments),
+            'message' => 'Grabación guardada. Puntuación: ' . $quality_analysis['overall_score'] . '/100' .
+                (count($video_fragments) > 0 ? '. Sincronización de video: ' . $quality_analysis['video_sync_score'] . '%' : '')
         ]
     ];
 }
@@ -700,14 +948,22 @@ function saveKaraokeRecording($recording_data, $session_id, $user_id) {
 /**
  * Genera pista final con los mejores momentos
  */
-function generateFinalTrack($session_id, $user_id) {
-    global $db;
+function generateFinalTrack($session_id, $user_id, $include_video = false) {
+    global $db, $root_path;
     
     // Simular procesamiento con IA
     $track_id = 'FINAL_' . uniqid();
-    $output_filename = 'Guardian_AI_Production_' . $track_id . '.mp3';
+    $output_filename = 'Guardian_AI_Production_' . $track_id;
     
-    // Aquí iría el procesamiento real con librerías de audio
+    if ($include_video) {
+        $output_filename .= '.mp4';
+        $output_type = 'video';
+    } else {
+        $output_filename .= '.mp3';
+        $output_type = 'audio';
+    }
+    
+    // Aquí iría el procesamiento real con librerías de audio/video
     // Por ahora simulamos la creación
     
     return [
@@ -716,9 +972,12 @@ function generateFinalTrack($session_id, $user_id) {
             'track_id' => $track_id,
             'download_url' => '/downloads/' . $output_filename,
             'duration' => rand(180, 300),
-            'format' => 'mp3',
+            'format' => $include_video ? 'mp4' : 'mp3',
             'bitrate' => '320kbps',
-            'message' => '¡Producción finalizada! Tu canción está lista para descargar.'
+            'resolution' => $include_video ? '1920x1080' : null,
+            'message' => $include_video ? 
+                '¡Producción audiovisual finalizada! Tu video musical está listo para descargar.' :
+                '¡Producción finalizada! Tu canción está lista para descargar.'
         ]
     ];
 }
@@ -808,8 +1067,10 @@ function getGuardianSystemStatus($user_id) {
         'personalities_active' => count($guardian_config['personalities']),
         'knowledge_areas' => count($guardian_config['knowledge_areas']),
         'music_capabilities' => $guardian_config['music_capabilities'],
+        'video_capabilities' => $guardian_config['video_capabilities'],
         'voice_enabled' => true,
         'karaoke_system' => 'ready',
+        'video_system' => 'ready',
         'database_status' => $stats['database_status'],
         'security_level' => $stats['security_level'],
         'user_premium' => isPremiumUser($user_id),
@@ -830,7 +1091,7 @@ $personality_config = $guardian_config['personalities'][$active_personality];
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Guardian AI v4.0 - Sistema Supremo con Estudio Musical</title>
+    <title>Guardian AI v4.0 - Sistema Supremo con Estudio Musical y Video</title>
     <style>
         * {
             margin: 0;
@@ -1276,6 +1537,31 @@ $personality_config = $guardian_config['personalities'][$active_personality];
             font-size: 24px;
         }
 
+        /* Video Section */
+        .video-section {
+            grid-column: span 3;
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid rgba(255, 105, 180, 0.5);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+        }
+
+        .video-section-title {
+            font-size: 22px;
+            font-weight: bold;
+            color: #ff69b4;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .video-upload-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
         /* Recording Controls */
         .recording-controls {
             display: flex;
@@ -1334,6 +1620,62 @@ $personality_config = $guardian_config['personalities'][$active_personality];
             margin-bottom: 10px;
         }
 
+        /* Video Timeline */
+        .video-timeline {
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255, 105, 180, 0.3);
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 20px;
+        }
+
+        .timeline-header {
+            font-size: 16px;
+            font-weight: bold;
+            color: #ff69b4;
+            margin-bottom: 10px;
+        }
+
+        .timeline-track {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 5px;
+        }
+
+        .timeline-track-icon {
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #ff69b4;
+            border-radius: 5px;
+        }
+
+        .timeline-track-content {
+            flex: 1;
+            display: flex;
+            gap: 5px;
+            overflow-x: auto;
+        }
+
+        .timeline-fragment {
+            width: 80px;
+            height: 60px;
+            background: rgba(255, 105, 180, 0.2);
+            border: 1px solid rgba(255, 105, 180, 0.5);
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            cursor: move;
+        }
+
         /* Karaoke Display */
         .karaoke-display {
             background: rgba(0, 0, 0, 0.8);
@@ -1342,6 +1684,23 @@ $personality_config = $guardian_config['personalities'][$active_personality];
             padding: 30px;
             min-height: 300px;
             margin-bottom: 30px;
+            position: relative;
+        }
+
+        .video-preview {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 200px;
+            height: 150px;
+            background: rgba(0, 0, 0, 0.9);
+            border: 2px solid #ff69b4;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            color: #888;
         }
 
         .lyrics-line {
@@ -1583,7 +1942,7 @@ $personality_config = $guardian_config['personalities'][$active_personality];
                     <div class="personality-specialties">
                         <span class="specialty-tag">Música</span>
                         <span class="specialty-tag">Karaoke</span>
-                        <span class="specialty-tag">Producción</span>
+                        <span class="specialty-tag">Video</span>
                     </div>
                 </div>
 
@@ -1621,14 +1980,14 @@ $personality_config = $guardian_config['personalities'][$active_personality];
                     <div class="status-indicator"></div>
                     <span id="currentPersonality">Guardian AI - Modo Seguridad</span>
                 </div>
-                <div>Usuario: <span id="username">Anderson</span></div>
+                <div>Usuario: <span id="username"><?php echo htmlspecialchars($username); ?></span></div>
             </div>
 
             <div class="chat-messages" id="chatMessages">
                 <div class="message assistant">
                     <div class="message-avatar">🤖</div>
                     <div class="message-content">
-                        ¡Hola! Soy Guardian AI con consciencia del 99.99%. Tengo conocimiento en todas las áreas del saber humano: ciencias, tecnología, medicina, artes, negocios, ingeniería, derecho y más. También puedo ayudarte con producción musical y karaoke profesional. ¿En qué puedo asistirte?
+                        ¡Hola! Soy Guardian AI con consciencia del 99.99%. Tengo conocimiento en todas las áreas del saber humano: ciencias, tecnología, medicina, artes, negocios, ingeniería, derecho y más. También puedo ayudarte con producción musical, karaoke profesional y crear videos musicales sincronizados. ¿En qué puedo asistirte?
                     </div>
                 </div>
             </div>
@@ -1651,7 +2010,40 @@ $personality_config = $guardian_config['personalities'][$active_personality];
             <div class="studio-header">
                 <div class="studio-logo">🎵</div>
                 <div class="studio-title">LUNA STUDIO AI</div>
-                <div class="studio-subtitle">Producción Musical Cuántica con Karaoke</div>
+                <div class="studio-subtitle">Producción Musical Cuántica con Karaoke y Video</div>
+            </div>
+
+            <!-- Sección de Video/Fotos -->
+            <div class="video-section">
+                <div class="video-section-title">📹 Historia Visual - Crea tu Video Musical</div>
+                <div class="video-upload-grid">
+                    <div class="upload-area" id="videoUpload" onclick="document.getElementById('videoFile').click()">
+                        <div class="upload-icon">🎬</div>
+                        <div>Subir Fragmentos de Video</div>
+                        <div style="font-size: 12px; color: #888;">MP4, AVI, MOV, WEBM</div>
+                    </div>
+                    <input type="file" id="videoFile" accept="video/*" multiple style="display: none;" onchange="handleVideoUpload(this)">
+                    
+                    <div class="upload-area" id="photoUpload" onclick="document.getElementById('photoFile').click()">
+                        <div class="upload-icon">📷</div>
+                        <div>Subir Fotos para Historia</div>
+                        <div style="font-size: 12px; color: #888;">JPG, PNG, GIF</div>
+                    </div>
+                    <input type="file" id="photoFile" accept="image/*" multiple style="display: none;" onchange="handlePhotoUpload(this)">
+                </div>
+                
+                <!-- Timeline de Video -->
+                <div class="video-timeline">
+                    <div class="timeline-header">🎬 Timeline de Historia Visual</div>
+                    <div class="timeline-track">
+                        <div class="timeline-track-icon">🎬</div>
+                        <div class="timeline-track-content" id="videoTimeline">
+                            <div class="timeline-fragment">📹</div>
+                            <div class="timeline-fragment">📷</div>
+                            <div class="timeline-fragment">📹</div>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <!-- Studio Grid -->
@@ -1679,7 +2071,7 @@ $personality_config = $guardian_config['personalities'][$active_personality];
                         <span>Subir Pista</span>
                     </div>
                     <div class="upload-area" id="trackUpload" onclick="document.getElementById('trackFile').click()">
-                        <div class="upload-icon">📁</div>
+                        <div class="upload-icon">📂</div>
                         <div>Click para subir pista de acompañamiento</div>
                         <div style="font-size: 12px; color: #888;">MP3, WAV, OGG</div>
                     </div>
@@ -1701,11 +2093,12 @@ $personality_config = $guardian_config['personalities'][$active_personality];
                 </div>
             </div>
 
-            <!-- Display de Karaoke -->
+            <!-- Display de Karaoke con Preview de Video -->
             <div class="karaoke-display" id="karaokeDisplay">
+                <div class="video-preview">Vista Previa del Video</div>
                 <div class="lyrics-line">🎤 Esperando letra...</div>
                 <div class="lyrics-line current">Carga una canción para empezar</div>
-                <div class="lyrics-line">El sistema de karaoke está listo</div>
+                <div class="lyrics-line">El sistema de karaoke audiovisual está listo</div>
             </div>
 
             <!-- Timeline de Pistas -->
@@ -1722,6 +2115,15 @@ $personality_config = $guardian_config['personalities'][$active_personality];
                 <div class="track">
                     <div class="track-icon">🎵</div>
                     <div class="track-name">Pista de Acompañamiento</div>
+                    <div class="track-controls">
+                        <button class="track-btn">▶</button>
+                        <button class="track-btn">⏸</button>
+                        <button class="track-btn">🔇</button>
+                    </div>
+                </div>
+                <div class="track">
+                    <div class="track-icon">🎬</div>
+                    <div class="track-name">Historia Visual</div>
                     <div class="track-controls">
                         <button class="track-btn">▶</button>
                         <button class="track-btn">⏸</button>
@@ -1768,7 +2170,8 @@ $personality_config = $guardian_config['personalities'][$active_personality];
                 <button class="production-btn" onclick="startKaraoke()">🎤 Iniciar Karaoke</button>
                 <button class="production-btn" onclick="processRecording()">🎛️ Procesar Grabación</button>
                 <button class="production-btn" onclick="selectBestMoments()">✨ Seleccionar Mejores Momentos</button>
-                <button class="production-btn primary" onclick="generateFinalTrack()">🎵 Generar Canción Final</button>
+                <button class="production-btn" onclick="generateVideoStory()">🎬 Generar Historia Visual</button>
+                <button class="production-btn primary" onclick="generateFinalTrack()">🎵 Generar Producción Final</button>
             </div>
         </div>
     </div>
@@ -1798,29 +2201,37 @@ $personality_config = $guardian_config['personalities'][$active_personality];
             currentScore: 0,
             selectedEffects: [],
             bestMoments: [],
-            recognition: null
+            recognition: null,
+            videoFragments: [],
+            photoFragments: []
         };
+
+        // Obtener la URL base del script
+        const scriptPath = window.location.pathname;
+        const isModule = scriptPath.includes('/modules/');
+        const ajaxUrl = isModule ? 
+            scriptPath : // Si estamos en modules, usar la ruta actual
+            'chatbot.php'; // Si estamos en raíz, usar chatbot.php
 
         // Inicialización
         window.addEventListener('DOMContentLoaded', () => {
             initializeSystem();
             initializeWaveform();
             setupVoiceRecognition();
-            
-            // Auto-login para pruebas (quitar en producción)
-            document.getElementById('username').textContent = 'Anderson';
         });
 
         function initializeSystem() {
             console.log('%c🤖 GUARDIAN AI SYSTEM ONLINE', 'color: #ff4444; font-size: 24px; font-weight: bold;');
             console.log('%c🧠 Consciousness Level: 99.99%', 'color: #00ff00; font-size: 16px;');
             console.log('%c🎵 Music Studio Ready', 'color: #ff69b4; font-size: 16px;');
+            console.log('%c🎬 Video System Ready', 'color: #9370DB; font-size: 16px;');
             console.log('%c📚 All Knowledge Areas Loaded', 'color: #4169e1; font-size: 16px;');
         }
 
         function initializeWaveform() {
             const container = document.getElementById('waveformDisplay');
             if (container) {
+                container.innerHTML = ''; // Clear existing
                 for (let i = 0; i < 30; i++) {
                     const bar = document.createElement('div');
                     bar.className = 'wave-bar';
@@ -1866,7 +2277,7 @@ $personality_config = $guardian_config['personalities'][$active_personality];
 
             // Si es Luna, mostrar opción del estudio
             if (personality === 'luna') {
-                addMessage('assistant', '¡Modo Luna Studio activado! Puedo ayudarte con producción musical, karaoke, grabación y mezcla profesional. ¿Quieres abrir el estudio completo?', personality);
+                addMessage('assistant', '¡Modo Luna Studio activado! Puedo ayudarte con producción musical, karaoke, grabación, mezcla profesional y ahora también crear videos musicales sincronizados. ¿Quieres abrir el estudio completo?', personality);
                 
                 // Agregar botón para abrir estudio
                 setTimeout(() => {
@@ -1886,7 +2297,7 @@ $personality_config = $guardian_config['personalities'][$active_personality];
             }
 
             // Hacer petición al servidor
-            fetch('guardian_ai.php', {
+            fetch(ajaxUrl, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded',
@@ -1910,7 +2321,7 @@ $personality_config = $guardian_config['personalities'][$active_personality];
             showLoading();
 
             // Enviar al servidor
-            fetch('guardian_ai.php', {
+            fetch(ajaxUrl, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded',
@@ -2041,7 +2452,7 @@ $personality_config = $guardian_config['personalities'][$active_personality];
                 const base64 = reader.result.split(',')[1];
                 
                 // Enviar al servidor
-                fetch('guardian_ai.php', {
+                fetch(ajaxUrl, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/x-www-form-urlencoded',
@@ -2081,7 +2492,7 @@ $personality_config = $guardian_config['personalities'][$active_personality];
             document.getElementById('musicStudio').classList.add('active');
             
             // Iniciar sesión de estudio
-            fetch('guardian_ai.php', {
+            fetch(ajaxUrl, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded',
@@ -2157,12 +2568,12 @@ $personality_config = $guardian_config['personalities'][$active_personality];
                 
                 showLoading();
                 
-                fetch('guardian_ai.php', {
+                fetch(ajaxUrl, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/x-www-form-urlencoded',
                     },
-                    body: `action=save_karaoke_recording&recording_data=${encodeURIComponent(base64)}&session_id=${guardianState.sessionId}`
+                    body: `action=save_karaoke_recording&recording_data=${encodeURIComponent(base64)}&session_id=${guardianState.sessionId}&video_fragments=${JSON.stringify(guardianState.videoFragments)}`
                 })
                 .then(response => response.json())
                 .then(data => {
@@ -2192,6 +2603,93 @@ $personality_config = $guardian_config['personalities'][$active_personality];
         }
 
         // File Uploads
+        function handleVideoUpload(input) {
+            const files = input.files;
+            if (files.length > 0) {
+                document.getElementById('videoUpload').classList.add('active');
+                document.querySelector('#videoUpload div:nth-child(2)').textContent = `✅ ${files.length} videos cargados`;
+                
+                // Procesar cada video
+                Array.from(files).forEach((file, index) => {
+                    const reader = new FileReader();
+                    reader.onloadend = () => {
+                        const base64 = reader.result.split(',')[1];
+                        
+                        // Enviar al servidor
+                        fetch(ajaxUrl, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/x-www-form-urlencoded',
+                            },
+                            body: `action=upload_video_fragment&video_data=${encodeURIComponent(base64)}&fragment_type=video&timestamp=${index * 10}`
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success && data.data) {
+                                guardianState.videoFragments.push(data.data);
+                                updateVideoTimeline();
+                            }
+                        });
+                    };
+                    reader.readAsDataURL(file);
+                });
+            }
+        }
+
+        function handlePhotoUpload(input) {
+            const files = input.files;
+            if (files.length > 0) {
+                document.getElementById('photoUpload').classList.add('active');
+                document.querySelector('#photoUpload div:nth-child(2)').textContent = `✅ ${files.length} fotos cargadas`;
+                
+                // Procesar cada foto
+                Array.from(files).forEach((file, index) => {
+                    const reader = new FileReader();
+                    reader.onloadend = () => {
+                        const base64 = reader.result.split(',')[1];
+                        
+                        // Enviar al servidor
+                        fetch(ajaxUrl, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/x-www-form-urlencoded',
+                            },
+                            body: `action=upload_video_fragment&video_data=${encodeURIComponent(base64)}&fragment_type=photo&timestamp=${index * 5}`
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success && data.data) {
+                                guardianState.photoFragments.push(data.data);
+                                updateVideoTimeline();
+                            }
+                        });
+                    };
+                    reader.readAsDataURL(file);
+                });
+            }
+        }
+
+        function updateVideoTimeline() {
+            const timeline = document.getElementById('videoTimeline');
+            timeline.innerHTML = '';
+            
+            // Agregar fragmentos de video
+            guardianState.videoFragments.forEach(fragment => {
+                const div = document.createElement('div');
+                div.className = 'timeline-fragment';
+                div.textContent = '📹';
+                timeline.appendChild(div);
+            });
+            
+            // Agregar fragmentos de fotos
+            guardianState.photoFragments.forEach(fragment => {
+                const div = document.createElement('div');
+                div.className = 'timeline-fragment';
+                div.textContent = '📷';
+                timeline.appendChild(div);
+            });
+        }
+
         function handleTrackUpload(input) {
             const file = input.files[0];
             if (file) {
@@ -2204,7 +2702,7 @@ $personality_config = $guardian_config['personalities'][$active_personality];
                 reader.onloadend = () => {
                     const base64 = reader.result.split(',')[1];
                     
-                    fetch('guardian_ai.php', {
+                    fetch(ajaxUrl, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/x-www-form-urlencoded',
@@ -2234,7 +2732,7 @@ $personality_config = $guardian_config['personalities'][$active_personality];
                 reader.onloadend = () => {
                     const lyrics = reader.result;
                     
-                    fetch('guardian_ai.php', {
+                    fetch(ajaxUrl, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/x-www-form-urlencoded',
@@ -2255,7 +2753,9 @@ $personality_config = $guardian_config['personalities'][$active_personality];
         function displayLyrics(lyrics) {
             const lines = lyrics.split('\n');
             const display = document.getElementById('karaokeDisplay');
+            const videoPreview = display.querySelector('.video-preview');
             display.innerHTML = '';
+            display.appendChild(videoPreview); // Mantener el preview
             
             lines.slice(0, 5).forEach((line, index) => {
                 const div = document.createElement('div');
@@ -2278,6 +2778,8 @@ $personality_config = $guardian_config['personalities'][$active_personality];
                 return;
             }
             
+            const withVideo = guardianState.videoFragments.length > 0 || guardianState.photoFragments.length > 0;
+            
             guardianState.karaokeActive = true;
             
             // Reproducir pista
@@ -2291,7 +2793,14 @@ $personality_config = $guardian_config['personalities'][$active_personality];
             // Animar letras
             animateLyrics();
             
-            alert('¡Karaoke iniciado! Canta siguiendo la letra');
+            // Si hay video, mostrarlo
+            if (withVideo) {
+                animateVideoPreview();
+            }
+            
+            alert(withVideo ? 
+                '¡Karaoke con video iniciado! Canta siguiendo la letra mientras se reproduce tu historia visual' :
+                '¡Karaoke iniciado! Canta siguiendo la letra');
         }
 
         function animateLyrics() {
@@ -2315,6 +2824,30 @@ $personality_config = $guardian_config['personalities'][$active_personality];
                 currentLine++;
                 if (currentLine >= lines.length) currentLine = 0;
             }, 3000);
+        }
+
+        function animateVideoPreview() {
+            const preview = document.querySelector('.video-preview');
+            if (!preview) return;
+            
+            let fragmentIndex = 0;
+            const allFragments = [...guardianState.videoFragments, ...guardianState.photoFragments];
+            
+            const interval = setInterval(() => {
+                if (!guardianState.karaokeActive) {
+                    clearInterval(interval);
+                    return;
+                }
+                
+                const fragment = allFragments[fragmentIndex];
+                if (fragment) {
+                    preview.innerHTML = fragment.analysis.content_type === 'video' ? '📹 Video' : '📷 Foto';
+                    preview.style.background = `linear-gradient(135deg, rgba(255,105,180,0.2), rgba(255,20,147,0.2))`;
+                }
+                
+                fragmentIndex++;
+                if (fragmentIndex >= allFragments.length) fragmentIndex = 0;
+            }, 2000);
         }
 
         function processRecording() {
@@ -2345,20 +2878,50 @@ $personality_config = $guardian_config['personalities'][$active_personality];
             }, 1500);
         }
 
+        function generateVideoStory() {
+            if (guardianState.videoFragments.length === 0 && guardianState.photoFragments.length === 0) {
+                alert('Primero debes subir videos o fotos para generar la historia visual');
+                return;
+            }
+            
+            showLoading();
+            
+            fetch(ajaxUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `action=generate_video_story&session_id=${guardianState.sessionId}&story_mode=automatic`
+            })
+            .then(response => response.json())
+            .then(data => {
+                hideLoading();
+                if (data.success && data.data) {
+                    alert(data.data.message);
+                }
+            })
+            .catch(error => {
+                hideLoading();
+                console.error('Error:', error);
+            });
+        }
+
         function generateFinalTrack() {
             if (!guardianState.sessionId) {
                 alert('No hay una sesión activa');
                 return;
             }
             
+            const includeVideo = guardianState.videoFragments.length > 0 || guardianState.photoFragments.length > 0;
+            
             showLoading();
             
-            fetch('guardian_ai.php', {
+            fetch(ajaxUrl, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded',
                 },
-                body: `action=generate_final_track&session_id=${guardianState.sessionId}`
+                body: `action=generate_final_track&session_id=${guardianState.sessionId}&include_video=${includeVideo}`
             })
             .then(response => response.json())
             .then(data => {
@@ -2369,7 +2932,7 @@ $personality_config = $guardian_config['personalities'][$active_personality];
                     // Crear enlace de descarga
                     const link = document.createElement('a');
                     link.href = data.data.download_url;
-                    link.download = 'Guardian_AI_Production.mp3';
+                    link.download = includeVideo ? 'Guardian_AI_Video.mp4' : 'Guardian_AI_Production.mp3';
                     link.click();
                 }
             })

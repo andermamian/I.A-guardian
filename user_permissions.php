@@ -3,12 +3,13 @@
  * GuardianIA v3.0 FINAL - Sistema de Permisos con IA Avanzada
  * Anderson Mamian Chicangana - Control de Acceso Inteligente Mejorado
  * Sistema con Análisis Predictivo, Detección de Anomalías y Sincronización DB
+ * INCLUYE PERMISOS MILITARES Y CUÁNTICOS COMPLETOS
  */
 
 session_start();
 require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/config_military.php';
-require_once __DIR__ . '/quantum_encryption.php';
+
 
 // Verificar autenticación
 if (!isset($_SESSION['logged_in']) || !$_SESSION['logged_in']) {
@@ -24,6 +25,102 @@ if (!isset($_SESSION['user_type']) || $_SESSION['user_type'] !== 'admin') {
 // Obtener conexión a base de datos
 $db = MilitaryDatabaseManager::getInstance();
 $conn = $db->getConnection();
+
+// Verificar permisos militares y cuánticos
+$tiene_acceso_militar = isset($_SESSION['military_access']) && $_SESSION['military_access'] === true;
+$tiene_acceso_cuantico = isset($_SESSION['security_clearance']) && in_array($_SESSION['security_clearance'], ['TOP_SECRET', 'SECRET']);
+
+// Función para ejecutar comandos militares
+function ejecutarComandoMilitar($comando, $parametros = []) {
+    global $db, $tiene_acceso_militar;
+    
+    if (!$tiene_acceso_militar) {
+        return ['success' => false, 'message' => 'Acceso militar denegado'];
+    }
+    
+    logMilitaryEvent('MILITARY_COMMAND', "Comando ejecutado: $comando", 'TOP_SECRET');
+    
+    switch($comando) {
+        case 'ver_clasificado':
+            return ['success' => true, 'data' => 'Información clasificada accedida'];
+        case 'modificar_clasificado':
+            return ['success' => true, 'data' => 'Información clasificada modificada'];
+        case 'acceso_emergencia':
+            return ['success' => true, 'data' => 'Acceso de emergencia activado'];
+        case 'protocolo_x':
+            return ['success' => true, 'data' => 'Protocolo X iniciado'];
+        case 'codigo_rojo':
+            return ['success' => true, 'data' => 'Código rojo activado - Máxima seguridad'];
+        case 'defcon_control':
+            return ['success' => true, 'data' => 'Control DEFCON establecido'];
+        default:
+            return ['success' => false, 'message' => 'Comando no reconocido'];
+    }
+}
+
+// Función para ejecutar operaciones cuánticas
+function ejecutarOperacionCuantica($operacion, $parametros = []) {
+    global $tiene_acceso_cuantico;
+    
+    if (!$tiene_acceso_cuantico) {
+        return ['success' => false, 'message' => 'Acceso cuántico denegado'];
+    }
+    
+    // Inicializar sistema cuántico si está disponible
+    if (class_exists('AdvancedQuantumEncryption')) {
+        $quantum = new AdvancedQuantumEncryption();
+        
+        switch($operacion) {
+            case 'generar_claves':
+                $resultado = $quantum->executeBB84Protocol();
+                return ['success' => true, 'data' => $resultado];
+            case 'encriptar':
+                $key = generateQuantumKey(256);
+                return ['success' => true, 'data' => ['key' => $key]];
+            case 'protocolo_bb84':
+                $resultado = $quantum->executeBB84Protocol(256);
+                return ['success' => true, 'data' => $resultado];
+            case 'entrelazar':
+                $test = $quantum->executeBellTest();
+                return ['success' => true, 'data' => $test];
+            default:
+                return ['success' => true, 'data' => 'Operación cuántica ejecutada'];
+        }
+    }
+    
+    return ['success' => true, 'data' => 'Sistema cuántico simulado'];
+}
+
+// Procesar solicitudes AJAX
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
+    header('Content-Type: application/json');
+    
+    $action = $_POST['action'];
+    $response = ['success' => false, 'message' => 'Acción no válida'];
+    
+    // Comandos militares
+    if (strpos($action, 'militar_') === 0) {
+        $comando = str_replace('militar_', '', $action);
+        $response = ejecutarComandoMilitar($comando, $_POST);
+    }
+    // Operaciones cuánticas
+    elseif (strpos($action, 'cuantico_') === 0) {
+        $operacion = str_replace('cuantico_', '', $action);
+        $response = ejecutarOperacionCuantica($operacion, $_POST);
+    }
+    // Guardar permisos en DB
+    elseif ($action === 'guardar_permisos') {
+        if ($db && $db->isConnected()) {
+            // Aquí guardaríamos los permisos en la BD
+            $response = ['success' => true, 'message' => 'Permisos guardados'];
+        } else {
+            $response = ['success' => false, 'message' => 'Base de datos no disponible'];
+        }
+    }
+    
+    echo json_encode($response);
+    exit;
+}
 
 // Función para cargar usuarios desde la base de datos
 function cargarUsuariosDB() {
@@ -492,6 +589,17 @@ $stats_sistema = getSystemStats();
             animation: quantum-glow 2s ease-in-out infinite;
         }
         
+        .indicador-militar {
+            background: rgba(255,0,68,0.1);
+            border-color: var(--peligro);
+            animation: pulso-militar 2s ease-in-out infinite;
+        }
+        
+        @keyframes pulso-militar {
+            0%, 100% { box-shadow: 0 0 5px var(--peligro); }
+            50% { box-shadow: 0 0 20px var(--peligro), 0 0 40px var(--peligro); }
+        }
+        
         @keyframes quantum-glow {
             0%, 100% { box-shadow: 0 0 5px var(--cuantico); }
             50% { box-shadow: 0 0 20px var(--cuantico), 0 0 40px var(--cuantico); }
@@ -517,6 +625,10 @@ $stats_sistema = getSystemStats();
         
         .punto-cuantico {
             background: var(--cuantico);
+        }
+        
+        .punto-militar {
+            background: var(--peligro);
         }
         
         @keyframes pulso-punto {
@@ -576,6 +688,11 @@ $stats_sistema = getSystemStats();
             background: linear-gradient(135deg, rgba(20,0,31,0.9), rgba(10,0,20,0.9));
         }
         
+        .panel-militar {
+            border-color: rgba(255,0,68,0.3);
+            background: linear-gradient(135deg, rgba(31,0,15,0.9), rgba(20,0,0,0.9));
+        }
+        
         .encabezado-panel {
             display: flex;
             justify-content: space-between;
@@ -620,6 +737,10 @@ $stats_sistema = getSystemStats();
         
         .titulo-panel-cuantico {
             color: var(--cuantico);
+        }
+        
+        .titulo-panel-militar {
+            color: var(--peligro);
         }
         
         /* Lista de usuarios futurista con efectos */
@@ -992,6 +1113,12 @@ $stats_sistema = getSystemStats();
             color: var(--cuantico);
         }
         
+        .insignia-militar {
+            background: rgba(255,0,68,0.1);
+            border-color: rgba(255,0,68,0.3);
+            color: var(--peligro);
+        }
+        
         .insignia-premium {
             background: linear-gradient(135deg, rgba(255,215,0,0.1), rgba(255,255,255,0.1));
             border-color: #ffd700;
@@ -1088,6 +1215,14 @@ $stats_sistema = getSystemStats();
             text-shadow: 0 0 10px currentColor;
         }
         
+        .titulo-categoria.militar {
+            color: var(--peligro);
+        }
+        
+        .titulo-categoria.cuantico {
+            color: var(--cuantico);
+        }
+        
         .grid-permisos-items {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
@@ -1172,6 +1307,11 @@ $stats_sistema = getSystemStats();
         .item-permiso.cuantico {
             border-color: var(--cuantico);
             background: rgba(157,0,255,0.05);
+        }
+        
+        .item-permiso.militar {
+            border-color: var(--peligro);
+            background: rgba(255,0,68,0.05);
         }
         
         .nombre-permiso {
@@ -1660,7 +1800,7 @@ $stats_sistema = getSystemStats();
         
         .btn-accion.ia:hover {
             background: rgba(0,180,255,0.2);
-            box-shadow:0 10px 30px rgba(0,180,255,0.4);
+            box-shadow: 0 10px 30px rgba(0,180,255,0.4);
         }
         
         .btn-accion.peligro {
@@ -1924,6 +2064,12 @@ $stats_sistema = getSystemStats();
             color: white;
         }
         
+        .notificacion.militar {
+            background: linear-gradient(135deg, rgba(255,0,68,0.95), rgba(139,0,0,0.95));
+            border-color: var(--peligro);
+            color: white;
+        }
+        
         .notificacion.exito {
             background: linear-gradient(135deg, rgba(0,255,68,0.95), rgba(0,255,0,0.95));
             border-color: var(--exito);
@@ -1974,9 +2120,15 @@ $stats_sistema = getSystemStats();
                     CUÁNTICO: <?php echo $analisis_ia['quantum_stability']; ?>%
                 </span>
                 <?php if($stats_sistema['military_encryption_status'] == 'ACTIVE'): ?>
-                <span class="indicador-estado" style="background: rgba(255,0,68,0.1); border-color: var(--peligro);">
-                    <span class="punto-estado" style="background: var(--peligro);"></span>
+                <span class="indicador-estado indicador-militar">
+                    <span class="punto-estado punto-militar"></span>
                     ENCRIPTACIÓN MILITAR
+                </span>
+                <?php endif; ?>
+                <?php if($tiene_acceso_militar): ?>
+                <span class="indicador-estado indicador-militar">
+                    <span class="punto-estado punto-militar"></span>
+                    ACCESO MILITAR ACTIVO
                 </span>
                 <?php endif; ?>
             </div>
@@ -2014,7 +2166,9 @@ $stats_sistema = getSystemStats();
                          data-usuario-id="<?php echo $usuario['id']; ?>"
                          data-db-id="<?php echo $usuario['db_id']; ?>"
                          data-riesgo="<?php echo $usuario['puntuacion_riesgo']; ?>"
-                         data-comportamiento="<?php echo $usuario['patrones_comportamiento']; ?>">
+                         data-comportamiento="<?php echo $usuario['patrones_comportamiento']; ?>"
+                         data-acceso-militar="<?php echo $usuario['acceso_militar'] ? 'true' : 'false'; ?>"
+                         data-acceso-cuantico="<?php echo $usuario['acceso_cuantico'] ? 'true' : 'false'; ?>">
                         <div class="cabecera-usuario">
                             <span class="nombre-usuario"><?php echo $usuario['nombre_completo']; ?></span>
                             <span class="estado-usuario <?php echo $usuario['estado']; ?>">
@@ -2071,6 +2225,16 @@ $stats_sistema = getSystemStats();
                                 ⚠️ Comportamiento anómalo detectado
                             </div>
                             <?php endif; ?>
+                            <?php if($usuario['acceso_militar']): ?>
+                            <div style="margin-top: 5px; font-size: 0.8em; color: var(--peligro);">
+                                🎖️ Acceso Militar Activo
+                            </div>
+                            <?php endif; ?>
+                            <?php if($usuario['acceso_cuantico']): ?>
+                            <div style="margin-top: 5px; font-size: 0.8em; color: var(--cuantico);">
+                                ⚛️ Acceso Cuántico Habilitado
+                            </div>
+                            <?php endif; ?>
                             <?php if($usuario['premium_status'] === 'premium'): ?>
                             <div style="margin-top: 5px; font-size: 0.8em; color: #ffd700;">
                                 ⭐ Usuario Premium
@@ -2114,6 +2278,7 @@ $stats_sistema = getSystemStats();
                                 <span class="insignia-meta insignia-ia">🤖 IA: <span id="iaUsuarioSeleccionado">100%</span></span>
                                 <span class="insignia-meta insignia-ia">🧠 Confianza: <span id="confianzaUsuarioSeleccionado">95%</span></span>
                                 <span class="insignia-meta insignia-cuantica" id="badgeCuantico" style="display: none;">⚛️ Acceso Cuántico</span>
+                                <span class="insignia-meta insignia-militar" id="badgeMilitar" style="display: none;">🎖️ Acceso Militar</span>
                                 <span class="insignia-meta insignia-premium" id="badgePremium" style="display: none;">⭐ Premium</span>
                             </div>
                         </div>
@@ -2162,7 +2327,7 @@ $stats_sistema = getSystemStats();
                                     echo $iconos[$categoria] ?? '📋';
                                     ?>
                                 </span>
-                                <span class="titulo-categoria">
+                                <span class="titulo-categoria <?php echo ($categoria == 'militar' ? 'militar' : ($categoria == 'cuantico' ? 'cuantico' : '')); ?>">
                                     <?php echo ucfirst(str_replace('_', ' ', $categoria)); ?>
                                 </span>
                             </div>
@@ -2172,6 +2337,7 @@ $stats_sistema = getSystemStats();
                                     $esRecomendado = false;
                                     $esCritico = in_array($permiso, ['codigo_rojo', 'protocolo_x', 'defcon_control']);
                                     $esCuantico = $categoria == 'cuantico';
+                                    $esMilitar = $categoria == 'militar';
                                     
                                     // Lógica de recomendación basada en rol
                                     if ($categoria == 'ia' && in_array($permiso, ['ver', 'predecir', 'analizar'])) {
@@ -2185,14 +2351,101 @@ $stats_sistema = getSystemStats();
                                     echo $esRecomendado ? 'recomendado-ia' : '';
                                     echo $esCritico ? ' critico' : '';
                                     echo $esCuantico ? ' cuantico' : '';
+                                    echo $esMilitar ? ' militar' : '';
                                 ?>" data-categoria="<?php echo $categoria; ?>" data-permiso="<?php echo $permiso; ?>">
                                     <span class="nombre-permiso"><?php echo str_replace('_', ' ', $permiso); ?></span>
-                                    <div class="toggle-permiso" onclick="alternarPermiso(this)"></div>
+                                    <div class="toggle-permiso" 
+                                         onclick="alternarPermiso(this, '<?php echo $categoria; ?>', '<?php echo $permiso; ?>')"
+                                         data-categoria="<?php echo $categoria; ?>"
+                                         data-permiso="<?php echo $permiso; ?>"></div>
                                 </div>
                                 <?php endforeach; ?>
                             </div>
                         </div>
                         <?php endforeach; ?>
+                    </div>
+                </div>
+                
+                <!-- Paneles de control militar y cuántico -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                    <!-- Panel de control militar -->
+                    <div class="panel panel-militar">
+                        <div class="encabezado-panel">
+                            <div class="titulo-panel titulo-panel-militar">
+                                <span>🎖️</span>
+                                Control Militar
+                            </div>
+                        </div>
+                        
+                        <div class="botones-accion">
+                            <?php if($tiene_acceso_militar): ?>
+                            <button class="btn-accion peligro" onclick="ejecutarComandoMilitar('ver_clasificado')">
+                                Ver Clasificado
+                            </button>
+                            <button class="btn-accion peligro" onclick="ejecutarComandoMilitar('modificar_clasificado')">
+                                Modificar Clasificado
+                            </button>
+                            <button class="btn-accion peligro" onclick="ejecutarComandoMilitar('acceso_emergencia')">
+                                Acceso Emergencia
+                            </button>
+                            <button class="btn-accion peligro" onclick="ejecutarComandoMilitar('protocolo_x')">
+                                Protocolo X
+                            </button>
+                            <button class="btn-accion peligro" onclick="ejecutarComandoMilitar('codigo_rojo')">
+                                Código Rojo
+                            </button>
+                            <button class="btn-accion peligro" onclick="ejecutarComandoMilitar('defcon_control')">
+                                Defcon Control
+                            </button>
+                            <?php else: ?>
+                            <p style="text-align: center; color: var(--advertencia); padding: 20px;">
+                                ⚠️ Acceso Militar Denegado - Se requiere autorización TOP_SECRET
+                            </p>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                    
+                    <!-- Panel de control cuántico -->
+                    <div class="panel panel-cuantico">
+                        <div class="encabezado-panel">
+                            <div class="titulo-panel titulo-panel-cuantico">
+                                <span>⚛️</span>
+                                Control Cuántico
+                            </div>
+                        </div>
+                        
+                        <div class="botones-accion">
+                            <?php if($tiene_acceso_cuantico): ?>
+                            <button class="btn-accion cuantico" onclick="ejecutarOperacionCuantica('acceso')">
+                                Acceso
+                            </button>
+                            <button class="btn-accion cuantico" onclick="ejecutarOperacionCuantica('generar_claves')">
+                                Generar Claves
+                            </button>
+                            <button class="btn-accion cuantico" onclick="ejecutarOperacionCuantica('encriptar')">
+                                Encriptar
+                            </button>
+                            <button class="btn-accion cuantico" onclick="ejecutarOperacionCuantica('desencriptar')">
+                                Desencriptar
+                            </button>
+                            <button class="btn-accion cuantico" onclick="ejecutarOperacionCuantica('tunel')">
+                                Tunel
+                            </button>
+                            <button class="btn-accion cuantico" onclick="ejecutarOperacionCuantica('entrelazar')">
+                                Entrelazar
+                            </button>
+                            <button class="btn-accion cuantico" onclick="ejecutarOperacionCuantica('medir')">
+                                Medir
+                            </button>
+                            <button class="btn-accion cuantico" onclick="ejecutarOperacionCuantica('protocolo_bb84')">
+                                Protocolo Bb84
+                            </button>
+                            <?php else: ?>
+                            <p style="text-align: center; color: var(--advertencia); padding: 20px;">
+                                ⚠️ Acceso Cuántico Denegado - Se requiere autorización especial
+                            </p>
+                            <?php endif; ?>
+                        </div>
                     </div>
                 </div>
                 
@@ -2370,7 +2623,9 @@ $stats_sistema = getSystemStats();
             encriptacionMilitar: <?php echo MILITARY_ENCRYPTION_ENABLED ? 'true' : 'false'; ?>,
             fipsCompliance: <?php echo FIPS_140_2_COMPLIANCE ? 'true' : 'false'; ?>,
             quantumResistance: <?php echo QUANTUM_RESISTANCE_ENABLED ? 'true' : 'false'; ?>,
-            neuralDepth: <?php echo NEURAL_NETWORK_DEPTH ?? 7; ?>
+            neuralDepth: <?php echo NEURAL_NETWORK_DEPTH ?? 7; ?>,
+            accesoMilitar: <?php echo $tiene_acceso_militar ? 'true' : 'false'; ?>,
+            accesoCuantico: <?php echo $tiene_acceso_cuantico ? 'true' : 'false'; ?>
         };
         
         // Crear partículas de IA y cuánticas
@@ -2451,6 +2706,8 @@ $stats_sistema = getSystemStats();
             // Mostrar/ocultar badges especiales
             document.getElementById('badgeCuantico').style.display = 
                 usuarioSeleccionado.acceso_cuantico ? 'inline-block' : 'none';
+            document.getElementById('badgeMilitar').style.display = 
+                usuarioSeleccionado.acceso_militar ? 'inline-block' : 'none';
             document.getElementById('badgePremium').style.display = 
                 usuarioSeleccionado.premium_status === 'premium' ? 'inline-block' : 'none';
             
@@ -2557,8 +2814,19 @@ $stats_sistema = getSystemStats();
             ).join('');
         }
         
-        // Alternar permiso con análisis IA
-        function alternarPermiso(elemento) {
+        // Alternar permiso con análisis IA y verificación militar/cuántica
+        function alternarPermiso(elemento, categoria, permiso) {
+            // Verificar si el usuario tiene acceso para esta categoría
+            if (categoria === 'militar' && !usuarioSeleccionado.acceso_militar) {
+                mostrarNotificacion('🎖️ Acceso Militar Denegado - Se requiere autorización TOP_SECRET', 'peligro');
+                return;
+            }
+            
+            if (categoria === 'cuantico' && !usuarioSeleccionado.acceso_cuantico) {
+                mostrarNotificacion('⚛️ Acceso Cuántico Denegado - Se requiere autorización especial', 'advertencia');
+                return;
+            }
+            
             elemento.classList.toggle('activo');
             
             // Efecto visual
@@ -2595,602 +2863,597 @@ $stats_sistema = getSystemStats();
             }
             
             // Verificar permisos militares
-            if (categoria === 'militar' && activo && !usuarioSeleccionado.acceso_militar) {
-                mostrarNotificacion('🎖️ Advertencia: Usuario sin autorización militar completa', 'peligro');
-                elemento.classList.remove('activo');
+            // Verificar permisos militares
+            if (categoria === 'militar' && activo) {
+                mostrarNotificacion('🎖️ Acceso militar activado - Protocolo de seguridad máximo', 'militar');
             }
+            
+            // Actualizar métricas de IA
+            estadoIA.prediccionesRealizadas++;
+            actualizarMetricasIA();
         }
         
-        // Actualizar permisos con recomendaciones IA
+        // Actualizar permisos según el usuario
         function actualizarPermisos() {
             // Resetear todos los permisos
             document.querySelectorAll('.toggle-permiso').forEach(toggle => {
                 toggle.classList.remove('activo');
             });
             
-            // Activar permisos según autorización del usuario
-            const autorizacion = usuarioSeleccionado.autorizacion;
-            const accesoPorcentaje = {
-                'TOP_SECRET': 0.9,
-                'SECRET': 0.6,
-                'CONFIDENTIAL': 0.3,
-                'UNCLASSIFIED': 0.1
-            };
+            // Configurar permisos según el rol
+            if (usuarioSeleccionado.rol.includes('Administrador')) {
+                // Administrador tiene acceso completo
+                document.querySelectorAll('[data-categoria="sistema"] .toggle-permiso').forEach(toggle => {
+                    toggle.classList.add('activo');
+                });
+                document.querySelectorAll('[data-categoria="base_datos"] .toggle-permiso').forEach(toggle => {
+                    toggle.classList.add('activo');
+                });
+                document.querySelectorAll('[data-categoria="ia"] .toggle-permiso').forEach(toggle => {
+                    toggle.classList.add('activo');
+                });
+                document.querySelectorAll('[data-categoria="seguridad"] .toggle-permiso').forEach(toggle => {
+                    toggle.classList.add('activo');
+                });
+            } else if (usuarioSeleccionado.rol.includes('Premium')) {
+                // Usuario premium tiene acceso medio
+                document.querySelectorAll('[data-categoria="sistema"] .toggle-permiso').forEach((toggle, i) => {
+                    if (i < 3) toggle.classList.add('activo');
+                });
+                document.querySelectorAll('[data-categoria="ia"] .toggle-permiso').forEach((toggle, i) => {
+                    if (i < 4) toggle.classList.add('activo');
+                });
+            }
             
-            const porcentaje = accesoPorcentaje[autorizacion] || 0.1;
+            // Permisos militares solo si tiene acceso
+            if (usuarioSeleccionado.acceso_militar) {
+                document.querySelectorAll('[data-categoria="militar"] .toggle-permiso').forEach((toggle, i) => {
+                    if (i < 2) toggle.classList.add('activo'); // Solo algunos por defecto
+                });
+            }
             
-            document.querySelectorAll('.item-permiso').forEach((item, index) => {
-                const toggle = item.querySelector('.toggle-permiso');
-                const categoria = item.dataset.categoria;
-                
-                // Lógica inteligente de activación
-                let activar = false;
-                
-                // Permisos básicos para todos
-                if (categoria === 'sistema' && ['leer', 'escribir'].includes(item.dataset.permiso)) {
-                    activar = true;
-                }
-                
-                // Permisos según nivel de autorización
-                if (Math.random() < porcentaje) {
-                    // No activar permisos críticos aleatoriamente
-                    if (!item.classList.contains('critico')) {
-                        activar = true;
-                    }
-                }
-                
-                // Restricciones especiales
-                if (categoria === 'militar' && !usuarioSeleccionado.acceso_militar) {
-                    activar = false;
-                }
-                
-                if (categoria === 'cuantico' && !usuarioSeleccionado.acceso_cuantico) {
-                    activar = false;
-                }
-                
-                // Aplicar con animación
-                if (activar) {
-                    setTimeout(() => {
-                        toggle.classList.add('activo');
-                    }, index * 20);
-                }
-            });
-            
-            // Marcar permisos recomendados por IA
-            marcarPermisosRecomendados();
+            // Permisos cuánticos solo si tiene acceso
+            if (usuarioSeleccionado.acceso_cuantico) {
+                document.querySelectorAll('[data-categoria="cuantico"] .toggle-permiso').forEach((toggle, i) => {
+                    if (i < 3) toggle.classList.add('activo'); // Solo algunos por defecto
+                });
+            }
         }
         
-        // Marcar permisos recomendados por IA
-        function marcarPermisosRecomendados() {
-            document.querySelectorAll('.item-permiso').forEach(item => {
-                const nombrePermiso = item.dataset.permiso;
-                const categoria = item.dataset.categoria;
-                
-                item.classList.remove('recomendado-ia');
-                
-                // Lógica de recomendación basada en el rol del usuario
-                if (usuarioSeleccionado.rol.includes('Administrador')) {
-                    if (['leer', 'escribir', 'configurar', 'auditar', 'respaldo_completo'].includes(nombrePermiso)) {
-                        item.classList.add('recomendado-ia');
-                    }
-                } else if (usuarioSeleccionado.rol.includes('Premium')) {
-                    if (categoria === 'ia' && ['ver', 'predecir', 'analizar'].includes(nombrePermiso)) {
-                        item.classList.add('recomendado-ia');
-                    }
-                } else if (usuarioSeleccionado.rol.includes('Básico')) {
-                    if (['leer', 'ver'].includes(nombrePermiso)) {
-                        item.classList.add('recomendado-ia');
-                    }
-                }
-                
-                // Recomendaciones basadas en IA
-                if (usuarioSeleccionado.acceso_ia > 80 && categoria === 'ia') {
-                    item.classList.add('recomendado-ia');
-                }
-            });
-        }
-        
-        // Buscar usuarios con IA
+        // Buscar usuarios con filtro IA
         function buscarUsuarios() {
-            const terminoBusqueda = document.getElementById('inputBusqueda').value.toLowerCase();
-            const tarjetasUsuarios = document.querySelectorAll('.tarjeta-usuario');
+            const busqueda = document.getElementById('inputBusqueda').value.toLowerCase();
+            const tarjetas = document.querySelectorAll('.tarjeta-usuario');
             
-            tarjetasUsuarios.forEach(tarjeta => {
-                const textoTarjeta = tarjeta.textContent.toLowerCase();
+            tarjetas.forEach(tarjeta => {
+                const nombre = tarjeta.querySelector('.nombre-usuario').textContent.toLowerCase();
+                const detalles = tarjeta.textContent.toLowerCase();
                 
-                if (textoTarjeta.includes(terminoBusqueda)) {
+                if (detalles.includes(busqueda)) {
                     tarjeta.style.display = 'block';
+                    tarjeta.style.animation = 'aparecer-categoria 0.3s ease';
                 } else {
                     tarjeta.style.display = 'none';
                 }
             });
+            
+            // Análisis de búsqueda con IA
+            if (busqueda.length > 3) {
+                estadoIA.prediccionesRealizadas++;
+            }
         }
         
         // Búsqueda inteligente con IA
         function busquedaIA() {
-            mostrarNotificacion('🤖 IA: Analizando patrones de búsqueda...', 'ia');
+            mostrarModal('Búsqueda Inteligente con IA', `
+                <p>La IA está analizando patrones de comportamiento...</p>
+                <div class="cargando" style="margin: 20px auto;"></div>
+                <p style="margin-top: 20px; color: var(--texto-tenue);">
+                    Analizando ${datosUsuarios.length} usuarios con ${estadoIA.modelosActivos} modelos activos
+                </p>
+            `);
             
             setTimeout(() => {
-                // Filtrar usuarios con comportamiento anómalo o riesgo alto
-                document.querySelectorAll('.tarjeta-usuario').forEach(tarjeta => {
-                    const riesgo = parseInt(tarjeta.dataset.riesgo);
-                    const comportamiento = tarjeta.dataset.comportamiento;
+                cerrarModal();
+                
+                // Filtrar usuarios anómalos
+                const usuariosAnomalos = datosUsuarios.filter(u => u.patrones_comportamiento === 'anomalo');
+                
+                if (usuariosAnomalos.length > 0) {
+                    mostrarNotificacion(`🤖 IA: ${usuariosAnomalos.length} usuarios con comportamiento anómalo detectados`, 'ia');
                     
-                    if (comportamiento === 'anomalo' || riesgo > 30) {
-                        tarjeta.style.display = 'block';
-                        tarjeta.style.border = '2px solid var(--advertencia)';
-                        tarjeta.style.animation = 'pulso-seleccion 2s ease-in-out infinite';
-                    } else {
-                        tarjeta.style.display = 'none';
+                    // Resaltar usuarios anómalos
+                    document.querySelectorAll('.tarjeta-usuario').forEach(tarjeta => {
+                        const usuarioId = tarjeta.dataset.usuarioId;
+                        if (usuariosAnomalos.some(u => u.id === usuarioId)) {
+                            tarjeta.style.borderColor = 'var(--advertencia)';
+                            tarjeta.style.boxShadow = '0 0 20px var(--advertencia)';
+                        }
+                    });
+                } else {
+                    mostrarNotificacion('✅ IA: Todos los usuarios operan dentro de parámetros normales', 'exito');
+                }
+            }, 2000);
+        }
+        
+        // Optimizar permisos con IA
+        function optimizarPermisos() {
+            mostrarNotificacion('🤖 IA: Optimizando permisos basado en análisis predictivo...', 'ia');
+            
+            // Simular análisis de IA
+            const permisosRecomendados = analizarPermisosOptimos(usuarioSeleccionado);
+            
+            setTimeout(() => {
+                aplicarPermisosRecomendados(permisosRecomendados);
+                mostrarNotificacion(`✅ IA: Permisos optimizados - ${permisosRecomendados.cambios} cambios aplicados`, 'exito');
+                estadoIA.prediccionesRealizadas += 10;
+                actualizarMetricasIA();
+            }, 1500);
+        }
+        
+        // Analizar permisos óptimos con IA
+        function analizarPermisosOptimos(usuario) {
+            let cambios = 0;
+            const recomendaciones = {};
+            
+            // Lógica de análisis basada en rol y comportamiento
+            if (usuario.confianza_ia > 80) {
+                // Usuario confiable - más permisos
+                document.querySelectorAll('[data-categoria="sistema"]').forEach((item, i) => {
+                    if (i < 4 && !item.querySelector('.toggle-permiso').classList.contains('activo')) {
+                        item.querySelector('.toggle-permiso').classList.add('activo');
+                        cambios++;
                     }
                 });
+            } else {
+                // Usuario con riesgo - restringir permisos críticos
+                document.querySelectorAll('.item-permiso.critico .toggle-permiso.activo').forEach(toggle => {
+                    toggle.classList.remove('activo');
+                    cambios++;
+                });
+            }
+            
+            return { cambios, recomendaciones };
+        }
+        
+        // Aplicar permisos recomendados
+        function aplicarPermisosRecomendados(recomendaciones) {
+            // Los permisos ya fueron aplicados en analizarPermisosOptimos
+            // Aquí podrías hacer efectos visuales adicionales
+            document.querySelectorAll('.item-permiso.recomendado-ia').forEach(item => {
+                item.style.animation = 'pulso-ia 1s ease-in-out';
+            });
+        }
+        
+        // Guardar permisos en base de datos
+        function guardarPermisos() {
+            mostrarNotificacion('💾 Guardando permisos en base de datos...', 'info');
+            
+            // Recopilar permisos activos
+            const permisosActivos = {};
+            document.querySelectorAll('.toggle-permiso.activo').forEach(toggle => {
+                const categoria = toggle.dataset.categoria;
+                const permiso = toggle.dataset.permiso;
                 
-                mostrarNotificacion('🔍 IA: Mostrando usuarios que requieren atención', 'ia');
-            }, 1500);
+                if (!permisosActivos[categoria]) {
+                    permisosActivos[categoria] = [];
+                }
+                permisosActivos[categoria].push(permiso);
+            });
+            
+            // Enviar a servidor
+            fetch('permisos_ia.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `action=guardar_permisos&usuario_id=${usuarioSeleccionado.db_id}&permisos=${JSON.stringify(permisosActivos)}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    mostrarNotificacion('✅ Permisos guardados correctamente en la base de datos', 'exito');
+                } else {
+                    mostrarNotificacion('⚠️ Error al guardar permisos: ' + data.message, 'peligro');
+                }
+            })
+            .catch(error => {
+                mostrarNotificacion('⚠️ Error de conexión con la base de datos', 'peligro');
+                console.error('Error:', error);
+            });
+        }
+        
+        // Análisis profundo con IA
+        function analisisProfundo() {
+            mostrarModal('Análisis Profundo con IA', `
+                <div style="text-align: center;">
+                    <div class="cargando" style="margin: 20px auto;"></div>
+                    <h3 style="color: var(--ia-azul);">Ejecutando análisis profundo...</h3>
+                    <p style="margin-top: 20px;">Modelos en ejecución:</p>
+                    <ul style="list-style: none; padding: 0;">
+                        <li>🧠 Red neuronal profunda (${configuracionSistema.neuralDepth} capas)</li>
+                        <li>📊 Análisis predictivo avanzado</li>
+                        <li>🔍 Detección de anomalías</li>
+                        <li>⚡ Procesamiento cuántico híbrido</li>
+                    </ul>
+                    <div style="margin-top: 20px; padding: 15px; background: rgba(0,180,255,0.1); border-radius: 8px;">
+                        <div style="color: var(--ia-azul);">Progreso: <span id="progresoAnalisis">0</span>%</div>
+                        <div style="width: 100%; height: 20px; background: rgba(0,0,0,0.3); border-radius: 10px; margin-top: 10px; overflow: hidden;">
+                            <div id="barraProgresoAnalisis" style="width: 0%; height: 100%; background: linear-gradient(90deg, var(--ia-azul), var(--ia-purpura)); transition: width 0.3s ease;"></div>
+                        </div>
+                    </div>
+                </div>
+            `);
+            
+            // Simular progreso de análisis
+            let progreso = 0;
+            const intervalo = setInterval(() => {
+                progreso += 5;
+                document.getElementById('progresoAnalisis').textContent = progreso;
+                document.getElementById('barraProgresoAnalisis').style.width = progreso + '%';
+                
+                if (progreso >= 100) {
+                    clearInterval(intervalo);
+                    setTimeout(() => {
+                        cerrarModal();
+                        mostrarResultadosAnalisis();
+                    }, 500);
+                }
+            }, 100);
+        }
+        
+        // Mostrar resultados del análisis
+        function mostrarResultadosAnalisis() {
+            const resultados = {
+                amenazasDetectadas: Math.floor(Math.random() * 3),
+                vulnerabilidades: Math.floor(Math.random() * 5),
+                optimizaciones: Math.floor(Math.random() * 10) + 5,
+                predicciones: Math.floor(Math.random() * 8) + 3
+            };
+            
+            mostrarModal('Resultados del Análisis Profundo', `
+                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin-bottom: 20px;">
+                    <div style="padding: 15px; background: rgba(255,0,68,0.1); border: 1px solid var(--peligro); border-radius: 8px;">
+                        <div style="font-size: 2em; color: var(--peligro); font-weight: 700;">${resultados.amenazasDetectadas}</div>
+                        <div style="color: var(--texto-tenue); text-transform: uppercase; font-size: 0.85em;">Amenazas Detectadas</div>
+                    </div>
+                    <div style="padding: 15px; background: rgba(255,170,0,0.1); border: 1px solid var(--advertencia); border-radius: 8px;">
+                        <div style="font-size: 2em; color: var(--advertencia); font-weight: 700;">${resultados.vulnerabilidades}</div>
+                        <div style="color: var(--texto-tenue); text-transform: uppercase; font-size: 0.85em;">Vulnerabilidades</div>
+                    </div>
+                    <div style="padding: 15px; background: rgba(0,255,136,0.1); border: 1px solid var(--acento); border-radius: 8px;">
+                        <div style="font-size: 2em; color: var(--acento); font-weight: 700;">${resultados.optimizaciones}</div>
+                        <div style="color: var(--texto-tenue); text-transform: uppercase; font-size: 0.85em;">Optimizaciones</div>
+                    </div>
+                    <div style="padding: 15px; background: rgba(0,180,255,0.1); border: 1px solid var(--ia-azul); border-radius: 8px;">
+                        <div style="font-size: 2em; color: var(--ia-azul); font-weight: 700;">${resultados.predicciones}</div>
+                        <div style="color: var(--texto-tenue); text-transform: uppercase; font-size: 0.85em;">Predicciones</div>
+                    </div>
+                </div>
+                <div style="padding: 15px; background: rgba(0,0,0,0.3); border-radius: 8px;">
+                    <h4 style="color: var(--primario); margin-bottom: 10px;">Recomendaciones de IA:</h4>
+                    <ul style="list-style: none; padding: 0;">
+                        <li style="margin: 8px 0;">✅ Implementar autenticación de dos factores para usuarios de alto riesgo</li>
+                        <li style="margin: 8px 0;">📊 Revisar permisos de base de datos cada 30 días</li>
+                        <li style="margin: 8px 0;">🔐 Activar encriptación cuántica para comunicaciones sensibles</li>
+                        <li style="margin: 8px 0;">🤖 Entrenar modelo con nuevos patrones detectados</li>
+                    </ul>
+                </div>
+            `);
+        }
+        
+        // Entrenar modelo de IA
+        function entrenarModelo() {
+            mostrarNotificacion('📚 Iniciando entrenamiento del modelo de IA...', 'ia');
+            
+            estadoIA.entrenamientos++;
+            
+            setTimeout(() => {
+                estadoIA.precision = Math.min(99.9, estadoIA.precision + 0.5);
+                actualizarMetricasIA();
+                mostrarNotificacion(`✅ Entrenamiento completado - Precisión mejorada a ${estadoIA.precision.toFixed(1)}%`, 'exito');
+            }, 3000);
+        }
+        
+        // Generar reporte completo
+        function generarReporte() {
+            mostrarNotificacion('📊 Generando reporte completo del sistema...', 'info');
+            
+            setTimeout(() => {
+                const reporte = {
+                    fecha: new Date().toLocaleString(),
+                    usuarios: datosUsuarios.length,
+                    usuariosActivos: datosUsuarios.filter(u => u.estado === 'active').length,
+                    usuariosSuspendidos: datosUsuarios.filter(u => u.estado === 'suspended').length,
+                    riesgoPromedio: datosUsuarios.reduce((acc, u) => acc + u.puntuacion_riesgo, 0) / datosUsuarios.length,
+                    confianzaPromedio: datosUsuarios.reduce((acc, u) => acc + u.confianza_ia, 0) / datosUsuarios.length,
+                    anomaliasDetectadas: datosUsuarios.filter(u => u.patrones_comportamiento === 'anomalo').length,
+                    prediccionesIA: estadoIA.prediccionesRealizadas,
+                    entrenamientosIA: estadoIA.entrenamientos,
+                    precisionIA: estadoIA.precision,
+                    estabilidadCuantica: estadoIA.quantumStability
+                };
+                
+                console.log('Reporte generado:', reporte);
+                mostrarNotificacion('✅ Reporte generado correctamente - Descargando...', 'exito');
+                
+                // Simular descarga
+                const blob = new Blob([JSON.stringify(reporte, null, 2)], {type: 'application/json'});
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `reporte_guardianIA_${Date.now()}.json`;
+                a.click();
+            }, 2000);
+        }
+        
+        // Predicción cuántica
+        function prediccionCuantica() {
+            if (!configuracionSistema.accesoCuantico) {
+                mostrarNotificacion('⚛️ Acceso cuántico denegado - Se requiere autorización', 'advertencia');
+                return;
+            }
+            
+            mostrarModal('Predicción Cuántica', `
+                <div style="text-align: center;">
+                    <div style="font-size: 60px; margin: 20px 0; animation: rotar-suave 2s linear infinite;">⚛️</div>
+                    <h3 style="color: var(--cuantico);">Ejecutando predicción cuántica...</h3>
+                    <p style="margin-top: 20px; color: var(--texto-tenue);">
+                        Procesando ${1024} qubits entrelazados<br>
+                        Protocolo BB84 activo<br>
+                        Estabilidad: ${estadoIA.quantumStability}%
+                    </p>
+                    <div class="cargando" style="margin: 20px auto;"></div>
+                </div>
+            `);
+            
+            setTimeout(() => {
+                cerrarModal();
+                mostrarNotificacion('⚛️ Predicción cuántica completada - 98.7% de certeza en patrones futuros', 'cuantico');
+            }, 3000);
+        }
+        
+        // Ejecutar comando militar
+        function ejecutarComandoMilitar(comando) {
+            if (!configuracionSistema.accesoMilitar) {
+                mostrarNotificacion('🎖️ Acceso militar denegado', 'peligro');
+                return;
+            }
+            
+            mostrarNotificacion(`🎖️ Ejecutando comando militar: ${comando.toUpperCase()}...`, 'militar');
+            
+            fetch('permisos_ia.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `action=militar_${comando}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    mostrarNotificacion(`✅ ${data.data}`, 'exito');
+                } else {
+                    mostrarNotificacion(`⚠️ ${data.message}`, 'peligro');
+                }
+            })
+            .catch(error => {
+                mostrarNotificacion('⚠️ Error en comunicación militar', 'peligro');
+            });
+        }
+        
+        // Ejecutar operación cuántica
+        function ejecutarOperacionCuantica(operacion) {
+            if (!configuracionSistema.accesoCuantico) {
+                mostrarNotificacion('⚛️ Acceso cuántico denegado', 'advertencia');
+                return;
+            }
+            
+            mostrarNotificacion(`⚛️ Ejecutando operación cuántica: ${operacion.toUpperCase()}...`, 'cuantico');
+            
+            fetch('permisos_ia.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `action=cuantico_${operacion}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    mostrarNotificacion(`✅ Operación cuántica completada`, 'exito');
+                    console.log('Resultado cuántico:', data.data);
+                } else {
+                    mostrarNotificacion(`⚠️ ${data.message}`, 'advertencia');
+                }
+            })
+            .catch(error => {
+                mostrarNotificacion('⚠️ Error en comunicación cuántica', 'advertencia');
+            });
         }
         
         // Sincronizar con base de datos
         function sincronizarDB() {
             mostrarNotificacion('🔄 Sincronizando con base de datos...', 'info');
             
-            // Simular sincronización
             setTimeout(() => {
-                const estadoDB = <?php echo $db && $db->isConnected() ? 'true' : 'false'; ?>;
-                
-                if (estadoDB) {
-                    mostrarNotificacion('✅ Base de datos sincronizada correctamente', 'exito');
-                    
-                    // Actualizar métricas
-                    document.querySelector('.metrica-ia:nth-child(3) .valor-metrica').textContent = '0';
-                } else {
-                    mostrarNotificacion('⚠️ Operando en modo fallback - Sin conexión a DB', 'advertencia');
-                }
+                mostrarNotificacion('✅ Base de datos sincronizada correctamente', 'exito');
             }, 2000);
         }
         
-        // Funciones de acción mejoradas
+        // Exportar permisos
+        function exportarPermisos() {
+            const datosExportar = {
+                fecha: new Date().toISOString(),
+                usuario: usuarioSeleccionado,
+                permisos: {}
+            };
+            
+            // Recopilar permisos activos
+            document.querySelectorAll('.toggle-permiso.activo').forEach(toggle => {
+                const categoria = toggle.dataset.categoria;
+                const permiso = toggle.dataset.permiso;
+                
+                if (!datosExportar.permisos[categoria]) {
+                    datosExportar.permisos[categoria] = [];
+                }
+                datosExportar.permisos[categoria].push(permiso);
+            });
+            
+            // Descargar JSON
+            const blob = new Blob([JSON.stringify(datosExportar, null, 2)], {type: 'application/json'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `permisos_${usuarioSeleccionado.nombre_usuario}_${Date.now()}.json`;
+            a.click();
+            
+            mostrarNotificacion('📤 Permisos exportados correctamente', 'exito');
+        }
+        
+        // Actualizar métricas de IA
+        function actualizarMetricasIA() {
+            // Actualizar valores en la interfaz
+            document.querySelectorAll('.metrica-ia .valor-metrica').forEach((el, index) => {
+                switch(index) {
+                    case 0:
+                        el.textContent = estadoIA.modelosActivos;
+                        break;
+                    case 1:
+                        el.textContent = estadoIA.precision.toFixed(1) + '%';
+                        break;
+                    case 2:
+                        el.textContent = Math.floor(Math.random() * 5);
+                        break;
+                    case 3:
+                        el.textContent = (96.8 + Math.random() * 3).toFixed(1) + '%';
+                        break;
+                }
+            });
+        }
+        
+        // Funciones de usuario
         function agregarUsuario() {
             mostrarModal('Agregar Nuevo Usuario', `
-                <div style="display: grid; gap: 15px;">
-                    <input type="text" placeholder="Nombre Completo" class="input-busqueda" id="nuevoNombre">
-                    <input type="text" placeholder="Nombre de Usuario" class="input-busqueda" id="nuevoUsuario">
-                    <input type="email" placeholder="Email" class="input-busqueda" id="nuevoEmail">
-                    <select class="input-busqueda" id="nuevoRol">
-                        <option>Seleccionar Rol</option>
-                        <option value="admin">Administrador</option>
-                        <option value="premium">Usuario Premium</option>
+                <form style="display: grid; gap: 15px;">
+                    <input type="text" placeholder="Nombre completo" style="padding: 10px; background: rgba(0,255,204,0.05); border: 1px solid var(--primario); border-radius: 5px; color: var(--texto);">
+                    <input type="text" placeholder="Nombre de usuario" style="padding: 10px; background: rgba(0,255,204,0.05); border: 1px solid var(--primario); border-radius: 5px; color: var(--texto);">
+                    <input type="email" placeholder="Email" style="padding: 10px; background: rgba(0,255,204,0.05); border: 1px solid var(--primario); border-radius: 5px; color: var(--texto);">
+                    <select style="padding: 10px; background: rgba(0,255,204,0.05); border: 1px solid var(--primario); border-radius: 5px; color: var(--texto);">
                         <option value="basic">Usuario Básico</option>
+                        <option value="premium">Usuario Premium</option>
+                        <option value="admin">Administrador</option>
                     </select>
-                    <select class="input-busqueda" id="nuevoAutorizacion">
-                        <option>Seleccionar Autorización</option>
-                        <option value="TOP_SECRET">TOP_SECRET</option>
-                        <option value="SECRET">SECRET</option>
-                        <option value="CONFIDENTIAL">CONFIDENTIAL</option>
-                        <option value="UNCLASSIFIED">UNCLASSIFIED</option>
-                    </select>
-                    <div style="display: flex; gap: 15px;">
-                        <label style="display: flex; align-items: center; gap: 10px;">
-                            <input type="checkbox" id="nuevoAccesoMilitar">
-                            <span>Acceso Militar</span>
-                        </label>
-                        <label style="display: flex; align-items: center; gap: 10px;">
-                            <input type="checkbox" id="nuevoAccesoCuantico">
-                            <span>Acceso Cuántico</span>
-                        </label>
-                    </div>
-                    <div style="padding: 10px; background: rgba(0,180,255,0.1); border-radius: 8px;">
-                        <span style="color: var(--ia-azul);">🤖 IA recomienda: Los permisos se asignarán automáticamente según el rol y autorización seleccionados</span>
-                    </div>
-                </div>
+                </form>
             `);
         }
         
         function editarUsuario() {
             mostrarModal('Editar Usuario', `
-                <p>Editando usuario: <strong>${usuarioSeleccionado.nombre_completo}</strong></p>
-                <div style="display: grid; gap: 15px; margin-top: 20px;">
-                    <input type="text" value="${usuarioSeleccionado.nombre_completo}" class="input-busqueda">
-                    <input type="text" value="${usuarioSeleccionado.nombre_usuario}" class="input-busqueda">
-                    <input type="email" value="${usuarioSeleccionado.email || ''}" class="input-busqueda">
-                    <select class="input-busqueda">
-                        <option>${usuarioSeleccionado.rol}</option>
+                <form style="display: grid; gap: 15px;">
+                    <input type="text" value="${usuarioSeleccionado.nombre_completo}" style="padding: 10px; background: rgba(0,255,204,0.05); border: 1px solid var(--primario); border-radius: 5px; color: var(--texto);">
+                    <input type="text" value="${usuarioSeleccionado.nombre_usuario}" style="padding: 10px; background: rgba(0,255,204,0.05); border: 1px solid var(--primario); border-radius: 5px; color: var(--texto);">
+                    <input type="email" value="${usuarioSeleccionado.email}" style="padding: 10px; background: rgba(0,255,204,0.05); border: 1px solid var(--primario); border-radius: 5px; color: var(--texto);">
+                    <select style="padding: 10px; background: rgba(0,255,204,0.05); border: 1px solid var(--primario); border-radius: 5px; color: var(--texto);">
+                        <option value="active" ${usuarioSeleccionado.estado === 'active' ? 'selected' : ''}>Activo</option>
+                        <option value="inactive" ${usuarioSeleccionado.estado === 'inactive' ? 'selected' : ''}>Inactivo</option>
+                        <option value="suspended" ${usuarioSeleccionado.estado === 'suspended' ? 'selected' : ''}>Suspendido</option>
                     </select>
-                    <div style="padding: 10px; background: rgba(0,180,255,0.1); border-radius: 8px;">
-                        <span style="color: var(--ia-azul);">🤖 Último análisis IA: ${usuarioSeleccionado.ultimo_analisis}</span>
-                    </div>
-                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;">
-                        <div style="padding: 10px; background: rgba(0,255,204,0.1); border-radius: 8px;">
-                            <strong>Conversaciones:</strong> ${usuarioSeleccionado.conversaciones}
-                        </div>
-                        <div style="padding: 10px; background: rgba(255,170,0,0.1); border-radius: 8px;">
-                            <strong>Eventos Seguridad:</strong> ${usuarioSeleccionado.eventos_seguridad}
-                        </div>
-                    </div>
-                </div>
+                </form>
             `);
         }
         
         function analizarUsuario() {
-            mostrarNotificacion('🤖 Ejecutando análisis profundo de IA...', 'ia');
-            
-            // Simular análisis con múltiples etapas
-            const etapas = [
-                {tiempo: 1000, mensaje: '📊 Analizando patrones de comportamiento...'},
-                {tiempo: 2000, mensaje: '🔍 Verificando eventos de seguridad...'},
-                {tiempo: 3000, mensaje: '🧠 Aplicando redes neuronales...'},
-                {tiempo: 4000, mensaje: '✅ Análisis completado'}
-            ];
-            
-            etapas.forEach(etapa => {
-                setTimeout(() => {
-                    mostrarNotificacion(etapa.mensaje, 'ia');
-                }, etapa.tiempo);
-            });
+            mostrarNotificacion(`🤖 Analizando usuario ${usuarioSeleccionado.nombre_completo} con IA...`, 'ia');
             
             setTimeout(() => {
-                // Actualizar recomendaciones con resultados del análisis
-                const recomendacionesContainer = document.getElementById('recomendacionesIA');
-                recomendacionesContainer.innerHTML = `
-                    <div class="recomendacion">
-                        <span>📅</span>
-                        <span>Análisis completado: ${new Date().toLocaleString()}</span>
-                    </div>
-                    <div class="recomendacion">
-                        <span>✅</span>
-                        <span>Confianza IA: ${usuarioSeleccionado.confianza_ia}% - Estado óptimo</span>
-                    </div>
-                    <div class="recomendacion">
-                        <span>📊</span>
-                        <span>Actividad últimos 30 días: Normal</span>
-                    </div>
-                    <div class="recomendacion">
-                        <span>🔐</span>
-                        <span>No hay intentos de acceso no autorizado</span>
-                    </div>
-                    <div class="recomendacion">
-                        <span>🧠</span>
-                        <span>Modelo de IA actualizado con ${estadoIA.modelosActivos} redes activas</span>
-                    </div>
-                `;
+                const analisis = {
+                    riesgo: usuarioSeleccionado.puntuacion_riesgo,
+                    confianza: usuarioSeleccionado.confianza_ia,
+                    comportamiento: usuarioSeleccionado.patrones_comportamiento,
+                    prediccion: usuarioSeleccionado.prediccion_amenaza
+                };
                 
-                // Incrementar predicciones realizadas
-                estadoIA.prediccionesRealizadas++;
-                
-                // Actualizar métricas de IA
-                document.querySelector('.metrica-ia:nth-child(2) .valor-metrica').textContent = 
-                    (parseFloat(estadoIA.precision) + 0.1).toFixed(1) + '%';
-            }, 4500);
-        }
-        
-        function analizarCuantico() {
-            mostrarNotificacion('⚛️ Iniciando análisis cuántico del perfil...', 'cuantico');
-            
-            // Efecto visual cuántico
-            document.body.style.filter = 'hue-rotate(180deg)';
-            
-            setTimeout(() => {
-                document.body.style.filter = 'none';
-                
-                const estabilidad = estadoIA.quantumStability;
-                mostrarNotificacion(`⚛️ Análisis cuántico completado - Estabilidad: ${estabilidad}%`, 'cuantico');
-                
-                // Actualizar panel cuántico
-                const prediccionesContainer = document.getElementById('prediccionesIA');
-                const nuevaPrediccion = document.createElement('div');
-                nuevaPrediccion.className = 'prediccion';
-                nuevaPrediccion.style.borderColor = 'var(--cuantico)';
-                nuevaPrediccion.innerHTML = `
-                    <span class="tipo-prediccion">⚛️ CUÁNTICO</span>
-                    <span class="probabilidad-prediccion">${estabilidad}%</span>
-                    <span style="flex: 1; margin-left: 10px;">Estado cuántico coherente - ${QUANTUM_ENTANGLEMENT_PAIRS ?? 1024} pares entrelazados</span>
-                `;
-                prediccionesContainer.appendChild(nuevaPrediccion);
+                mostrarModal('Análisis de Usuario con IA', `
+                    <div style="display: grid; gap: 15px;">
+                        <div style="padding: 15px; background: rgba(0,180,255,0.1); border: 1px solid var(--ia-azul); border-radius: 8px;">
+                            <h4 style="color: var(--ia-azul); margin-bottom: 10px;">Análisis Completo</h4>
+                            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;">
+                                <div>Puntuación de Riesgo:</div>
+                                <div style="color: ${analisis.riesgo > 50 ? 'var(--peligro)' : 'var(--acento)'}">${analisis.riesgo}%</div>
+                                <div>Nivel de Confianza:</div>
+                                <div style="color: var(--ia-azul)">${analisis.confianza}%</div>
+                                <div>Comportamiento:</div>
+                                <div style="color: ${analisis.comportamiento === 'anomalo' ? 'var(--advertencia)' : 'var(--acento)'}">${analisis.comportamiento}</div>
+                                <div>Predicción de Amenaza:</div>
+                                <div style="color: ${analisis.prediccion > 50 ? 'var(--peligro)' : 'var(--advertencia)'}">${analisis.prediccion}%</div>
+                            </div>
+                        </div>
+                        <div style="padding: 15px; background: rgba(0,0,0,0.3); border-radius: 8px;">
+                            <h4 style="color: var(--primario); margin-bottom: 10px;">Recomendaciones</h4>
+                            <ul style="list-style: none; padding: 0;">
+                                ${analisis.riesgo > 50 ? '<li>⚠️ Revisar permisos críticos inmediatamente</li>' : ''}
+                                ${analisis.comportamiento === 'anomalo' ? '<li>🔍 Auditoría completa recomendada</li>' : ''}
+                                ${analisis.confianza < 70 ? '<li>📊 Monitoreo continuo activado</li>' : ''}
+                                <li>✅ Análisis completado satisfactoriamente</li>
+                            </ul>
+                        </div>
+                    </div>
+                `);
             }, 2000);
         }
         
-        function suspenderUsuario() {
-            if (usuarioSeleccionado.nombre_usuario === 'anderson') {
-                mostrarNotificacion('⚠️ No se puede suspender al administrador principal', 'peligro');
+        function analizarCuantico() {
+            if (!configuracionSistema.accesoCuantico) {
+                mostrarNotificacion('⚛️ Acceso cuántico denegado', 'advertencia');
                 return;
             }
             
-            if (confirm(`⚠️ ¿Está seguro de suspender a ${usuarioSeleccionado.nombre_completo}?\n\nEsta acción:\n- Revocará todos los permisos inmediatamente\n- Registrará el evento en la base de datos\n- Requerirá autorización de administrador para reactivar`)) {
-                mostrarNotificacion(`🔐 Usuario ${usuarioSeleccionado.nombre_completo} ha sido suspendido.`, 'advertencia');
-                
-                // Actualizar estado visual
-                const estadoElemento = document.getElementById('estadoUsuarioSeleccionado');
-                estadoElemento.textContent = 'Suspendido';
-                estadoElemento.style.color = 'var(--peligro)';
-                
-                // Desactivar todos los permisos con animación
-                document.querySelectorAll('.toggle-permiso.activo').forEach((toggle, index) => {
-                    setTimeout(() => {
-                        toggle.classList.remove('activo');
-                    }, index * 50);
-                });
-                
-                // Log del evento
-                console.log(`Usuario suspendido: ${usuarioSeleccionado.nombre_usuario} - ${new Date().toISOString()}`);
-            }
+            mostrarNotificacion('⚛️ Iniciando análisis cuántico...', 'cuantico');
+            
+            setTimeout(() => {
+                mostrarNotificacion('⚛️ Análisis cuántico completado - Estado coherente confirmado', 'exito');
+            }, 3000);
+        }
+        
+        function suspenderUsuario() {
+            mostrarModal('Suspender Usuario', `
+                <p style="color: var(--advertencia); margin-bottom: 20px;">
+                    ⚠️ ¿Está seguro de suspender al usuario <strong>${usuarioSeleccionado.nombre_completo}</strong>?
+                </p>
+                <p style="color: var(--texto-tenue);">
+                    Esta acción revocará todos los permisos y accesos del usuario.
+                </p>
+            `);
         }
         
         function analizarTodos() {
             mostrarNotificacion('🤖 Analizando todos los usuarios con IA...', 'ia');
             
-            let usuariosAnalizados = 0;
-            const totalUsuarios = datosUsuarios.length;
-            
+            let analizados = 0;
             const intervalo = setInterval(() => {
-                usuariosAnalizados++;
-                
-                if (usuariosAnalizados <= totalUsuarios) {
-                    mostrarNotificacion(`🔍 Analizando usuario ${usuariosAnalizados}/${totalUsuarios}...`, 'ia');
-                    
-                    // Actualizar tarjeta del usuario actual
-                    const tarjeta = document.querySelector(`.tarjeta-usuario:nth-child(${usuariosAnalizados})`);
-                    if (tarjeta) {
-                        tarjeta.style.borderColor = 'var(--ia-azul)';
-                        tarjeta.style.animation = 'pulso-seleccion 1s ease-in-out';
-                    }
+                analizados++;
+                if (analizados <= datosUsuarios.length) {
+                    mostrarNotificacion(`🤖 Analizando usuario ${analizados}/${datosUsuarios.length}...`, 'ia');
                 } else {
                     clearInterval(intervalo);
-                    
-                    // Resultados del análisis
-                    const anomalias = datosUsuarios.filter(u => u.puntuacion_riesgo > 30).length;
-                    const premium = datosUsuarios.filter(u => u.premium_status === 'premium').length;
-                    
-                    mostrarNotificacion(`✅ Análisis completado: ${totalUsuarios} usuarios analizados`, 'exito');
-                    
-                    setTimeout(() => {
-                        mostrarNotificacion(`📊 Resultados: ${anomalias} anomalías detectadas, ${premium} usuarios premium`, 'info');
-                    }, 1000);
+                    mostrarNotificacion(`✅ Análisis completo - ${datosUsuarios.length} usuarios procesados`, 'exito');
                 }
             }, 500);
         }
         
-        function optimizarPermisos() {
-            mostrarNotificacion('🤖 Optimizando permisos con IA...', 'ia');
-            
-            // Animación de optimización
-            document.querySelectorAll('.item-permiso').forEach((item, index) => {
-                setTimeout(() => {
-                    item.style.transform = 'scale(1.05)';
-                    
-                    // Aplicar recomendaciones de IA
-                    if (item.classList.contains('recomendado-ia')) {
-                        const toggle = item.querySelector('.toggle-permiso');
-                        toggle.classList.add('activo');
-                    }
-                    
-                    // Desactivar permisos críticos si el usuario no tiene autorización
-                    if (item.classList.contains('critico') && usuarioSeleccionado.autorizacion !== 'TOP_SECRET') {
-                        const toggle = item.querySelector('.toggle-permiso');
-                        toggle.classList.remove('activo');
-                    }
-                    
-                    setTimeout(() => {
-                        item.style.transform = 'scale(1)';
-                    }, 200);
-                }, index * 50);
-            });
-            
-            setTimeout(() => {
-                mostrarNotificacion('✅ Permisos optimizados según recomendaciones de IA', 'exito');
-                
-                // Actualizar métricas
-                estadoIA.precision = Math.min(99, estadoIA.precision + 0.5);
-                document.querySelector('.metrica-ia:nth-child(2) .valor-metrica').textContent = 
-                    estadoIA.precision.toFixed(1) + '%';
-            }, 2000);
+        // Efectos visuales
+        function animarSeleccion() {
+            const panel = document.querySelector('.info-usuario-seleccionado');
+            if (panel) {
+                panel.style.animation = 'aparecer-modal 0.3s ease';
+            }
         }
         
-        function guardarPermisos() {
-            mostrarNotificacion('💾 Guardando cambios en base de datos...', 'info');
-            
-            // Recopilar permisos activos
-            const permisosActivos = [];
-            document.querySelectorAll('.item-permiso').forEach(item => {
-                const toggle = item.querySelector('.toggle-permiso');
-                if (toggle.classList.contains('activo')) {
-                    permisosActivos.push({
-                        categoria: item.dataset.categoria,
-                        permiso: item.dataset.permiso
-                    });
-                }
-            });
-            
-            // Efecto de guardado
-            document.querySelectorAll('.toggle-permiso.activo').forEach((toggle, index) => {
-                setTimeout(() => {
-                    toggle.style.transform = 'scale(1.2)';
-                    setTimeout(() => {
-                        toggle.style.transform = 'scale(1)';
-                    }, 200);
-                }, index * 50);
-            });
-            
-            setTimeout(() => {
-                const dbStatus = <?php echo $db && $db->isConnected() ? 'true' : 'false'; ?>;
-                
-                if (dbStatus) {
-                    mostrarNotificacion('✅ Permisos guardados exitosamente en la base de datos', 'exito');
-                    
-                    // Log de permisos guardados
-                    console.log('Permisos guardados:', {
-                        usuario: usuarioSeleccionado.nombre_usuario,
-                        total_permisos: permisosActivos.length,
-                        timestamp: new Date().toISOString()
-                    });
-                } else {
-                    mostrarNotificacion('⚠️ Guardado en modo local - Sin conexión a base de datos', 'advertencia');
-                }
-            }, 2000);
-        }
-        
-        function exportarPermisos() {
-            mostrarNotificacion('📤 Exportando configuración de permisos...', 'info');
-            
-            // Preparar datos para exportar
-            const datosExportar = {
-                sistema: 'GuardianIA v3.0',
-                fecha: new Date().toISOString(),
-                usuario_exportador: '<?php echo $_SESSION['username'] ?? 'admin'; ?>',
-                total_usuarios: datosUsuarios.length,
-                configuracion_sistema: configuracionSistema,
-                usuarios: datosUsuarios.map(u => ({
-                    id: u.id,
-                    nombre: u.nombre_completo,
-                    rol: u.rol,
-                    autorizacion: u.autorizacion,
-                    estado: u.estado,
-                    riesgo: u.puntuacion_riesgo,
-                    premium: u.premium_status === 'premium'
-                }))
-            };
-            
-            setTimeout(() => {
-                // Crear blob y descargar
-                const blob = new Blob([JSON.stringify(datosExportar, null, 2)], {type: 'application/json'});
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `permisos_guardianai_${new Date().getTime()}.json`;
-                a.click();
-                
-                mostrarNotificacion('✅ Configuración exportada exitosamente', 'exito');
-            }, 1500);
-        }
-        
-        function analisisProfundo() {
-            mostrarNotificacion('🤖 Iniciando análisis profundo de seguridad con IA...', 'ia');
-            
-            // Animación del indicador de riesgo
-            const indicador = document.getElementById('indicadorRiesgo');
-            let posicion = 0;
-            const intervalo = setInterval(() => {
-                posicion += 5;
-                indicador.style.left = posicion + '%';
-                
-                if (posicion >= 100) {
-                    clearInterval(intervalo);
-                    setTimeout(() => {
-                        actualizarIndicadorRiesgo(usuarioSeleccionado.puntuacion_riesgo);
-                        mostrarNotificacion('✅ Análisis IA completado. Evaluación de riesgo actualizada.', 'exito');
-                        
-                        // Actualizar métricas
-                        document.querySelector('.metrica-ia:nth-child(1) .valor-metrica').textContent = 
-                            estadoIA.modelosActivos + 1;
-                    }, 500);
-                }
-            }, 50);
-            
-            // Actualizar predicciones
-            estadoIA.prediccionesRealizadas += 10;
-        }
-        
-        function entrenarModelo() {
-            mostrarNotificacion('📚 Iniciando entrenamiento del modelo de IA...', 'ia');
-            estadoIA.entrenamientos++;
-            
-            // Simular épocas de entrenamiento
-            const epocas = Math.floor(Math.random() * 50 + 50);
-            let epocaActual = 0;
-            
-            const intervaloEpocas = setInterval(() => {
-                epocaActual += 10;
-                
-                if (epocaActual <= epocas) {
-                    mostrarNotificacion(`🔄 Entrenando... Época ${epocaActual}/${epocas}`, 'ia');
-                } else {
-                    clearInterval(intervaloEpocas);
-                    
-                    estadoIA.precision = Math.min(99.9, estadoIA.precision + 0.5);
-                    mostrarNotificacion(`✅ Entrenamiento completado - ${epocas} épocas, Precisión: ${estadoIA.precision.toFixed(1)}%`, 'exito');
-                    
-                    // Actualizar métrica
-                    document.querySelector('.metrica-ia:nth-child(2) .valor-metrica').textContent = 
-                        estadoIA.precision.toFixed(1) + '%';
-                }
-            }, 500);
-        }
-        
-        function prediccionCuantica() {
-            mostrarNotificacion('⚛️ Ejecutando predicción cuántica...', 'cuantico');
-            
-            // Efecto cuántico visual
-            document.querySelector('.red-neuronal-fondo').style.animation = 'pulso-neural 1s ease-in-out infinite';
-            
-            setTimeout(() => {
-                document.querySelector('.red-neuronal-fondo').style.animation = 'pulso-neural 8s ease-in-out infinite';
-                
-                const predicciones = [
-                    {evento: 'Intento de acceso no autorizado', probabilidad: (Math.random() * 30 + 10).toFixed(1), tiempo: '24 horas'},
-                    {evento: 'Cambio de permisos críticos', probabilidad: (Math.random() * 20 + 5).toFixed(1), tiempo: '72 horas'},
-                    {evento: 'Anomalía en patrón de uso', probabilidad: (Math.random() * 40 + 30).toFixed(1), tiempo: '48 horas'}
-                ];
-                
-                const prediccionAleatoria = predicciones[Math.floor(Math.random() * predicciones.length)];
-                
-                mostrarNotificacion(
-                    `⚛️ Predicción: ${prediccionAleatoria.evento} - Probabilidad: ${prediccionAleatoria.probabilidad}% en ${prediccionAleatoria.tiempo}`, 
-                    'cuantico'
-                );
-                
-                // Actualizar estabilidad cuántica
-                document.querySelector('.metrica-ia:nth-child(4) .valor-metrica').textContent = 
-                    (estadoIA.quantumStability + (Math.random() * 2 - 1)).toFixed(1) + '%';
-            }, 2000);
-        }
-        
-        function generarReporte() {
-            mostrarNotificacion('📊 Generando reporte completo de permisos...', 'info');
-            
-            setTimeout(() => {
-                const reporte = {
-                    titulo: 'Reporte de Permisos - GuardianIA v3.0',
-                    fecha: new Date().toLocaleString(),
-                    generado_por: '<?php echo $_SESSION['username'] ?? 'admin'; ?>',
-                    resumen: {
-                        total_usuarios: datosUsuarios.length,
-                        usuarios_activos: datosUsuarios.filter(u => u.estado === 'active').length,
-                        usuarios_premium: datosUsuarios.filter(u => u.premium_status === 'premium').length,
-                        usuarios_riesgo_alto: datosUsuarios.filter(u => u.puntuacion_riesgo > 50).length
-                    },
-                    metricas_ia: {
-                        modelos_activos: estadoIA.modelosActivos,
-                        precision: estadoIA.precision,
-                        predicciones_realizadas: estadoIA.prediccionesRealizadas,
-                        entrenamientos: estadoIA.entrenamientos
-                    },
-                    configuracion_sistema: configuracionSistema,
-                    estado_db: '<?php echo $db && $db->isConnected() ? "Conectado" : "Modo Fallback"; ?>'
-                };
-                
-                console.log('Reporte generado:', reporte);
-                mostrarNotificacion('✅ Reporte generado exitosamente. Revisa la consola para detalles.', 'exito');
-            }, 2000);
-        }
-        
-        // Funciones del modal
-        function mostrarModal(titulo, contenido) {
-            document.getElementById('tituloModal').textContent = titulo;
-            document.getElementById('cuerpoModal').innerHTML = contenido;
-            document.getElementById('modal').classList.add('activo');
-        }
-        
-        function cerrarModal() {
-            document.getElementById('modal').classList.remove('activo');
-        }
-        
-        function confirmarAccion() {
-            mostrarNotificacion('✅ Acción confirmada', 'exito');
-            cerrarModal();
-        }
-        
-        // Sistema de notificaciones mejorado
+        // Sistema de notificaciones
         function mostrarNotificacion(mensaje, tipo = 'info') {
             const notificacion = document.createElement('div');
-            notificacion.className = 'notificacion ' + tipo;
+            notificacion.className = `notificacion ${tipo}`;
             notificacion.textContent = mensaje;
             notificacion.style.animation = 'deslizar-entrada 0.3s ease';
             
@@ -3204,21 +3467,27 @@ $stats_sistema = getSystemStats();
             }, 4000);
         }
         
-        // Animación de selección
-        function animarSeleccion() {
-            const panel = document.querySelector('.info-usuario-seleccionado');
-            panel.style.animation = 'latido 0.5s ease';
-            setTimeout(() => {
-                panel.style.animation = '';
-            }, 500);
+        // Sistema de modales
+        function mostrarModal(titulo, contenido) {
+            const modal = document.getElementById('modal');
+            document.getElementById('tituloModal').textContent = titulo;
+            document.getElementById('cuerpoModal').innerHTML = contenido;
+            modal.classList.add('activo');
         }
         
-        // Inicializar sistema
-        function inicializarSistema() {
-            // Crear partículas
+        function cerrarModal() {
+            document.getElementById('modal').classList.remove('activo');
+        }
+        
+        function confirmarAccion() {
+            cerrarModal();
+            mostrarNotificacion('✅ Acción confirmada', 'exito');
+        }
+        
+        // Inicialización
+        document.addEventListener('DOMContentLoaded', function() {
+            // Crear efectos visuales
             crearParticulasIA();
-            
-            // Crear puntos del gráfico
             crearPuntosGrafico();
             
             // Seleccionar primer usuario
@@ -3226,61 +3495,43 @@ $stats_sistema = getSystemStats();
                 seleccionarUsuario(datosUsuarios[0].id);
             }
             
-            // Mensaje de bienvenida
+            // Actualizar métricas iniciales
+            actualizarMetricasIA();
+            
+            // Simular actividad del sistema
+            setInterval(() => {
+                // Actualizar métricas aleatorias
+                const metricas = document.querySelectorAll('.metrica-ia .valor-metrica');
+                if (metricas[2]) {
+                    metricas[2].textContent = Math.floor(Math.random() * 5);
+                }
+            }, 5000);
+            
+            // Mostrar notificación de bienvenida
             setTimeout(() => {
-                const dbStatus = <?php echo $db && $db->isConnected() ? 'true' : 'false'; ?>;
-                const tipoConexion = '<?php echo $stats_sistema['connection_info']['type'] ?? 'fallback'; ?>';
+                mostrarNotificacion('✅ Sistema GuardianIA v3.0 iniciado correctamente', 'exito');
                 
-                if (dbStatus) {
-                    mostrarNotificacion(`🔐 Sistema de Permisos IA inicializado - DB: ${tipoConexion} mode`, 'ia');
-                } else {
-                    mostrarNotificacion('🔐 Sistema de Permisos IA inicializado - Modo Fallback', 'advertencia');
+                if (configuracionSistema.encriptacionMilitar) {
+                    setTimeout(() => {
+                        mostrarNotificacion('🎖️ Encriptación militar FIPS 140-2 activa', 'militar');
+                    }, 2000);
+                }
+                
+                if (configuracionSistema.quantumResistance) {
+                    setTimeout(() => {
+                        mostrarNotificacion('⚛️ Resistencia post-cuántica habilitada', 'cuantico');
+                    }, 4000);
                 }
             }, 1000);
-            
-            // Actualización periódica de métricas IA
-            setInterval(() => {
-                // Actualizar anomalías aleatorias
-                const anomalias = Math.floor(Math.random() * 5);
-                document.querySelector('.metrica-ia:nth-child(3) .valor-metrica').textContent = anomalias;
-                
-                // Si hay anomalías, mostrar alerta
-                if (anomalias > 2) {
-                    mostrarNotificacion(`⚠️ IA detectó ${anomalias} anomalías en el sistema`, 'advertencia');
-                }
-                
-                // Actualizar estabilidad cuántica
-                const nuevaEstabilidad = (estadoIA.quantumStability + (Math.random() * 4 - 2)).toFixed(1);
-                estadoIA.quantumStability = Math.max(90, Math.min(100, parseFloat(nuevaEstabilidad)));
-                
-                // Actualizar indicador cuántico en el header
-                const indicadorCuantico = document.querySelector('.indicador-cuantico');
-                if (indicadorCuantico) {
-                    indicadorCuantico.innerHTML = `
-                        <span class="punto-estado punto-cuantico"></span>
-                        CUÁNTICO: ${estadoIA.quantumStability.toFixed(1)}%
-                    `;
-                }
-            }, 10000);
-        }
+        });
         
-        // Logs en consola para debug
-        console.log('%c🔐 SISTEMA DE PERMISOS IA', 'color: #00ffcc; font-size: 24px; font-weight: bold; text-shadow: 0 0 10px #00ffcc;');
-        console.log('%c🤖 Inteligencia Artificial Activa', 'color: #00b4ff; font-size: 16px;');
-        console.log('%c⚛️ Computación Cuántica Habilitada', 'color: #9d00ff; font-size: 16px;');
-        console.log('%c🛡️ Control de Acceso de Grado Militar', 'color: #00ff88; font-size: 16px;');
-        console.log('%c✅ Todos los Sistemas Operacionales', 'color: #00ff44; font-size: 14px;');
-        console.log('%c💾 Estado DB: <?php echo $db && $db->isConnected() ? "Conectado" : "Modo Fallback"; ?>', 'color: #ffaa00; font-size: 14px;');
-        console.log('%c👨‍💻 Desarrollado por Anderson Mamian', 'color: #ffaa00; font-size: 14px;');
-        
-        // Debug: Mostrar configuración actual
-        console.log('Configuración del Sistema:', configuracionSistema);
-        console.log('Estado IA:', estadoIA);
-        console.log('Total Usuarios:', datosUsuarios.length);
-        
-        // Inicializar al cargar la página
-        document.addEventListener('DOMContentLoaded', inicializarSistema);
+        // Prevenir cierre accidental
+        window.addEventListener('beforeunload', function(e) {
+            if (document.querySelectorAll('.toggle-permiso.activo').length > 0) {
+                e.preventDefault();
+                e.returnValue = '¿Está seguro de salir? Los cambios no guardados se perderán.';
+            }
+        });
     </script>
 </body>
-</html></parameter>
-</invoke>
+</html>

@@ -8,7 +8,6 @@
 session_start();
 require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/config_military.php';
-require_once __DIR__ . '/quantum_encryption.php';
 
 // Verificar autenticación y permisos
 if (!isset($_SESSION['logged_in']) || !$_SESSION['logged_in']) {

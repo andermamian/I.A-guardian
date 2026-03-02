@@ -1,9 +1,9 @@
 <?php
 /**
- * Dashboard de Usuario - GuardianIA v3.0 FINAL
- * Sincronizado con config.php y config_military.php
+ * Dashboard de Usuario - GuardianIA v3.0 FINAL ACTUALIZADO
+ * Separación Free/Premium y sin funciones de administrador
  * Anderson Mamian Chicangana
- * Versión completa con enlaces funcionales a módulos complementarios
+ * Versión con control de acceso por membresía
  */
 
 // Incluir configuraciones
@@ -72,20 +72,18 @@ $is_admin = ($user_data['user_type'] ?? 'basic') === 'admin';
 $has_military_access = isset($user_data['military_access']) && $user_data['military_access'] == 1;
 $security_clearance = $user_data['security_clearance'] ?? 'UNCLASSIFIED';
 
-// Verificar membership activa
-function checkMembershipAccess($user_id, $feature_required = null) {
+// Obtener nivel de membresía específico
+function getUserMembershipLevel($user_id) {
     global $db;
     
     if (!$db || !$db->isConnected()) {
-        return ['allowed' => true, 'message' => 'Acceso básico permitido'];
+        return 'RECRUIT'; // Plan gratuito por defecto
     }
     
     try {
         $conn = $db->getConnection();
-        
-        // Verificar membership premium activa
         $stmt = $conn->prepare("
-            SELECT pm.*, u.premium_status 
+            SELECT pm.membership_type, pm.status, u.premium_status 
             FROM users u 
             LEFT JOIN premium_memberships pm ON u.id = pm.user_id AND pm.status = 'active'
             WHERE u.id = ? AND u.status = 'active'
@@ -97,325 +95,128 @@ function checkMembershipAccess($user_id, $feature_required = null) {
             $result = $stmt->get_result();
             
             if ($row = $result->fetch_assoc()) {
-                $premium_status = $row['premium_status'];
-                $has_active_membership = !empty($row['plan_type']);
-                
-                if ($premium_status === 'premium' || $has_active_membership) {
-                    return ['allowed' => true, 'message' => 'Acceso premium activo'];
+                if ($row['membership_type']) {
+                    return strtoupper($row['membership_type']);
+                } elseif ($row['premium_status'] === 'premium') {
+                    return 'TACTICAL_PRO'; // Premium básico
                 }
             }
-            $stmt->close();
-        }
-        
-        // Si requiere feature premium específica
-        if ($feature_required) {
-            return [
-                'allowed' => false, 
-                'message' => 'Se requiere membresía Premium para acceder a esta función',
-                'upgrade_needed' => true
-            ];
-        }
-        
-        return ['allowed' => true, 'message' => 'Acceso básico permitido'];
-        
-    } catch (Exception $e) {
-        logEvent('ERROR', 'Error verificando membership: ' . $e->getMessage());
-        return ['allowed' => true, 'message' => 'Acceso básico permitido'];
-    }
-}
-
-// Obtener iniciales para el avatar
-$name_parts = explode(' ', $user_fullname);
-$user_initials = strtoupper(substr($name_parts[0], 0, 1));
-if (count($name_parts) > 1) {
-    $user_initials .= strtoupper(substr(end($name_parts), 0, 1));
-}
-
-// Determinar saludo según la hora
-function getGreeting() {
-    $hour = date('H');
-    if ($hour >= 5 && $hour < 12) {
-        return 'Buenos días';
-    } elseif ($hour >= 12 && $hour < 18) {
-        return 'Buenas tardes';
-    } else {
-        return 'Buenas noches';
-    }
-}
-
-// Funciones auxiliares para obtener datos del usuario
-function getUserStats($user_id) {
-    global $db;
-    
-    $stats = [
-        'security_level' => 100,
-        'performance_score' => rand(88, 98),
-        'threats_blocked' => 0,
-        'optimizations_today' => rand(1, 3),
-        'space_freed' => number_format(rand(1000, 5000) / 1000, 1),
-        'last_scan' => date('Y-m-d H:i:s', strtotime('-2 hours')),
-        'last_optimization' => date('Y-m-d H:i:s', strtotime('-4 hours'))
-    ];
-    
-    if ($db && $db->isConnected()) {
-        try {
-            $conn = $db->getConnection();
-            
-            // Obtener amenazas bloqueadas hoy
-            $stmt = $conn->prepare("
-                SELECT COUNT(*) as count 
-                FROM security_events 
-                WHERE user_id = ? AND DATE(created_at) = CURDATE() AND severity IN ('high', 'critical')
-            ");
-            
-            if ($stmt) {
-                $stmt->bind_param("i", $user_id);
-                $stmt->execute();
-                $result = $stmt->get_result();
-                if ($row = $result->fetch_assoc()) {
-                    $stats['threats_blocked'] = (int)$row['count'];
-                }
-                $stmt->close();
-            }
-            
-            // Obtener último escaneo
-            $stmt = $conn->prepare("
-                SELECT MAX(created_at) as last_scan
-                FROM security_events 
-                WHERE user_id = ? AND event_type LIKE '%scan%'
-            ");
-            
-            if ($stmt) {
-                $stmt->bind_param("i", $user_id);
-                $stmt->execute();
-                $result = $stmt->get_result();
-                if ($row = $result->fetch_assoc()) {
-                    if (!empty($row['last_scan'])) {
-                        $stats['last_scan'] = $row['last_scan'];
-                    }
-                }
-                $stmt->close();
-            }
-            
-        } catch (Exception $e) {
-            logEvent('ERROR', 'Error obteniendo estadísticas de usuario: ' . $e->getMessage());
-        }
-    }
-    
-    return $stats;
-}
-
-function getUserRecentActivity($user_id) {
-    global $db;
-    
-    $default_activities = [
-        [
-            'title' => 'Escaneo completo finalizado',
-            'description' => 'Sin amenazas detectadas',
-            'time' => 'Hace 2 horas',
-            'icon' => 'fas fa-shield-check',
-            'color' => 'var(--success-gradient)',
-            'timestamp' => date('Y-m-d H:i:s', strtotime('-2 hours'))
-        ],
-        [
-            'title' => 'Optimización automática',
-            'description' => '1.8 GB liberados',
-            'time' => 'Hace 4 horas',
-            'icon' => 'fas fa-broom',
-            'color' => 'var(--info-gradient)',
-            'timestamp' => date('Y-m-d H:i:s', strtotime('-4 hours'))
-        ],
-        [
-            'title' => 'Definiciones actualizadas',
-            'description' => '1,247 nuevas firmas',
-            'time' => 'Hace 6 horas',
-            'icon' => 'fas fa-download',
-            'color' => 'var(--warning-gradient)',
-            'timestamp' => date('Y-m-d H:i:s', strtotime('-6 hours'))
-        ],
-        [
-            'title' => 'Consulta al asistente IA',
-            'description' => '"¿Cómo optimizar la batería?"',
-            'time' => 'Ayer',
-            'icon' => 'fas fa-robot',
-            'color' => 'var(--primary-gradient)',
-            'timestamp' => date('Y-m-d H:i:s', strtotime('-1 day'))
-        ]
-    ];
-    
-    if (!$db || !$db->isConnected()) {
-        return $default_activities;
-    }
-    
-    try {
-        $conn = $db->getConnection();
-        $stmt = $conn->prepare("
-            SELECT 
-                event_type,
-                description,
-                created_at,
-                severity
-            FROM security_events 
-            WHERE user_id = ? 
-            ORDER BY created_at DESC 
-            LIMIT 4
-        ");
-        
-        if (!$stmt) {
-            return $default_activities;
-        }
-        
-        $stmt->bind_param("i", $user_id);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        
-        $activities = [];
-        while ($row = $result->fetch_assoc()) {
-            $time_diff = time() - strtotime($row['created_at']);
-            $time_text = formatTimeAgo($time_diff);
-            
-            $activities[] = [
-                'title' => formatEventType($row['event_type']),
-                'description' => $row['description'],
-                'time' => $time_text,
-                'icon' => getEventIcon($row['event_type']),
-                'color' => getEventColor($row['severity']),
-                'timestamp' => $row['created_at']
-            ];
-        }
-        $stmt->close();
-        
-        // Si no hay actividades en BD, usar las por defecto
-        return count($activities) > 0 ? $activities : $default_activities;
-        
-    } catch (Exception $e) {
-        logEvent('ERROR', 'Error obteniendo actividad reciente: ' . $e->getMessage());
-        return $default_activities;
-    }
-}
-
-function formatTimeAgo($seconds) {
-    if ($seconds < 60) return 'Ahora';
-    if ($seconds < 3600) return 'Hace ' . floor($seconds / 60) . ' min';
-    if ($seconds < 86400) return 'Hace ' . floor($seconds / 3600) . ' horas';
-    if ($seconds < 604800) return 'Hace ' . floor($seconds / 86400) . ' días';
-    return 'Hace más de una semana';
-}
-
-function formatEventType($event_type) {
-    $types = [
-        'scan_completed' => 'Escaneo completado',
-        'threat_blocked' => 'Amenaza bloqueada',
-        'optimization_run' => 'Optimización ejecutada',
-        'definition_update' => 'Definiciones actualizadas',
-        'ai_consultation' => 'Consulta al asistente IA',
-        'LOGIN_SUCCESS' => 'Inicio de sesión exitoso',
-        'login_success' => 'Inicio de sesión',
-        'system_cleanup' => 'Limpieza del sistema',
-        'performance_boost' => 'Mejora de rendimiento',
-        'dashboard_access' => 'Acceso al dashboard',
-        'defense_protocol' => 'Protocolo de defensa'
-    ];
-    
-    return $types[$event_type] ?? ucfirst(str_replace('_', ' ', $event_type));
-}
-
-function getEventIcon($event_type) {
-    $icons = [
-        'scan_completed' => 'fas fa-shield-check',
-        'threat_blocked' => 'fas fa-exclamation-triangle',
-        'optimization_run' => 'fas fa-broom',
-        'definition_update' => 'fas fa-download',
-        'ai_consultation' => 'fas fa-robot',
-        'LOGIN_SUCCESS' => 'fas fa-sign-in-alt',
-        'login_success' => 'fas fa-sign-in-alt',
-        'system_cleanup' => 'fas fa-trash',
-        'performance_boost' => 'fas fa-bolt',
-        'dashboard_access' => 'fas fa-tachometer-alt',
-        'defense_protocol' => 'fas fa-shield-alt'
-    ];
-    
-    return $icons[$event_type] ?? 'fas fa-info-circle';
-}
-
-function getEventColor($severity) {
-    $colors = [
-        'low' => 'var(--info-gradient)',
-        'medium' => 'var(--warning-gradient)',
-        'high' => 'var(--danger-gradient)',
-        'critical' => 'var(--danger-gradient)',
-        '' => 'var(--success-gradient)' // Para eventos sin severity
-    ];
-    
-    return $colors[$severity] ?? 'var(--primary-gradient)';
-}
-
-// Función para verificar acceso a módulos
-function checkModuleAccess($module_name, $user_id) {
-    $membership_check = checkMembershipAccess($user_id);
-    
-    $modules_config = [
-        'user_security' => ['premium_required' => false, 'file' => 'user_security.php'],
-        'user_performance' => ['premium_required' => false, 'file' => 'user_performance.php'],
-        'user_settings' => ['premium_required' => false, 'file' => 'user_settings.php'],
-        'user_permissions' => ['premium_required' => true, 'file' => 'user_permissions.php'],
-        'user_assistant' => ['premium_required' => true, 'file' => 'GuardianAIChatbot.php'],
-        'performance' => ['premium_required' => false, 'file' => 'performance.php'],
-        'threat_center' => ['premium_required' => false, 'file' => 'threat_center.php']
-    ];
-    
-    if (!isset($modules_config[$module_name])) {
-        return ['allowed' => false, 'message' => 'Módulo no encontrado'];
-    }
-    
-    $module = $modules_config[$module_name];
-    
-    if ($module['premium_required'] && !$membership_check['allowed']) {
-        return [
-            'allowed' => false, 
-            'message' => 'Se requiere membresía Premium',
-            'upgrade_needed' => true
-        ];
-    }
-    
-    return ['allowed' => true, 'file' => $module['file']];
-}
-
-// Registrar acceso al dashboard
-logSecurityEvent('dashboard_access', 'Usuario accedió al dashboard de usuario', 'low', $current_user_id);
-
-// Actualizar último acceso si hay conexión a BD
-if ($db && $db->isConnected()) {
-    try {
-        $conn = $db->getConnection();
-        $stmt = $conn->prepare("UPDATE users SET last_login = NOW() WHERE id = ?");
-        if ($stmt) {
-            $stmt->bind_param("i", $current_user_id);
-            $stmt->execute();
-            $stmt->close();
         }
     } catch (Exception $e) {
-        logEvent('ERROR', 'Error actualizando último acceso: ' . $e->getMessage());
+        logEvent('ERROR', 'Error obteniendo nivel de membresía: ' . $e->getMessage());
     }
+    
+    return 'RECRUIT';
 }
 
-// Obtener estadísticas y actividad
-$user_stats = getUserStats($current_user_id);
-$recent_activity = getUserRecentActivity($current_user_id);
-$greeting = getGreeting();
+// Verificar acceso a funciones según membresía
+function checkFeatureAccess($feature, $user_membership_level) {
+    $feature_requirements = [
+        // Funciones FREE (disponibles para RECRUIT)
+        'user_security' => 'RECRUIT',
+        'user_performance' => 'RECRUIT', 
+        'user_settings' => 'RECRUIT',
+        'quick_scan' => 'RECRUIT',
+        'basic_optimization' => 'RECRUIT',
+        
+        // Funciones PREMIUM
+        'user_permissions' => 'OPERATIVE',
+        'user_assistant' => 'OPERATIVE',
+        'chatbot' => 'OPERATIVE', // Chatbot ahora requiere membresía pagada
+        'quantum_optimization' => 'TACTICAL_PRO',
+        'ai_vpn' => 'TACTICAL_PRO',
+        'real_time_monitoring' => 'CYBER_COMMAND',
+        'quantum_encryption' => 'CYBER_COMMAND',
+        'military_access' => 'QUANTUM_ELITE',
+        'unlimited_features' => 'QUANTUM_ELITE'
+    ];
+    
+    $membership_hierarchy = [
+        'RECRUIT' => 0,
+        'OPERATIVE' => 1,
+        'TACTICAL_PRO' => 2,
+        'CYBER_COMMAND' => 3,
+        'QUANTUM_ELITE' => 4
+    ];
+    
+    $required_level = $feature_requirements[$feature] ?? 'QUANTUM_ELITE';
+    $user_level = $membership_hierarchy[$user_membership_level] ?? 0;
+    $required_level_num = $membership_hierarchy[$required_level] ?? 4;
+    
+    return $user_level >= $required_level_num;
+}
 
-// Obtener estadísticas del sistema
-$system_stats = getSystemStats();
+$user_membership_level = getUserMembershipLevel($current_user_id);
+
+// Generar saludo basado en la hora
+$hour = date('H');
+if ($hour < 12) {
+    $greeting = "Buenos días";
+} elseif ($hour < 18) {
+    $greeting = "Buenas tardes";
+} else {
+    $greeting = "Buenas noches";
+}
+
+// Generar iniciales del usuario
+$names = explode(' ', $user_fullname);
+$user_initials = strtoupper(substr($names[0], 0, 1) . (isset($names[1]) ? substr($names[1], 0, 1) : ''));
+
+// Estadísticas del usuario
+$user_stats = [
+    'security_level' => rand(85, 98),
+    'performance_score' => rand(750, 950),
+    'threats_blocked' => rand(0, 15),
+    'space_freed' => rand(1, 8)
+];
+
+// Actividad reciente
+$recent_activity = [
+    [
+        'icon' => 'fas fa-shield-check',
+        'title' => 'Escaneo de seguridad completado',
+        'description' => 'Sistema limpio, sin amenazas detectadas',
+        'time' => '2 min',
+        'color' => 'var(--success-gradient)'
+    ],
+    [
+        'icon' => 'fas fa-broom',
+        'title' => 'Optimización automática',
+        'description' => 'Liberados ' . $user_stats['space_freed'] . ' GB de espacio',
+        'time' => '15 min',
+        'color' => 'var(--info-gradient)'
+    ],
+    [
+        'icon' => 'fas fa-update',
+        'title' => 'Definiciones actualizadas',
+        'description' => 'Base de datos de amenazas actualizada',
+        'time' => '1 hora',
+        'color' => 'var(--warning-gradient)'
+    ],
+    [
+        'icon' => 'fas fa-user-check',
+        'title' => 'Inicio de sesión exitoso',
+        'description' => 'Acceso desde ubicación verificada',
+        'time' => '2 horas',
+        'color' => 'var(--primary-gradient)'
+    ]
+];
+
 ?>
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mi Seguridad - GuardianIA v3.0</title>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <title>GuardianIA - Dashboard Usuario</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
         :root {
             --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             --success-gradient: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
@@ -423,81 +224,64 @@ $system_stats = getSystemStats();
             --danger-gradient: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
             --info-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
             --premium-gradient: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
-            --military-gradient: linear-gradient(135deg, #2c5530 0%, #8b9dc3 100%);
             
-            --bg-primary: #0f0f23;
+            --bg-primary: #0a0a0a;
             --bg-secondary: #1a1a2e;
             --bg-card: #16213e;
             --text-primary: #ffffff;
             --text-secondary: #a0a9c0;
-            --border-color: #2d3748;
+            --border-color: rgba(255, 255, 255, 0.1);
             --shadow-color: rgba(0, 0, 0, 0.3);
             
-            --animation-speed: 0.3s;
             --border-radius: 12px;
-            --card-padding: 24px;
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+            --card-padding: 1.5rem;
+            --animation-speed: 0.3s;
         }
 
         body {
-            font-family: 'Inter', sans-serif;
-            background: var(--bg-primary);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 50%, var(--bg-card) 100%);
             color: var(--text-primary);
-            line-height: 1.6;
-            overflow-x: hidden;
+            min-height: 100vh;
+            position: relative;
         }
 
-        /* Animated Background */
         .animated-bg {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            z-index: -1;
-            background: var(--bg-primary);
-        }
-
-        .animated-bg::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
             background: 
-                radial-gradient(circle at 20% 80%, rgba(102, 126, 234, 0.3) 0%, transparent 50%),
-                radial-gradient(circle at 80% 20%, rgba(118, 75, 162, 0.3) 0%, transparent 50%),
-                radial-gradient(circle at 40% 40%, rgba(67, 233, 123, 0.2) 0%, transparent 50%);
-            animation: backgroundPulse 8s ease-in-out infinite;
+                radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.3) 0%, transparent 50%),
+                radial-gradient(circle at 40% 40%, rgba(120, 219, 255, 0.2) 0%, transparent 50%);
+            z-index: -1;
+            animation: bgShift 20s ease-in-out infinite;
         }
 
-        @keyframes backgroundPulse {
-            0%, 100% { opacity: 0.3; }
-            50% { opacity: 0.6; }
+        @keyframes bgShift {
+            0%, 100% { transform: scale(1) rotate(0deg); }
+            50% { transform: scale(1.1) rotate(180deg); }
         }
 
         /* Navigation */
         .navbar {
-            background: rgba(26, 26, 46, 0.95);
-            backdrop-filter: blur(20px);
-            border-bottom: 1px solid var(--border-color);
-            padding: 1rem 0;
             position: fixed;
             top: 0;
             left: 0;
             right: 0;
+            background: rgba(22, 33, 62, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border-color);
             z-index: 1000;
+            height: 80px;
         }
 
         .nav-container {
             max-width: 1400px;
             margin: 0 auto;
+            height: 100%;
             padding: 0 2rem;
             display: flex;
             justify-content: space-between;
@@ -558,6 +342,7 @@ $system_stats = getSystemStats();
             justify-content: center;
             color: white;
             font-weight: 600;
+            cursor: pointer;
         }
 
         .user-menu {
@@ -642,6 +427,18 @@ $system_stats = getSystemStats();
             font-size: 1.1rem;
             color: rgba(255, 255, 255, 0.9);
             margin-bottom: 1.5rem;
+        }
+
+        .membership-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 0.75rem 1.5rem;
+            border-radius: 25px;
+            font-weight: 600;
+            color: white;
+            margin-right: 1rem;
         }
 
         .protection-status {
@@ -802,6 +599,21 @@ $system_stats = getSystemStats();
             font-weight: 700;
         }
 
+        .module-card.locked {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .module-card.locked::after {
+            content: '🔒';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 3rem;
+            opacity: 0.3;
+        }
+
         .module-header {
             display: flex;
             align-items: center;
@@ -821,7 +633,7 @@ $system_stats = getSystemStats();
         }
 
         .module-title {
-            font-size: 1.2rem;
+            font-size: 1.1rem;
             font-weight: 700;
             margin-bottom: 0.25rem;
         }
@@ -829,26 +641,23 @@ $system_stats = getSystemStats();
         .module-description {
             color: var(--text-secondary);
             font-size: 0.9rem;
-            line-height: 1.4;
         }
 
         .module-features {
-            margin-top: 1rem;
             list-style: none;
+            margin-top: 1rem;
         }
 
         .module-features li {
+            padding: 0.25rem 0;
             color: var(--text-secondary);
             font-size: 0.85rem;
-            padding: 0.25rem 0;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
         }
 
         .module-features li::before {
-            content: '✔';
+            content: '✓';
             color: #2ed573;
+            margin-right: 0.5rem;
             font-weight: bold;
         }
 
@@ -856,7 +665,7 @@ $system_stats = getSystemStats();
         .action-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 2rem;
+            gap: 1.5rem;
             margin-bottom: 2rem;
         }
 
@@ -881,18 +690,18 @@ $system_stats = getSystemStats();
         }
 
         .action-icon {
-            width: 60px;
-            height: 60px;
-            border-radius: 12px;
+            width: 50px;
+            height: 50px;
+            border-radius: 10px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.5rem;
+            font-size: 1.3rem;
             color: white;
         }
 
         .action-title {
-            font-size: 1.3rem;
+            font-size: 1.1rem;
             font-weight: 700;
             margin-bottom: 0.25rem;
         }
@@ -904,10 +713,8 @@ $system_stats = getSystemStats();
 
         .action-button {
             width: 100%;
-            background: var(--primary-gradient);
-            color: white;
+            padding: 0.75rem 1.5rem;
             border: none;
-            padding: 1rem 2rem;
             border-radius: 8px;
             font-weight: 600;
             cursor: pointer;
@@ -916,78 +723,108 @@ $system_stats = getSystemStats();
             align-items: center;
             justify-content: center;
             gap: 0.5rem;
-            margin-top: 1rem;
         }
 
         .action-button:hover {
             transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
         }
 
         .action-button.success {
             background: var(--success-gradient);
-        }
-
-        .action-button.warning {
-            background: var(--warning-gradient);
+            color: white;
         }
 
         .action-button.info {
             background: var(--info-gradient);
+            color: white;
         }
 
-        .action-button.premium {
-            background: var(--premium-gradient);
-            color: #000;
+        .action-button.warning {
+            background: var(--warning-gradient);
+            color: white;
         }
 
-        .action-button.military {
-            background: var(--military-gradient);
+        /* System Health */
+        .system-health {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
         }
 
-        .action-button:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-            transform: none;
-        }
-
-        /* Recent Activity */
-        .recent-activity {
+        .health-card {
             background: var(--bg-card);
             border: 1px solid var(--border-color);
             border-radius: var(--border-radius);
             padding: var(--card-padding);
-            margin-bottom: 2rem;
         }
 
         .activity-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 2rem;
-            padding-bottom: 1rem;
-            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 1.5rem;
         }
 
         .activity-title {
-            font-size: 1.5rem;
+            font-size: 1.2rem;
             font-weight: 700;
-            color: var(--text-primary);
+        }
+
+        .health-metric {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .metric-name {
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+
+        .metric-value {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .metric-bar {
+            width: 100px;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .metric-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.5s ease;
+        }
+
+        .metric-fill.good {
+            background: var(--success-gradient);
+        }
+
+        .metric-fill.warning {
+            background: var(--warning-gradient);
+        }
+
+        .metric-fill.danger {
+            background: var(--danger-gradient);
         }
 
         .activity-item {
             display: flex;
             align-items: center;
             gap: 1rem;
-            padding: 1rem;
-            margin-bottom: 1rem;
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 8px;
-            transition: all var(--animation-speed) ease;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
         }
 
-        .activity-item:hover {
-            background: rgba(255, 255, 255, 0.1);
+        .activity-item:last-child {
+            border-bottom: none;
         }
 
         .activity-icon {
@@ -997,8 +834,8 @@ $system_stats = getSystemStats();
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1rem;
             color: white;
+            font-size: 0.9rem;
         }
 
         .activity-content {
@@ -1015,69 +852,6 @@ $system_stats = getSystemStats();
             font-size: 0.85rem;
         }
 
-        /* System Health */
-        .system-health {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 2rem;
-            margin-bottom: 2rem;
-        }
-
-        .health-card {
-            background: var(--bg-card);
-            border: 1px solid var(--border-color);
-            border-radius: var(--border-radius);
-            padding: var(--card-padding);
-        }
-
-        .health-metric {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 1rem 0;
-            border-bottom: 1px solid var(--border-color);
-        }
-
-        .health-metric:last-child {
-            border-bottom: none;
-        }
-
-        .metric-name {
-            font-weight: 600;
-        }
-
-        .metric-value {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .metric-bar {
-            width: 100px;
-            height: 6px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 3px;
-            overflow: hidden;
-        }
-
-        .metric-fill {
-            height: 100%;
-            border-radius: 3px;
-            transition: width 1s ease;
-        }
-
-        .metric-fill.good {
-            background: var(--success-gradient);
-        }
-
-        .metric-fill.warning {
-            background: var(--warning-gradient);
-        }
-
-        .metric-fill.danger {
-            background: var(--danger-gradient);
-        }
-
         /* Quick Actions */
         .quick-actions {
             position: fixed;
@@ -1092,17 +866,18 @@ $system_stats = getSystemStats();
         .quick-action-btn {
             width: 60px;
             height: 60px;
-            border-radius: 50%;
             border: none;
+            border-radius: 50%;
             color: white;
-            font-size: 1.5rem;
+            font-size: 1.3rem;
             cursor: pointer;
             transition: all var(--animation-speed) ease;
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 4px 15px var(--shadow-color);
         }
 
         .quick-action-btn:hover {
-            transform: scale(1.1);
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px var(--shadow-color);
         }
 
         .quick-action-btn.scan {
@@ -1113,63 +888,8 @@ $system_stats = getSystemStats();
             background: var(--info-gradient);
         }
 
-        .quick-action-btn.chat {
-            background: var(--primary-gradient);
-        }
-
         .quick-action-btn.back {
-            background: var(--warning-gradient);
-        }
-
-        /* Responsive Design */
-        @media (max-width: 768px) {
-            .system-health {
-                grid-template-columns: 1fr;
-            }
-
-            .action-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .modules-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .quick-stats {
-                grid-template-columns: 1fr;
-            }
-
-            .welcome-title {
-                font-size: 1.5rem;
-            }
-
-            .main-container {
-                padding: 1rem;
-            }
-
-            .quick-actions {
-                bottom: 1rem;
-                right: 1rem;
-            }
-
-            .nav-menu {
-                display: none;
-            }
-        }
-
-        /* Loading States */
-        .loading {
-            display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 3px solid rgba(255, 255, 255, 0.3);
-            border-radius: 50%;
-            border-top-color: #fff;
-            animation: spin 1s ease-in-out infinite;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
+            background: var(--primary-gradient);
         }
 
         /* Toast Notification */
@@ -1179,13 +899,14 @@ $system_stats = getSystemStats();
             right: 2rem;
             background: var(--bg-card);
             border: 1px solid var(--border-color);
-            border-radius: var(--border-radius);
+            border-radius: 8px;
             padding: 1rem 1.5rem;
             color: var(--text-primary);
-            box-shadow: 0 8px 25px var(--shadow-color);
+            box-shadow: 0 10px 25px var(--shadow-color);
             transform: translateX(400px);
             transition: transform var(--animation-speed) ease;
-            z-index: 1001;
+            z-index: 2000;
+            max-width: 350px;
         }
 
         .toast.show {
@@ -1194,10 +915,6 @@ $system_stats = getSystemStats();
 
         .toast.success {
             border-left: 4px solid #2ed573;
-        }
-
-        .toast.error {
-            border-left: 4px solid #ff4757;
         }
 
         .toast.warning {
@@ -1290,6 +1007,37 @@ $system_stats = getSystemStats();
         .modal-btn:hover {
             transform: translateY(-2px);
         }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .main-container {
+                padding: 1rem;
+            }
+            
+            .welcome-title {
+                font-size: 2rem;
+            }
+            
+            .quick-stats {
+                grid-template-columns: 1fr;
+            }
+            
+            .modules-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .action-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .system-health {
+                grid-template-columns: 1fr;
+            }
+            
+            .nav-menu {
+                display: none;
+            }
+        }
     </style>
 </head>
 <body>
@@ -1307,9 +1055,6 @@ $system_stats = getSystemStats();
                 <li><a href="performance.php" class="nav-link">Rendimiento</a></li>
                 <li><a href="threat_center.php" class="nav-link">Centro de Amenazas</a></li>
                 <li><a href="javascript:navigateToModule('user_settings')" class="nav-link">Configuración</a></li>
-                <?php if ($is_admin): ?>
-                <li><a href="admin_dashboard.php" class="nav-link">Panel Admin</a></li>
-                <?php endif; ?>
             </ul>
             <div class="user-profile">
                 <div class="user-menu">
@@ -1323,7 +1068,7 @@ $system_stats = getSystemStats();
                         </a>
                         <?php if ($is_premium): ?>
                         <a href="#" class="dropdown-item" style="color: #ffd700;">
-                            <i class="fas fa-crown"></i> Premium Activo
+                            <i class="fas fa-crown"></i> <?php echo $user_membership_level; ?> Activo
                         </a>
                         <?php else: ?>
                         <a href="membership_system.php" class="dropdown-item" style="color: #ffd700;">
@@ -1353,13 +1098,27 @@ $system_stats = getSystemStats();
             <h1 class="welcome-title"><?php echo $greeting; ?>, <?php echo htmlspecialchars(explode(' ', $user_fullname)[0]); ?>!</h1>
             <p class="welcome-subtitle">
                 Tu sistema está protegido y funcionando óptimamente
-                <?php if ($is_premium): ?>
-                <span style="color: #ffd700;"> ⭐ Cuenta Premium</span>
-                <?php endif; ?>
-                <?php if ($has_military_access): ?>
-                <span style="color: #8b9dc3;"> 🛡️ Acceso Militar</span>
-                <?php endif; ?>
             </p>
+            <div style="margin-bottom: 1rem;">
+                <div class="membership-badge">
+                    <?php if ($user_membership_level === 'RECRUIT'): ?>
+                        🎖️ Plan Gratuito
+                    <?php elseif ($user_membership_level === 'OPERATIVE'): ?>
+                        🎯 Operative
+                    <?php elseif ($user_membership_level === 'TACTICAL_PRO'): ?>
+                        ⚔️ Tactical Pro
+                    <?php elseif ($user_membership_level === 'CYBER_COMMAND'): ?>
+                        🛡️ Cyber Command
+                    <?php elseif ($user_membership_level === 'QUANTUM_ELITE'): ?>
+                        👑 Quantum Elite
+                    <?php endif; ?>
+                </div>
+                <?php if ($has_military_access): ?>
+                <div class="membership-badge" style="background: rgba(139, 157, 195, 0.3);">
+                    🛡️ Acceso Militar
+                </div>
+                <?php endif; ?>
+            </div>
             <div class="protection-status">
                 <div class="status-indicator"></div>
                 <span>Protección Activa</span>
@@ -1435,6 +1194,7 @@ $system_stats = getSystemStats();
 
         <!-- Módulos del Sistema -->
         <div class="modules-grid">
+            <!-- FUNCIONES FREE -->
             <div class="module-card" onclick="navigateToModule('user_security')">
                 <div class="module-header">
                     <div class="module-icon" style="background: var(--success-gradient);">
@@ -1443,14 +1203,14 @@ $system_stats = getSystemStats();
                     <div>
                         <div class="module-title">Centro de Seguridad</div>
                         <div class="module-description">
-                            Gestiona la protección completa de tu sistema
+                            Gestiona la protección básica de tu sistema
                         </div>
                     </div>
                 </div>
                 <ul class="module-features">
-                    <li>Escaneo en tiempo real</li>
+                    <li>Escaneo básico</li>
                     <li>Detección de amenazas</li>
-                    <li>Firewall inteligente</li>
+                    <li>Firewall básico</li>
                     <li>Protección web</li>
                 </ul>
             </div>
@@ -1463,12 +1223,12 @@ $system_stats = getSystemStats();
                     <div>
                         <div class="module-title">Optimización de Rendimiento</div>
                         <div class="module-description">
-                            Acelera y optimiza tu sistema automáticamente
+                            Optimización básica de tu sistema
                         </div>
                     </div>
                 </div>
                 <ul class="module-features">
-                    <li>Limpieza automática</li>
+                    <li>Limpieza básica</li>
                     <li>Optimización de inicio</li>
                     <li>Gestión de memoria</li>
                     <li>Desfragmentación</li>
@@ -1483,18 +1243,20 @@ $system_stats = getSystemStats();
                     <div>
                         <div class="module-title">Configuraciones</div>
                         <div class="module-description">
-                            Personaliza tu experiencia de seguridad
+                            Configuraciones básicas del sistema
                         </div>
                     </div>
                 </div>
                 <ul class="module-features">
                     <li>Configuración de alertas</li>
-                    <li>Preferencias de escaneo</li>
+                    <li>Preferencias básicas</li>
                     <li>Configuración de red</li>
-                    <li>Backup automático</li>
+                    <li>Backup básico</li>
                 </ul>
             </div>
 
+            <!-- FUNCIONES PREMIUM -->
+            <?php if (checkFeatureAccess('user_permissions', $user_membership_level)): ?>
             <div class="module-card premium" onclick="navigateToModule('user_permissions')">
                 <div class="module-header">
                     <div class="module-icon" style="background: var(--premium-gradient);">
@@ -1514,16 +1276,38 @@ $system_stats = getSystemStats();
                     <li>Control parental</li>
                 </ul>
             </div>
+            <?php else: ?>
+            <div class="module-card premium locked" onclick="showMembershipModal('Control de Permisos', 'OPERATIVE')">
+                <div class="module-header">
+                    <div class="module-icon" style="background: var(--premium-gradient);">
+                        <i class="fas fa-key"></i>
+                    </div>
+                    <div>
+                        <div class="module-title">Control de Permisos</div>
+                        <div class="module-description">
+                            Requiere plan Operative o superior
+                        </div>
+                    </div>
+                </div>
+                <ul class="module-features">
+                    <li>Control de aplicaciones</li>
+                    <li>Gestión de usuarios</li>
+                    <li>Permisos de archivos</li>
+                    <li>Control parental</li>
+                </ul>
+            </div>
+            <?php endif; ?>
 
+            <?php if (checkFeatureAccess('user_assistant', $user_membership_level)): ?>
             <div class="module-card premium" onclick="navigateToModule('user_assistant')">
                 <div class="module-header">
                     <div class="module-icon" style="background: var(--warning-gradient);">
                         <i class="fas fa-robot"></i>
                     </div>
                     <div>
-                        <div class="module-title">Asistente IA Premium</div>
+                        <div class="module-title">Asistente IA</div>
                         <div class="module-description">
-                            Tu asistente inteligente avanzado para resolver problemas
+                            Tu asistente inteligente para resolver problemas
                         </div>
                     </div>
                 </div>
@@ -1531,11 +1315,119 @@ $system_stats = getSystemStats();
                     <li>Diagnóstico automático</li>
                     <li>Resolución de problemas</li>
                     <li>Consejos personalizados</li>
-                    <li>Soporte 24/7</li>
+                    <li>Soporte avanzado</li>
                 </ul>
             </div>
+            <?php else: ?>
+            <div class="module-card premium locked" onclick="showMembershipModal('Asistente IA', 'OPERATIVE')">
+                <div class="module-header">
+                    <div class="module-icon" style="background: var(--warning-gradient);">
+                        <i class="fas fa-robot"></i>
+                    </div>
+                    <div>
+                        <div class="module-title">Asistente IA</div>
+                        <div class="module-description">
+                            Requiere plan Operative o superior
+                        </div>
+                    </div>
+                </div>
+                <ul class="module-features">
+                    <li>Diagnóstico automático</li>
+                    <li>Resolución de problemas</li>
+                    <li>Consejos personalizados</li>
+                    <li>Soporte avanzado</li>
+                </ul>
+            </div>
+            <?php endif; ?>
 
-            <?php if (!$is_premium): ?>
+            <!-- CHATBOT PREMIUM -->
+            <?php if (checkFeatureAccess('chatbot', $user_membership_level)): ?>
+            <div class="module-card premium" onclick="navigateToModule('chatbot')">
+                <div class="module-header">
+                    <div class="module-icon" style="background: var(--info-gradient);">
+                        <i class="fas fa-comments"></i>
+                    </div>
+                    <div>
+                        <div class="module-title">Chat IA Avanzado</div>
+                        <div class="module-description">
+                            Conversaciones inteligentes con IA avanzada
+                        </div>
+                    </div>
+                </div>
+                <ul class="module-features">
+                    <li>Conversaciones ilimitadas</li>
+                    <li>IA especializada</li>
+                    <li>Múltiples personalidades</li>
+                    <li>Análisis avanzado</li>
+                </ul>
+            </div>
+            <?php else: ?>
+            <div class="module-card premium locked" onclick="showMembershipModal('Chat IA Avanzado', 'OPERATIVE')">
+                <div class="module-header">
+                    <div class="module-icon" style="background: var(--info-gradient);">
+                        <i class="fas fa-comments"></i>
+                    </div>
+                    <div>
+                        <div class="module-title">Chat IA Avanzado</div>
+                        <div class="module-description">
+                            Requiere plan Operative o superior
+                        </div>
+                    </div>
+                </div>
+                <ul class="module-features">
+                    <li>Conversaciones ilimitadas</li>
+                    <li>IA especializada</li>
+                    <li>Múltiples personalidades</li>
+                    <li>Análisis avanzado</li>
+                </ul>
+            </div>
+            <?php endif; ?>
+
+            <!-- Funciones de nivel superior -->
+            <?php if (checkFeatureAccess('quantum_optimization', $user_membership_level)): ?>
+            <div class="module-card premium" onclick="navigateToModule('quantum_encryption')">
+                <div class="module-header">
+                    <div class="module-icon" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);">
+                        <i class="fas fa-atom"></i>
+                    </div>
+                    <div>
+                        <div class="module-title">Optimización Cuántica</div>
+                        <div class="module-description">
+                            Tecnología cuántica avanzada
+                        </div>
+                    </div>
+                </div>
+                <ul class="module-features">
+                    <li>Encriptación cuántica</li>
+                    <li>Optimización avanzada</li>
+                    <li>Resistencia cuántica</li>
+                    <li>Análisis predictivo</li>
+                </ul>
+            </div>
+            <?php else: ?>
+            <div class="module-card premium locked" onclick="showMembershipModal('Optimización Cuántica', 'TACTICAL_PRO')">
+                <div class="module-header">
+                    <div class="module-icon" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);">
+                        <i class="fas fa-atom"></i>
+                    </div>
+                    <div>
+                        <div class="module-title">Optimización Cuántica</div>
+                        <div class="module-description">
+                            Requiere plan Tactical Pro o superior
+                        </div>
+                    </div>
+                </div>
+                <ul class="module-features">
+                    <li>Encriptación cuántica</li>
+                    <li>Optimización avanzada</li>
+                    <li>Resistencia cuántica</li>
+                    <li>Análisis predictivo</li>
+                </ul>
+            </div>
+            <?php endif; ?>
+
+            <!-- Promoción de upgrade si es usuario gratuito -->
+            <?php if ($user_membership_level === 'RECRUIT'): ?>
             <div class="module-card premium" onclick="window.location.href='membership_system.php'">
                 <div class="module-header">
                     <div class="module-icon" style="background: var(--premium-gradient);">
@@ -1549,16 +1441,16 @@ $system_stats = getSystemStats();
                     </div>
                 </div>
                 <ul class="module-features">
+                    <li>Chat IA ilimitado</li>
                     <li>Protección cuántica</li>
                     <li>Optimización avanzada</li>
                     <li>Soporte prioritario</li>
-                    <li>Funciones exclusivas</li>
                 </ul>
             </div>
             <?php endif; ?>
         </div>
 
-        <!-- Action Cards */
+        <!-- Action Cards -->
         <div class="action-grid">
             <div class="action-card">
                 <div class="action-header">
@@ -1568,7 +1460,7 @@ $system_stats = getSystemStats();
                     <div>
                         <div class="action-title">Escaneo Rápido</div>
                         <div class="action-description">
-                            Analiza tu sistema en busca de amenazas en menos de 2 minutos
+                            Analiza tu sistema en busca de amenazas básicas
                         </div>
                     </div>
                 </div>
@@ -1584,9 +1476,9 @@ $system_stats = getSystemStats();
                         <i class="fas fa-magic"></i>
                     </div>
                     <div>
-                        <div class="action-title">Optimización Automática</div>
+                        <div class="action-title">Optimización Básica</div>
                         <div class="action-description">
-                            Mejora el rendimiento de tu sistema con un solo clic
+                            Mejora básica del rendimiento de tu sistema
                         </div>
                     </div>
                 </div>
@@ -1604,7 +1496,7 @@ $system_stats = getSystemStats();
                     <div>
                         <div class="action-title">Centro de Amenazas</div>
                         <div class="action-description">
-                            Monitorea y responde a amenazas en tiempo real
+                            Monitorea amenazas en tiempo real
                         </div>
                     </div>
                 </div>
@@ -1614,7 +1506,7 @@ $system_stats = getSystemStats();
                 </button>
             </div>
 
-            <?php if ($is_premium): ?>
+            <?php if (checkFeatureAccess('quantum_optimization', $user_membership_level)): ?>
             <div class="action-card">
                 <div class="action-header">
                     <div class="action-icon" style="background: var(--warning-gradient);">
@@ -1717,11 +1609,6 @@ $system_stats = getSystemStats();
 
     <!-- Quick Actions -->
     <div class="quick-actions">
-        <?php if ($is_admin): ?>
-        <button class="quick-action-btn back" onclick="goToAdmin()" title="Panel Admin">
-            <i class="fas fa-user-shield"></i>
-        </button>
-        <?php endif; ?>
         <button class="quick-action-btn scan" onclick="quickScan()" title="Escaneo Rápido">
             <i class="fas fa-search"></i>
         </button>
@@ -1742,7 +1629,7 @@ $system_stats = getSystemStats();
                 <i class="fas fa-crown"></i>
             </div>
             <h2 class="modal-title">Función Premium Requerida</h2>
-            <p class="modal-description">
+            <p class="modal-description" id="modalDescription">
                 Esta función requiere una membresía Premium activa. 
                 Actualiza tu cuenta para acceder a todas las funciones avanzadas de GuardianIA.
             </p>
@@ -1766,7 +1653,7 @@ $system_stats = getSystemStats();
         // Configuración del usuario
         const userConfig = {
             isPremium: <?php echo $is_premium ? 'true' : 'false'; ?>,
-            isAdmin: <?php echo $is_admin ? 'true' : 'false'; ?>,
+            membershipLevel: '<?php echo $user_membership_level; ?>',
             hasMilitaryAccess: <?php echo $has_military_access ? 'true' : 'false'; ?>,
             userId: <?php echo $current_user_id; ?>
         };
@@ -1803,233 +1690,130 @@ $system_stats = getSystemStats();
         // Mostrar mensaje de bienvenida
         function showWelcomeMessage() {
             setTimeout(() => {
-                showToast('Tu sistema está protegido y funcionando óptimamente.', 'success');
+                showToast('¡Bienvenido a GuardianIA! Tu sistema está protegido.', 'success');
             }, 1000);
         }
 
-        // Función para navegar a módulos
-        function navigateToModule(moduleName) {
-            showLoading();
+        // Navegación a módulos
+        function navigateToModule(module) {
+            // Verificar si el módulo requiere premium
+            const premiumModules = ['user_permissions', 'user_assistant', 'chatbot', 'quantum_encryption'];
             
-            // Verificar acceso al módulo
-            checkModuleAccess(moduleName)
-                .then(result => {
-                    hideLoading();
-                    
-                    if (result.allowed) {
-                        window.location.href = result.file;
-                    } else {
-                        if (result.upgrade_needed) {
-                            showMembershipModal(result.message);
-                        } else {
-                            showToast(result.message, 'warning');
-                        }
-                    }
-                })
-                .catch(error => {
-                    hideLoading();
-                    showToast('Error al acceder al módulo: ' + error.message, 'error');
-                });
-        }
-
-        // Verificar acceso a módulo (simulado - en producción sería AJAX)
-        function checkModuleAccess(moduleName) {
-            return new Promise((resolve) => {
-                // Simular verificación de acceso
-                const modules = {
-                    'user_security': { premium_required: false, file: 'user_security.php' },
-                    'user_performance': { premium_required: false, file: 'user_performance.php' },
-                    'user_settings': { premium_required: false, file: 'user_settings.php' },
-                    'user_permissions': { premium_required: true, file: 'user_permissions.php' },
-                    'user_assistant': { premium_required: true, file: 'GuardianAIChatbot.php' },
-                    'performance': { premium_required: false, file: 'performance.php' },
-                    'threat_center': { premium_required: false, file: 'threat_center.php' }
-                };
-
-                setTimeout(() => {
-                    if (!modules[moduleName]) {
-                        resolve({ allowed: false, message: 'Módulo no encontrado' });
-                        return;
-                    }
-
-                    const module = modules[moduleName];
-                    
-                    if (module.premium_required && !userConfig.isPremium) {
-                        resolve({ 
-                            allowed: false, 
-                            message: 'Se requiere membresía Premium para acceder a esta función',
-                            upgrade_needed: true
-                        });
-                    } else {
-                        resolve({ allowed: true, file: module.file });
-                    }
-                }, 500);
-            });
-        }
-
-        // Mostrar modal de membership
-        function showMembershipModal(message = null) {
-            const modal = document.getElementById('membershipModal');
-            if (message) {
-                modal.querySelector('.modal-description').textContent = message;
+            if (premiumModules.includes(module) && !userConfig.isPremium) {
+                showMembershipModal(module, 'OPERATIVE');
+                return;
             }
+            
+            // Redirigir al módulo
+            window.location.href = module + '.php';
+        }
+
+        // Mostrar modal de membresía
+        function showMembershipModal(featureName, requiredLevel) {
+            const modal = document.getElementById('membershipModal');
+            const description = document.getElementById('modalDescription');
+            
+            const levelNames = {
+                'OPERATIVE': 'Operative',
+                'TACTICAL_PRO': 'Tactical Pro',
+                'CYBER_COMMAND': 'Cyber Command',
+                'QUANTUM_ELITE': 'Quantum Elite'
+            };
+            
+            description.innerHTML = `
+                La función <strong>${featureName}</strong> requiere un plan <strong>${levelNames[requiredLevel] || requiredLevel}</strong> o superior.<br><br>
+                Tu plan actual: <strong>${userConfig.membershipLevel}</strong><br><br>
+                Actualiza tu membresía para acceder a esta y otras funciones avanzadas.
+            `;
+            
             modal.classList.add('show');
         }
 
-        // Cerrar modal de membership
+        // Cerrar modal de membresía
         function closeMembershipModal() {
             const modal = document.getElementById('membershipModal');
             modal.classList.remove('show');
         }
 
+        // Escaneo rápido
+        function quickScan() {
+            if (isScanning) return;
+            
+            isScanning = true;
+            showToast('Iniciando escaneo de seguridad...', 'info');
+            
+            // Simular escaneo
+            setTimeout(() => {
+                showToast('Escaneo completado. Sistema limpio.', 'success');
+                isScanning = false;
+            }, 3000);
+        }
+
+        // Optimización automática
+        function autoOptimize() {
+            if (isOptimizing) return;
+            
+            isOptimizing = true;
+            showToast('Iniciando optimización del sistema...', 'info');
+            
+            // Simular optimización
+            setTimeout(() => {
+                const spaceFreed = Math.floor(Math.random() * 5) + 1;
+                showToast(`Optimización completada. ${spaceFreed} GB liberados.`, 'success');
+                isOptimizing = false;
+            }, 4000);
+        }
+
+        // Optimización cuántica (solo premium)
+        function quantumOptimize() {
+            if (!userConfig.isPremium) {
+                showMembershipModal('Optimización Cuántica', 'TACTICAL_PRO');
+                return;
+            }
+            
+            showToast('Activando optimización cuántica...', 'info');
+            
+            setTimeout(() => {
+                showToast('Optimización cuántica completada. Rendimiento mejorado significativamente.', 'success');
+            }, 5000);
+        }
+
+        // Mostrar toast
+        function showToast(message, type = 'info') {
+            const toast = document.getElementById('toast');
+            const toastMessage = document.getElementById('toast-message');
+            
+            toastMessage.textContent = message;
+            toast.className = `toast ${type} show`;
+            
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 5000);
+        }
+
         // Actualizar métricas del sistema
         function updateSystemMetrics() {
             // Simular actualización de métricas
-            updateHealthBars();
+            const metrics = document.querySelectorAll('.metric-fill');
+            metrics.forEach(metric => {
+                const currentWidth = parseInt(metric.style.width);
+                const variation = Math.floor(Math.random() * 10) - 5;
+                const newWidth = Math.max(20, Math.min(95, currentWidth + variation));
+                metric.style.width = newWidth + '%';
+            });
         }
 
-        // Actualizar barras de salud
-        function updateHealthBars() {
-            const healthMetrics = {
-                cpu: Math.floor(Math.random() * 30) + 30,
-                ram: Math.floor(Math.random() * 40) + 50,
-                storage: Math.floor(Math.random() * 20) + 70,
-                network: Math.floor(Math.random() * 10) + 85,
-                security: <?php echo $user_stats['security_level']; ?>
-            };
-
-            const healthBars = document.querySelectorAll('.metric-fill');
-            const healthValues = document.querySelectorAll('.metric-value span');
-
-            if (healthBars[0]) healthBars[0].style.width = healthMetrics.cpu + '%';
-            if (healthBars[1]) healthBars[1].style.width = healthMetrics.ram + '%';
-            if (healthBars[2]) healthBars[2].style.width = healthMetrics.storage + '%';
-            if (healthBars[3]) healthBars[3].style.width = healthMetrics.network + '%';
-
-            if (healthValues[0]) healthValues[0].textContent = healthMetrics.cpu + '%';
-            if (healthValues[1]) healthValues[1].textContent = healthMetrics.ram + '%';
-            if (healthValues[2]) healthValues[2].textContent = healthMetrics.storage + '%';
+        // Verificar salud del sistema
+        function checkSystemHealth() {
+            // Lógica de verificación de salud
+            console.log('Verificando salud del sistema...');
         }
 
         // Iniciar actualizaciones en tiempo real
         function startRealTimeUpdates() {
             updateInterval = setInterval(() => {
                 updateSystemMetrics();
-                updateProtectionStatus();
-            }, 10000);
-        }
-
-        // Actualizar estado de protección
-        function updateProtectionStatus() {
-            const statusIndicator = document.querySelector('.status-indicator');
-            const protectionStatus = document.querySelector('.protection-status span');
-            
-            if (Math.random() < 0.1) {
-                statusIndicator.style.background = '#ffa502';
-                protectionStatus.textContent = 'Actualizando...';
-                
-                setTimeout(() => {
-                    statusIndicator.style.background = '#2ed573';
-                    protectionStatus.textContent = 'Protección Activa';
-                }, 3000);
-            }
-        }
-
-        // Escaneo rápido
-        function quickScan() {
-            if (isScanning) {
-                showToast('Ya hay un escaneo en progreso...', 'warning');
-                return;
-            }
-
-            isScanning = true;
-            const scanButton = document.querySelector('.action-button.success');
-            const originalText = scanButton.innerHTML;
-            
-            scanButton.innerHTML = '<div class="loading"></div> Escaneando...';
-            scanButton.disabled = true;
-
-            showToast('Iniciando escaneo rápido del sistema...', 'info');
-
-            setTimeout(() => {
-                showToast('Escaneo completado. No se encontraron amenazas.', 'success');
-                
-                scanButton.innerHTML = originalText;
-                scanButton.disabled = false;
-                isScanning = false;
-                
-                updateSystemMetrics();
-            }, 5000);
-        }
-
-        // Optimización automática
-        function autoOptimize() {
-            if (isOptimizing) {
-                showToast('Ya hay una optimización en progreso...', 'warning');
-                return;
-            }
-
-            isOptimizing = true;
-            const optimizeButton = document.querySelector('.action-button.info');
-            const originalText = optimizeButton.innerHTML;
-            
-            optimizeButton.innerHTML = '<div class="loading"></div> Optimizando...';
-            optimizeButton.disabled = true;
-
-            showToast('Iniciando optimización automática del sistema...', 'info');
-
-            setTimeout(() => {
-                showToast('Optimización completada. Rendimiento mejorado en 18%.', 'success');
-                
-                optimizeButton.innerHTML = originalText;
-                optimizeButton.disabled = false;
-                isOptimizing = false;
-                
-                updateSystemMetrics();
-            }, 5000);
-        }
-
-        // Optimización cuántica (Premium)
-        function quantumOptimize() {
-            if (!userConfig.isPremium) {
-                showMembershipModal('La optimización cuántica requiere una membresía Premium activa.');
-                return;
-            }
-            navigateToModule('user_performance');
-        }
-
-        // Ir al panel admin
-        function goToAdmin() {
-            window.location.href = 'admin_dashboard.php';
-        }
-
-        // Verificar salud del sistema
-        function checkSystemHealth() {
-            console.log('Verificando salud del sistema...');
-        }
-
-        // Mostrar indicador de carga
-        function showLoading() {
-            showToast('Cargando módulo...', 'info');
-        }
-
-        // Ocultar indicador de carga
-        function hideLoading() {
-            // El toast se oculta automáticamente
-        }
-
-        // Mostrar notificación toast
-        function showToast(message, type = 'info') {
-            const toast = document.getElementById('toast');
-            const toastMessage = document.getElementById('toast-message');
-            
-            toastMessage.textContent = message;
-            toast.className = `toast ${type}`;
-            toast.classList.add('show');
-            
-            setTimeout(() => {
-                toast.classList.remove('show');
-            }, 4000);
+            }, 30000); // Actualizar cada 30 segundos
         }
 
         // Cerrar modal al hacer clic fuera
@@ -2037,13 +1821,6 @@ $system_stats = getSystemStats();
             const modal = document.getElementById('membershipModal');
             if (e.target === modal) {
                 closeMembershipModal();
-            }
-        });
-
-        // Cleanup al salir
-        window.addEventListener('beforeunload', function() {
-            if (updateInterval) {
-                clearInterval(updateInterval);
             }
         });
     </script>
