@@ -1,0 +1,875 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Security Audit System - GuardianIA v3.0 MILITARY</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap');
+        
+        body {
+            font-family: 'Orbitron', monospace;
+            background: #000;
+            color: #00ff88;
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+        }
+        
+        /* Matrix rain effect */
+        .matrix-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            opacity: 0.1;
+        }
+        
+        .matrix-column {
+            position: absolute;
+            font-size: 10px;
+            color: #00ff88;
+            animation: matrix-fall linear infinite;
+        }
+        
+        @keyframes matrix-fall {
+            0% {
+                transform: translateY(-100%);
+                opacity: 0;
+            }
+            10% {
+                opacity: 1;
+            }
+            90% {
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(100vh);
+                opacity: 0;
+            }
+        }
+        
+        /* Scanning effect */
+        @keyframes scan {
+            0% {
+                transform: translateY(-100%);
+            }
+            100% {
+                transform: translateY(100vh);
+            }
+        }
+        
+        .scan-line {
+            position: fixed;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #00ff88, transparent);
+            animation: scan 3s linear infinite;
+            z-index: 10;
+            pointer-events: none;
+        }
+        
+        /* Glitch effect */
+        @keyframes glitch {
+            0%, 100% {
+                transform: translate(0);
+                filter: hue-rotate(0deg);
+            }
+            20% {
+                transform: translate(-1px, 1px);
+                filter: hue-rotate(90deg);
+            }
+            40% {
+                transform: translate(1px, -1px);
+                filter: hue-rotate(180deg);
+            }
+            60% {
+                transform: translate(-1px, -1px);
+                filter: hue-rotate(270deg);
+            }
+            80% {
+                transform: translate(1px, 1px);
+                filter: hue-rotate(360deg);
+            }
+        }
+        
+        /* Main container */
+        .main-container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 20px;
+            position: relative;
+        }
+        
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, rgba(0, 255, 136, 0.1), rgba(102, 126, 234, 0.1));
+            border: 2px solid #00ff88;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .header::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(0, 255, 136, 0.3), transparent);
+            animation: sweep 3s linear infinite;
+        }
+        
+        @keyframes sweep {
+            0% {
+                left: -100%;
+            }
+            100% {
+                left: 100%;
+            }
+        }
+        
+        h1 {
+            font-size: 3em;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            text-align: center;
+            background: linear-gradient(45deg, #00ff88, #667eea, #764ba2, #00ff88);
+            background-size: 400% 400%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gradient 5s ease infinite;
+        }
+        
+        @keyframes gradient {
+            0% {
+                background-position: 0% 50%;
+            }
+            50% {
+                background-position: 100% 50%;
+            }
+            100% {
+                background-position: 0% 50%;
+            }
+        }
+        
+        .subtitle {
+            text-align: center;
+            color: #667eea;
+            margin-top: 10px;
+            font-size: 1.2em;
+        }
+        
+        /* Security Score */
+        .security-score {
+            text-align: center;
+            margin: 30px 0;
+        }
+        
+        .score-circle {
+            width: 200px;
+            height: 200px;
+            margin: 0 auto;
+            position: relative;
+        }
+        
+        .score-circle svg {
+            transform: rotate(-90deg);
+        }
+        
+        .score-circle .score-bg {
+            fill: none;
+            stroke: rgba(0, 255, 136, 0.1);
+            stroke-width: 10;
+        }
+        
+        .score-circle .score-progress {
+            fill: none;
+            stroke: #00ff88;
+            stroke-width: 10;
+            stroke-linecap: round;
+            transition: all 1s ease;
+        }
+        
+        .score-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 3em;
+            font-weight: 900;
+        }
+        
+        .score-grade {
+            font-size: 1.5em;
+            margin-top: 10px;
+        }
+        
+        /* Grid layout */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+        
+        /* Cards */
+        .card {
+            background: rgba(0, 0, 0, 0.8);
+            border: 1px solid #00ff88;
+            border-radius: 10px;
+            padding: 20px;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0, 255, 136, 0.3);
+        }
+        
+        .card::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #00ff88, transparent);
+            animation: scan-horizontal 2s linear infinite;
+        }
+        
+        @keyframes scan-horizontal {
+            0% {
+                transform: translateX(-100%);
+            }
+            100% {
+                transform: translateX(100%);
+            }
+        }
+        
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(0, 255, 136, 0.3);
+        }
+        
+        .card-title {
+            font-size: 1.3em;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+        
+        .card-icon {
+            font-size: 1.5em;
+        }
+        
+        /* Status indicators */
+        .status {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 0.9em;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+        
+        .status-ok {
+            background: rgba(0, 255, 0, 0.2);
+            color: #00ff00;
+            border: 1px solid #00ff00;
+        }
+        
+        .status-warning {
+            background: rgba(255, 255, 0, 0.2);
+            color: #ffff00;
+            border: 1px solid #ffff00;
+        }
+        
+        .status-danger {
+            background: rgba(255, 0, 0, 0.2);
+            color: #ff0000;
+            border: 1px solid #ff0000;
+        }
+        
+        .status-info {
+            background: rgba(0, 170, 255, 0.2);
+            color: #00aaff;
+            border: 1px solid #00aaff;
+        }
+        
+        /* Vulnerability list */
+        .vulnerability-item {
+            background: rgba(255, 0, 0, 0.05);
+            border-left: 3px solid #ff0000;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        
+        .vulnerability-critical {
+            border-left-color: #ff0000;
+            background: rgba(255, 0, 0, 0.1);
+        }
+        
+        .vulnerability-high {
+            border-left-color: #ff6600;
+            background: rgba(255, 102, 0, 0.1);
+        }
+        
+        .vulnerability-medium {
+            border-left-color: #ffaa00;
+            background: rgba(255, 170, 0, 0.1);
+        }
+        
+        .vulnerability-low {
+            border-left-color: #ffff00;
+            background: rgba(255, 255, 0, 0.1);
+        }
+        
+        /* Stats */
+        .stat-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        
+        .stat-item {
+            background: rgba(0, 255, 136, 0.05);
+            border: 1px solid rgba(0, 255, 136, 0.3);
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 2em;
+            font-weight: 900;
+            color: #00ff88;
+        }
+        
+        .stat-label {
+            font-size: 0.9em;
+            color: rgba(0, 255, 136, 0.7);
+            margin-top: 5px;
+        }
+        
+        /* Progress bars */
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background: rgba(0, 255, 136, 0.1);
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #00ff88, #667eea);
+            border-radius: 10px;
+            transition: width 1s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .progress-fill::after {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            animation: shimmer 2s linear infinite;
+        }
+        
+        @keyframes shimmer {
+            0% {
+                transform: translateX(-100%);
+            }
+            100% {
+                transform: translateX(100%);
+            }
+        }
+        
+        /* Tables */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+        
+        .data-table th,
+        .data-table td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid rgba(0, 255, 136, 0.2);
+        }
+        
+        .data-table th {
+            background: rgba(0, 255, 136, 0.1);
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+        
+        .data-table tr:hover {
+            background: rgba(0, 255, 136, 0.05);
+        }
+        
+        /* Buttons */
+        .btn {
+            display: inline-block;
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 700;
+            text-transform: uppercase;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-danger {
+            background: linear-gradient(135deg, #ff0000, #cc0000);
+        }
+        
+        .btn-success {
+            background: linear-gradient(135deg, #00ff00, #00cc00);
+        }
+        
+        /* Alerts */
+        .alert {
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 8px;
+            border-left: 4px solid;
+        }
+        
+        .alert-danger {
+            background: rgba(255, 0, 0, 0.1);
+            border-left-color: #ff0000;
+            color: #ff6666;
+        }
+        
+        .alert-warning {
+            background: rgba(255, 255, 0, 0.1);
+            border-left-color: #ffff00;
+            color: #ffff66;
+        }
+        
+        .alert-success {
+            background: rgba(0, 255, 0, 0.1);
+            border-left-color: #00ff00;
+            color: #66ff66;
+        }
+        
+        .alert-info {
+            background: rgba(0, 170, 255, 0.1);
+            border-left-color: #00aaff;
+            color: #66ccff;
+        }
+        
+        /* Terminal output */
+        .terminal {
+            background: #000;
+            border: 1px solid #00ff88;
+            border-radius: 8px;
+            padding: 15px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            max-height: 300px;
+            overflow-y: auto;
+            margin: 15px 0;
+        }
+        
+        .terminal-line {
+            margin: 5px 0;
+        }
+        
+        .terminal-prompt {
+            color: #00ff88;
+        }
+        
+        .terminal-output {
+            color: #ffffff;
+        }
+        
+        .terminal-error {
+            color: #ff0000;
+        }
+        
+        /* Loading animation */
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(0, 255, 136, 0.3);
+            border-top-color: #00ff88;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+            
+            h1 {
+                font-size: 2em;
+            }
+            
+            .stat-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Matrix background -->
+    <div class="matrix-bg" id="matrix"></div>
+    
+    <!-- Scan line effect -->
+    <div class="scan-line"></div>
+    
+    <!-- Main container -->
+    <div class="main-container">
+        <!-- Header -->
+        <div class="header">
+            <h1>🛡️ Security Audit System</h1>
+            <div class="subtitle">GuardianIA v3.0 MILITARY - Top Secret Clearance Required</div>
+        </div>
+        
+        <!-- Security Score -->
+        <div class="security-score">
+            <div class="score-circle">
+                <svg width="200" height="200">
+                    <circle cx="100" cy="100" r="90" class="score-bg"></circle>
+                    <circle cx="100" cy="100" r="90" class="score-progress" 
+                            stroke-dasharray="{ { 565 * audit_data.security_score.score / 100 } } 565"></circle>
+                </svg>
+                <div class="score-text" style="color: ">
+                    { { audit_data.security_score.score } }%
+                </div>
+            </div>
+            <div class="score-grade">
+                Security Grade: <span class="status ">{ { grade|default('') } }</span>
+            </div>
+        </div>
+        
+        <!-- System Stats -->
+        <div class="stat-grid">
+            <div class="stat-item">
+                <div class="stat-value">{ { vulnerabilities } }</div>
+                <div class="stat-label">Vulnerabilities</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value"></div>
+                <div class="stat-label">Intrusion Attempts</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value"></div>
+                <div class="stat-label">Log Events</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value"></div>
+                <div class="stat-label">Active Sessions</div>
+            </div>
+        </div>
+        
+        <!-- Main Grid -->
+        <div class="grid">
+            <!-- Vulnerabilities Card -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">⚠️ Vulnerabilities</div>
+                    <div class="card-icon">{ { vulnerabilities } }</div>
+                </div>
+                <div class="card-content">
+                    
+                        <div class="alert alert-success">No vulnerabilities detected</div>
+                    { % else % }
+                        { % for vuln in vulnerabilities % }
+                            <div class="vulnerability-item vulnerability-">
+                                <strong>{ { vuln.type } }</strong> - 
+                                <span class="status status-danger">{ { vuln.severity } }</span><br>
+                                { { vuln.description } }<br>
+                                <small>Fix: { { vuln.recommendation } }</small>
+                            </div>
+                        { % endfor % }
+                    { % endif % }
+                </div>
+            </div>
+            
+            <!-- Intrusion Detection Card -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">🚨 Intrusion Detection</div>
+                    <div class="card-icon"></div>
+                </div>
+                <div class="card-content">
+                    
+                        <div class="alert alert-success">No intrusion attempts detected</div>
+                    { % else % }
+                        <div class="terminal">
+                            { % for intrusion in intrusions % }
+                                <div class="terminal-line">
+                                    <span class="terminal-prompt">[{ { intrusion.type } }]</span>
+                                    <span class="terminal-error">
+                                        
+                                    </span>
+                                </div>
+                            { % endfor % }
+                        </div>
+                    { % endif % }
+                </div>
+            </div>
+            
+            <!-- System Health Card -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">💚 System Health</div>
+                    <div class="card-icon">
+                        { % if audit_data.security_score.score >= 80 % }
+                            <span class="status status-ok">HEALTHY</span>
+                        { % elif audit_data.security_score.score >= 60 % }
+                            <span class="status status-warning">WARNING</span>
+                        { % else % }
+                            <span class="status status-danger">CRITICAL</span>
+                        
+                    </div>
+                </div>
+                <div class="card-content">
+                    <div class="data-table">
+                        <table width="100%">
+                            <tr>
+                                <td>Database</td>
+                                <td>
+                                    <span class="status { { 'status-ok' if audit_data.database.status === 'connected' else } }">
+                                        { { audit_data.database.status } }
+                                    </span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Encryption</td>
+                                <td>
+                                    <span class="status { { 'status-ok' if MILITARY_ENCRYPTION_ENABLED else '' } }">
+                                        { { 'ACTIVE' if MILITARY_ENCRYPTION_ENABLED else '' } }
+                                    </span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Quantum System</td>
+                                <td>
+                                    <span class="status { { 'status-ok' if audit_data.encryption.quantum_status.operational |default false else } }">
+                                        { { 'OPERATIONAL' if audit_data.encryption.quantum_status.operational |default false else } }
+                                    </span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>FIPS Compliance</td>
+                                <td>
+                                    <span class="status { { 'status-ok' if FIPS_140_2_COMPLIANCE else '' } }">
+                                        { { 'COMPLIANT' if FIPS_140_2_COMPLIANCE else '' } }
+                                    </span>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Network Analysis Card -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">🌐 Network Analysis</div>
+                    <div class="card-icon"><span class="loading"></span></div>
+                </div>
+                <div class="card-content">
+                    <h4>Open Ports</h4>
+                    
+                        <div class="alert alert-info">No open ports detected</div>
+                    { % else % }
+                        <div class="terminal">
+                            { % for port in audit_data.network.open_ports % }
+                                <div class="terminal-line">
+                                    <span class="terminal-prompt">PORT { { port.port } }</span>
+                                    <span class="terminal-output">{ { port.service } } - { { port.status } }</span>
+                                </div>
+                            { % endfor % }
+                        </div>
+                    
+                    
+                    <h4 style="margin-top: 15px;">Active Connections</h4>
+                    <div class="stat-grid">
+                        <div class="stat-item">
+                            <div class="stat-value"></div>
+                            <div class="stat-label">Total</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value"></div>
+                            <div class="stat-label">Established</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Encryption Status Card -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">🔐 Encryption Status</div>
+                    <div class="card-icon">
+                        <span class="status status-ok">SECURE</span>
+                    </div>
+                </div>
+                <div class="card-content">
+                    <h4>Quantum Metrics</h4>
+                    { % if audit_data.encryption.quantum_status.operational ?? false % }
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: { { (audit_data.encryption.quantum_status.bb84_security |default( 0) * 100) } }%"></div>
+                        </div>
+                        <small>BB84 Security Level: { { (audit_data.encryption.quantum_status.bb84_security |default( 0) * 100, 1) } }%</small>
+                        
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: %"></div>
+                        </div>
+                        <small>Quantum Volume: { { audit_data.encryption.quantum_status.quantum_volume |default( 0, 0) } }</small>
+                    { % else % }
+                        <div class="alert alert-warning">Quantum system offline</div>
+                    
+                    
+                    <h4 style="margin-top: 15px;">Algorithms</h4>
+                    <div class="terminal">
+                        <div class="terminal-line">
+                            <span class="terminal-prompt">AES:</span>
+                            <span class="terminal-output">{ { audit_data.encryption.key_strength.aes_key_size |default( 'N/A') } }-bit</span>
+                        </div>
+                        <div class="terminal-line">
+                            <span class="terminal-prompt">RSA:</span>
+                            <span class="terminal-output">{ { audit_data.encryption.key_strength.rsa_key_size |default( 'N/A') } }-bit</span>
+                        </div>
+                        <div class="terminal-line">
+                            <span class="terminal-prompt">KDF:</span>
+                            <span class="terminal-output">{ { audit_data.encryption.key_strength.kdf_iterations |default( 0) } } iterations</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Recommendations Card -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">📋 Recommendations</div>
+                    <div class="card-icon"></div>
+                </div>
+                <div class="card-content">
+                    
+                        <div class="alert alert-success">System is optimally configured</div>
+                    { % else % }
+                        { % for rec in audit_data.recommendations % }
+                            <div class="alert alert-">
+                                <strong>[{ { rec.category } }]</strong><br>
+                                { { rec.action } }
+                            </div>
+                        { % endfor % }
+                    
+                </div>
+            </div>
+        </div>
+        
+        <!-- Action Buttons -->
+        <div style="text-align: center; margin: 40px 0;">
+            <button class="btn" onclick="location.reload()">🔄 Re-scan System</button>
+            <button class="btn btn-danger" onclick="if(confirm('This will lock down the system. Continue?')) lockdownSystem()">🔒 Emergency Lockdown</button>
+            <button class="btn btn-success" onclick="exportReport()">📥 Export Report</button>
+            <a href="{ { url_for('admin.dashboard') } }" class="btn">🏠 Dashboard</a>
+        </div>
+    </div>
+    
+    <script>
+        // Matrix rain effect
+        function createMatrix() {
+            const matrix = document.getElementById('matrix');
+            const columns = Math.floor(window.innerWidth / 20);
+            
+            for (let i = 0; i < columns; i++) {
+                const column = document.createElement('div');
+                column.className = 'matrix-column';
+                column.style.left = i * 20 + 'px';
+                column.style.animationDuration = Math.random() * 5 + 5 + 's';
+                column.style.animationDelay = Math.random() * 5 + 's';
+                
+                // Random characters
+                let text = '';
+                for (let j = 0; j < 100; j++) {
+                    text += String.fromCharCode(33 + Math.floor(Math.random() * 94));
+                }
+                column.textContent = text;
+                
+                matrix.appendChild(column);
+            }
+        }
+        
+        createMatrix();
+        
+        // Auto-refresh
+        setTimeout(() => {
+            console.log('Auto-refresh in 5 minutes');
+        }, 300000);
+        
+        // Emergency lockdown
+        function lockdownSystem() {
+            alert('System lockdown initiated. All connections will be terminated.');
+            // Implementar lockdown real aqui
+        }
+        
+        // Export report
+        function exportReport() {
+            const data = ;
+            const blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'security_audit_' + new Date().toISOString() + '.json';
+            a.click();
+        }
+        
+        // Console warnings
+        console.log('%c⚠️ SECURITY WARNING', 'color: red; font-size: 30px; font-weight: bold');
+        console.log('%cThis is a secure military system. Unauthorized access is prohibited.', 'color: red; font-size: 16px');
+        console.log('%cAll activities are monitored and logged.', 'color: orange; font-size: 14px');
+    </script>
+</body>
+</html>

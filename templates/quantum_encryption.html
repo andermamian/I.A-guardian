@@ -1,0 +1,1161 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GuardianIA v4.0 - Sistema Cuántico-Militar Avanzado</title>
+    <style>{% raw %}
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%);
+            color: #00ff00;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow-x: hidden;
+        }
+        
+        /* Efectos de fondo animados */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 20% 80%, rgba(0, 255, 255, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(255, 0, 255, 0.1) 0%, transparent 50%),
+                linear-gradient(45deg, transparent 30%, rgba(0, 255, 0, 0.02) 50%, transparent 70%);
+            animation: quantumScan 12s linear infinite;
+            pointer-events: none;
+            z-index: -1;
+        }
+        
+        @keyframes quantumScan {
+            0% { transform: translateY(-100%) rotate(0deg); }
+            100% { transform: translateY(100%) rotate(360deg); }
+        }
+        
+        /* Partículas cuánticas flotantes */
+        .quantum-particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: -1;
+        }
+        
+        .particle {
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            background: #00ffff;
+            border-radius: 50%;
+            animation: float 8s infinite linear;
+            box-shadow: 0 0 6px #00ffff;
+        }
+        
+        @keyframes float {
+            0% { transform: translateY(100vh) translateX(0); opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { transform: translateY(-10vh) translateX(100px); opacity: 0; }
+        }
+        
+        .header {
+            background: linear-gradient(90deg, #001122, #003366, #004488);
+            padding: 25px;
+            border-bottom: 3px solid #00ffff;
+            box-shadow: 0 0 30px rgba(0, 255, 255, 0.6);
+            position: relative;
+        }
+        
+        .header::after {
+            content: '';
+            position: absolute;
+            bottom: -3px;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: linear-gradient(90deg, #00ffff, #ff00ff, #00ffff);
+            animation: headerGlow 3s ease-in-out infinite alternate;
+        }
+        
+        @keyframes headerGlow {
+            0% { box-shadow: 0 0 10px rgba(0, 255, 255, 0.5); }
+            100% { box-shadow: 0 0 20px rgba(0, 255, 255, 1); }
+        }
+        
+        .header h1 {
+            color: #00ffff;
+            text-shadow: 0 0 15px #00ffff, 0 0 30px #00ffff;
+            font-size: 2.2em;
+            margin-bottom: 15px;
+            text-align: center;
+            animation: titlePulse 4s ease-in-out infinite;
+        }
+        
+        @keyframes titlePulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+        }
+        
+        .status-bar {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            font-size: 0.95em;
+            color: #00ff00;
+        }
+        
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px;
+            background: rgba(0, 255, 255, 0.1);
+            border-radius: 8px;
+            border: 1px solid rgba(0, 255, 255, 0.3);
+        }
+        
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+            position: relative;
+        }
+        
+        .status-indicator::after {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            border-radius: 50%;
+            border: 2px solid currentColor;
+            animation: ripple 2s infinite;
+        }
+        
+        .status-indicator.active {
+            background: #00ff00;
+            box-shadow: 0 0 15px #00ff00;
+        }
+        
+        .status-indicator.restricted {
+            background: #ff0000;
+            box-shadow: 0 0 15px #ff0000;
+        }
+        
+        .status-indicator.quantum {
+            background: #00ffff;
+            box-shadow: 0 0 15px #00ffff;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.7; transform: scale(1.1); }
+        }
+        
+        @keyframes ripple {
+            0% { transform: scale(1); opacity: 1; }
+            100% { transform: scale(2); opacity: 0; }
+        }
+        
+        .main-container {
+            flex: 1;
+            padding: 30px;
+            max-width: 1600px;
+            margin: 0 auto;
+            width: 100%;
+        }
+        
+        .section {
+            margin-bottom: 40px;
+            background: rgba(0, 20, 40, 0.9);
+            border: 2px solid #00ffff;
+            border-radius: 15px;
+            padding: 25px;
+            backdrop-filter: blur(15px);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(0, 255, 255, 0.1), transparent);
+            animation: sectionScan 6s infinite;
+        }
+        
+        @keyframes sectionScan {
+            0% { left: -100%; }
+            100% { left: 100%; }
+        }
+        
+        .section-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid rgba(0, 255, 255, 0.4);
+            position: relative;
+            z-index: 1;
+        }
+        
+        .section-icon {
+            font-size: 2em;
+            animation: iconRotate 8s linear infinite;
+        }
+        
+        @keyframes iconRotate {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .section-title {
+            font-size: 1.4em;
+            color: #00ffff;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            text-shadow: 0 0 10px #00ffff;
+        }
+        
+        .button-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .quantum-button, .military-button, .ai-button {
+            background: linear-gradient(135deg, #001133, #003366, #004499);
+            border: 2px solid;
+            border-radius: 12px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .quantum-button::before, .military-button::before, .ai-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            transition: left 0.5s;
+        }
+        
+        .quantum-button:hover::before, .military-button:hover::before, .ai-button:hover::before {
+            left: 100%;
+        }
+        
+        .quantum-button {
+            border-color: #00ffff;
+            color: #00ffff;
+        }
+        
+        .quantum-button:hover {
+            background: linear-gradient(135deg, #002244, #004488, #0066cc);
+            box-shadow: 0 0 30px rgba(0, 255, 255, 0.6);
+            transform: translateY(-3px) scale(1.02);
+        }
+        
+        .military-button {
+            border-color: #ff0044;
+            color: #ff0044;
+        }
+        
+        .military-button:hover {
+            background: linear-gradient(135deg, #330011, #660022, #990033);
+            box-shadow: 0 0 30px rgba(255, 0, 68, 0.6);
+            transform: translateY(-3px) scale(1.02);
+        }
+        
+        .ai-button {
+            border-color: #ff00ff;
+            color: #ff00ff;
+        }
+        
+        .ai-button:hover {
+            background: linear-gradient(135deg, #330033, #660066, #990099);
+            box-shadow: 0 0 30px rgba(255, 0, 255, 0.6);
+            transform: translateY(-3px) scale(1.02);
+        }
+        
+        .button-text {
+            font-weight: bold;
+            font-size: 1.1em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .toggle-switch {
+            width: 60px;
+            height: 30px;
+            background: #333;
+            border-radius: 30px;
+            position: relative;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.5);
+        }
+        
+        .toggle-switch.active {
+            background: linear-gradient(45deg, #ff0044, #ff6600);
+            box-shadow: 0 0 20px rgba(255, 0, 68, 0.8);
+        }
+        
+        .toggle-switch::after {
+            content: '';
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            width: 24px;
+            height: 24px;
+            background: linear-gradient(45deg, #fff, #ccc);
+            border-radius: 50%;
+            transition: all 0.3s;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+        }
+        
+        .toggle-switch.active::after {
+            transform: translateX(30px);
+            background: linear-gradient(45deg, #fff, #ffcc00);
+            box-shadow: 0 0 10px rgba(255, 204, 0, 0.8);
+        }
+        
+        .console-output {
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px solid #00ff00;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 25px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 0.9em;
+            max-height: 400px;
+            overflow-y: auto;
+            color: #00ff00;
+            position: relative;
+        }
+        
+        .console-output::before {
+            content: 'QUANTUM CONSOLE v4.0';
+            position: absolute;
+            top: -15px;
+            left: 20px;
+            background: #0a0a0a;
+            padding: 0 10px;
+            color: #00ffff;
+            font-size: 0.8em;
+            letter-spacing: 2px;
+        }
+        
+        .console-line {
+            margin: 8px 0;
+            padding: 5px 10px;
+            border-left: 3px solid transparent;
+            animation: consoleFadeIn 0.5s ease-in;
+        }
+        
+        @keyframes consoleFadeIn {
+            0% { opacity: 0; transform: translateX(-20px); }
+            100% { opacity: 1; transform: translateX(0); }
+        }
+        
+        .console-line.success {
+            border-left-color: #00ff00;
+            background: rgba(0, 255, 0, 0.05);
+        }
+        
+        .console-line.error {
+            border-left-color: #ff0000;
+            color: #ff0000;
+            background: rgba(255, 0, 0, 0.05);
+        }
+        
+        .console-line.warning {
+            border-left-color: #ffaa00;
+            color: #ffaa00;
+            background: rgba(255, 170, 0, 0.05);
+        }
+        
+        .console-line.quantum {
+            border-left-color: #00ffff;
+            color: #00ffff;
+            background: rgba(0, 255, 255, 0.05);
+        }
+        
+        .access-denied {
+            background: rgba(255, 0, 0, 0.15);
+            border: 3px solid #ff0000;
+            border-radius: 15px;
+            padding: 25px;
+            text-align: center;
+            color: #ff0000;
+            margin: 25px 0;
+            animation: accessDeniedPulse 2s infinite;
+        }
+        
+        @keyframes accessDeniedPulse {
+            0%, 100% { box-shadow: 0 0 20px rgba(255, 0, 0, 0.5); }
+            50% { box-shadow: 0 0 40px rgba(255, 0, 0, 0.8); }
+        }
+        
+        .loading {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            flex-direction: column;
+        }
+        
+        .loading.active {
+            display: flex;
+        }
+        
+        .loading-spinner {
+            width: 80px;
+            height: 80px;
+            border: 4px solid rgba(0, 255, 255, 0.3);
+            border-top-color: #00ffff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+        
+        .loading-text {
+            color: #00ffff;
+            font-size: 1.2em;
+            text-align: center;
+            animation: loadingPulse 1.5s ease-in-out infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        @keyframes loadingPulse {
+            0%, 100% { opacity: 0.7; }
+            50% { opacity: 1; }
+        }
+        
+        .metrics-display {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .metric-card {
+            background: rgba(0, 255, 255, 0.1);
+            border: 2px solid rgba(0, 255, 255, 0.4);
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .metric-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(0, 255, 255, 0.2), transparent);
+            animation: metricScan 4s infinite;
+        }
+        
+        @keyframes metricScan {
+            0% { left: -100%; }
+            100% { left: 100%; }
+        }
+        
+        .metric-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 255, 255, 0.3);
+            border-color: #00ffff;
+        }
+        
+        .metric-value {
+            font-size: 1.8em;
+            color: #00ffff;
+            font-weight: bold;
+            text-shadow: 0 0 10px #00ffff;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .metric-label {
+            font-size: 0.85em;
+            color: rgba(0, 255, 255, 0.8);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-top: 5px;
+            position: relative;
+            z-index: 1;
+        }
+        
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .header {
+                padding: 20px 15px;
+            }
+            
+            .header h1 {
+                font-size: 1.8em;
+            }
+            
+            .main-container {
+                padding: 20px 15px;
+            }
+            
+            .button-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .status-bar {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        /* Efectos especiales para elementos cuánticos */
+        .quantum-effect {
+            animation: quantumFlicker 3s infinite;
+        }
+        
+        @keyframes quantumFlicker {
+            0%, 100% { opacity: 1; }
+            25% { opacity: 0.8; }
+            50% { opacity: 0.9; }
+            75% { opacity: 0.7; }
+        }
+        
+        /* Scrollbar personalizado */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.3);
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(45deg, #00ffff, #ff00ff);
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(45deg, #ff00ff, #00ffff);
+        }
+    {% endraw %}</style>
+</head>
+<body>
+    <!-- Partículas cuánticas de fondo -->
+    <div class="quantum-particles" id="quantumParticles"></div>
+    
+    <div class="loading" id="loading">
+        <div class="loading-spinner"></div>
+        <div class="loading-text">Procesando operación cuántica...</div>
+    </div>
+
+    <div class="header">
+        <h1>🛡️ GuardianIA v4.0 - Sistema Cuántico-Militar Avanzado</h1>
+        <div class="status-bar">
+            <div class="status-item">
+                <span class="status-indicator {{ 'quantum' if has_quantum_access else 'restricted' }}"></span>
+                <span>Cuántico: {{ 'ACTIVO' if has_quantum_access else 'RESTRINGIDO' }}</span>
+            </div>
+            <div class="status-item">
+                <span class="status-indicator {{ 'active' if has_military_access else 'restricted' }}"></span>
+                <span>Militar: {{ 'ACTIVO' if has_military_access else 'RESTRINGIDO' }}</span>
+            </div>
+            <div class="status-item">
+                <span class="status-indicator {{ 'active' if db_connected else 'restricted' }}"></span>
+                <span>Base de Datos: {{ 'CONECTADA' if db_connected else 'DESCONECTADA' }}</span>
+            </div>
+            <div class="status-item">
+                <span>Clasificación: {{ user_clearance }}</span>
+            </div>
+            <div class="status-item">
+                <span>Usuario: {{ user.username|default('NO AUTENTICADO') }}</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="main-container">
+        {% if has_quantum_access %}
+        <!-- Sección Cuántica Avanzada -->
+        <div class="section">
+            <div class="section-header">
+                <span class="section-icon quantum-effect">🔮</span>
+                <span class="section-title">SISTEMA CUÁNTICO AVANZADO</span>
+            </div>
+            <div class="button-grid">
+                <div class="quantum-button" onclick="executeQuantumAction('quantum_access')">
+                    <span class="button-text">Acceso Cuántico</span>
+                    <div class="toggle-switch" id="quantum_access_toggle"></div>
+                </div>
+                <div class="quantum-button" onclick="executeQuantumAction('quantum_generate_keys')">
+                    <span class="button-text">Generar Claves BB84</span>
+                    <div class="toggle-switch" id="quantum_generate_keys_toggle"></div>
+                </div>
+                <div class="quantum-button" onclick="executeQuantumAction('quantum_encrypt')">
+                    <span class="button-text">Encriptar Híbrido</span>
+                    <div class="toggle-switch" id="quantum_encrypt_toggle"></div>
+                </div>
+                <div class="quantum-button" onclick="executeQuantumAction('quantum_decrypt')">
+                    <span class="button-text">Desencriptar</span>
+                    <div class="toggle-switch" id="quantum_decrypt_toggle"></div>
+                </div>
+                <div class="quantum-button" onclick="executeQuantumAction('quantum_entangle')">
+                    <span class="button-text">Test de Bell</span>
+                    <div class="toggle-switch" id="quantum_entangle_toggle"></div>
+                </div>
+                <div class="quantum-button" onclick="executeQuantumAction('quantum_bb84')">
+                    <span class="button-text">Protocolo BB84</span>
+                    <div class="toggle-switch" id="quantum_bb84_toggle"></div>
+                </div>
+                <div class="quantum-button" onclick="executeQuantumAction('quantum_neural_analysis')">
+                    <span class="button-text">Análisis Neural IA</span>
+                    <div class="toggle-switch" id="quantum_neural_analysis_toggle"></div>
+                </div>
+            </div>
+            
+            <div class="metrics-display" id="quantum-metrics">
+                <div class="metric-card">
+                    <div class="metric-value" id="quantum-fidelity">0.97</div>
+                    <div class="metric-label">Fidelidad Cuántica</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value" id="quantum-pairs">2048</div>
+                    <div class="metric-label">Qubits Activos</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value" id="quantum-coherence">500μs</div>
+                    <div class="metric-label">Tiempo Coherencia</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value" id="quantum-error">0.02</div>
+                    <div class="metric-label">Tasa Error</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value" id="quantum-ai">85%</div>
+                    <div class="metric-label">IA Consciencia</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value" id="quantum-post">ACTIVO</div>
+                    <div class="metric-label">Post-Cuántico</div>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="access-denied">
+            ⚠️ ACCESO CUÁNTICO DENEGADO - SE REQUIERE MEMBRESÍA PREMIUM
+            <br><small>Contacte al administrador para activar funcionalidades cuánticas</small>
+        </div>
+        {% endif %}
+
+        {% if has_military_access %}
+        <!-- Sección Militar -->
+        <div class="section">
+            <div class="section-header">
+                <span class="section-icon">🚀</span>
+                <span class="section-title">PROTOCOLOS MILITARES</span>
+            </div>
+            <div class="button-grid">
+                <div class="military-button" onclick="executeMilitaryAction('military_emergency_access')">
+                    <span class="button-text">Acceso Emergencia</span>
+                    <div class="toggle-switch" id="military_emergency_access_toggle"></div>
+                </div>
+                <div class="military-button" onclick="executeMilitaryAction('military_protocol_x')">
+                    <span class="button-text">Protocolo X</span>
+                    <div class="toggle-switch" id="military_protocol_x_toggle"></div>
+                </div>
+                <div class="military-button" onclick="executeMilitaryAction('military_defcon')">
+                    <span class="button-text">Control DEFCON</span>
+                    <div class="toggle-switch" id="military_defcon_toggle"></div>
+                </div>
+                <div class="military-button" onclick="executeMilitaryAction('military_quantum_shield')">
+                    <span class="button-text">Escudo Cuántico</span>
+                    <div class="toggle-switch" id="military_quantum_shield_toggle"></div>
+                </div>
+            </div>
+            
+            <div class="metrics-display" id="military-metrics">
+                <div class="metric-card">
+                    <div class="metric-value" id="military-defcon">2</div>
+                    <div class="metric-label">DEFCON</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value" id="military-threats">0</div>
+                    <div class="metric-label">Amenazas</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value" id="military-readiness">95%</div>
+                    <div class="metric-label">Preparación</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value" id="military-encryption">QUANTUM</div>
+                    <div class="metric-label">Encriptación</div>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="access-denied">
+            ⚠️ ACCESO MILITAR DENEGADO - AUTORIZACIÓN TOP SECRET REQUERIDA
+            <br><small>Se requiere clearance militar para acceder a estos protocolos</small>
+        </div>
+        {% endif %}
+
+        <!-- Sección IA Neural (Disponible para todos) -->
+        <div class="section">
+            <div class="section-header">
+                <span class="section-icon">🧠</span>
+                <span class="section-title">INTELIGENCIA ARTIFICIAL NEURAL</span>
+            </div>
+            <div class="button-grid">
+                <div class="ai-button" onclick="executeAIAction('ai_threat_analysis')">
+                    <span class="button-text">Análisis Amenazas</span>
+                    <div class="toggle-switch" id="ai_threat_analysis_toggle"></div>
+                </div>
+                <div class="ai-button" onclick="executeAIAction('ai_pattern_recognition')">
+                    <span class="button-text">Reconocimiento Patrones</span>
+                    <div class="toggle-switch" id="ai_pattern_recognition_toggle"></div>
+                </div>
+                <div class="ai-button" onclick="executeAIAction('ai_predictive_analysis')">
+                    <span class="button-text">Análisis Predictivo</span>
+                    <div class="toggle-switch" id="ai_predictive_analysis_toggle"></div>
+                </div>
+                <div class="ai-button" onclick="executeAIAction('ai_neural_optimization')">
+                    <span class="button-text">Optimización Neural</span>
+                    <div class="toggle-switch" id="ai_neural_optimization_toggle"></div>
+                </div>
+            </div>
+            
+            <div class="metrics-display" id="ai-metrics">
+                <div class="metric-card">
+                    <div class="metric-value" id="ai-consciousness">85%</div>
+                    <div class="metric-label">Consciencia IA</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value" id="ai-learning">ACTIVO</div>
+                    <div class="metric-label">Aprendizaje</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value" id="ai-threats">0</div>
+                    <div class="metric-label">Amenazas Detectadas</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value" id="ai-efficiency">92%</div>
+                    <div class="metric-label">Eficiencia</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Consola de Sistema -->
+        <div class="section">
+            <div class="section-header">
+                <span class="section-icon">💻</span>
+                <span class="section-title">CONSOLA DE SISTEMA AVANZADA</span>
+            </div>
+            <div class="console-output" id="console">
+                <div class="console-line success">[{{ 'H:i:s' }}] Sistema GuardianIA v4.0 iniciado correctamente</div>
+                <div class="console-line quantum">[{{ 'H:i:s' }}] Conexión cuántica establecida con fidelidad 97%</div>
+                {% if db_connected %}
+                <div class="console-line success">[{{ 'H:i:s' }}] Base de datos sincronizada - Tipo: {{ db_info.type |default( 'unknown') }}</div>
+                {% endif %}
+                {% if has_quantum_access %}
+                <div class="console-line quantum">[{{ 'H:i:s' }}] Módulo cuántico avanzado cargado - 2048 qubits disponibles</div>
+                <div class="console-line quantum">[{{ 'H:i:s' }}] Algoritmos post-cuánticos NIST activados</div>
+                {% endif %}
+                {% if has_military_access %}
+                <div class="console-line success">[{{ 'H:i:s' }}] Protocolo militar activado - DEFCON 2</div>
+                <div class="console-line warning">[{{ 'H:i:s' }}] Monitoreo de amenazas en tiempo real activo</div>
+                {% endif %}
+                <div class="console-line success">[{{ 'H:i:s' }}] Red neuronal IA inicializada - Consciencia: 85%</div>
+                <div class="console-line quantum">[{{ 'H:i:s' }}] Sistema listo para operaciones cuántico-militares</div>
+            </div>
+        </div>
+    </div>
+
+    <script>{% raw %}
+        const csrfToken = '{{ csrf_token }}';
+        const hasQuantumAccess = {{ 'true' if has_quantum_access else 'false' }};
+        const hasMilitaryAccess = {{ 'true' if has_military_access else 'false' }};
+        const dbConnected = {{ 'true' if db_connected else 'false' }};
+        
+        let activeToggles = {};
+        let particleCount = 0;
+        
+        // Inicialización del sistema
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeQuantumParticles();
+            initializeSystemStatus();
+            startRealTimeMonitoring();
+            
+            {% if has_quantum_access and has_military_access %}
+            addConsoleMessage('ACCESO COMPLETO AUTORIZADO - Todos los sistemas operacionales', 'quantum');
+            {% elif has_quantum_access %}
+            addConsoleMessage('Acceso cuántico autorizado - Sistemas militares restringidos', 'warning');
+            {% elif has_military_access %}
+            addConsoleMessage('Acceso militar autorizado - Sistemas cuánticos restringidos', 'warning');
+            {% else %}
+            addConsoleMessage('ADVERTENCIA: Acceso limitado - Contacte al administrador', 'error');
+            {% endif %}
+        });
+        
+        // Generar partículas cuánticas de fondo
+        function initializeQuantumParticles() {
+            const container = document.getElementById('quantumParticles');
+            
+            setInterval(() => {
+                if (particleCount < 20) {
+                    createQuantumParticle(container);
+                }
+            }, 500);
+        }
+        
+        function createQuantumParticle(container) {
+            const particle = document.createElement('div');
+            particle.className = 'particle';
+            particle.style.left = Math.random() * 100 + '%';
+            particle.style.animationDuration = (Math.random() * 5 + 3) + 's';
+            particle.style.animationDelay = Math.random() * 2 + 's';
+            
+            container.appendChild(particle);
+            particleCount++;
+            
+            setTimeout(() => {
+                container.removeChild(particle);
+                particleCount--;
+            }, 8000);
+        }
+        
+        function showLoading() {
+            document.getElementById('loading').classList.add('active');
+        }
+        
+        function hideLoading() {
+            document.getElementById('loading').classList.remove('active');
+        }
+        
+        function addConsoleMessage(message, type = 'success') {
+            const console = document.getElementById('console');
+            const timestamp = new Date().toLocaleTimeString('es-ES');
+            const line = document.createElement('div');
+            line.className = `console-line ${type}`;
+            line.textContent = `[${timestamp}] ${message}`;
+            console.appendChild(line);
+            console.scrollTop = console.scrollHeight;
+            
+            // Limitar líneas de consola
+            const lines = console.querySelectorAll('.console-line');
+            if (lines.length > 50) {
+                console.removeChild(lines[0]);
+            }
+        }
+        
+        function toggleSwitch(id, state) {
+            const toggle = document.getElementById(id);
+            if (toggle) {
+                if (state) {
+                    toggle.classList.add('active');
+                } else {
+                    toggle.classList.remove('active');
+                }
+                activeToggles[id] = state;
+            }
+        }
+        
+        async function executeQuantumAction(action) {
+            if (!hasQuantumAccess) {
+                addConsoleMessage('ERROR: Acceso cuántico denegado - Se requiere membresía premium', 'error');
+                return;
+            }
+            
+            showLoading();
+            addConsoleMessage(`Ejecutando operación cuántica: ${action.replace('quantum_', '').toUpperCase()}...`, 'quantum');
+            
+            const toggleId = action + '_toggle';
+            const currentState = activeToggles[toggleId] || false;
+            
+            try {
+                const formData = new FormData();
+                formData.append('action', action);
+                formData.append('csrf_token', csrfToken);
+                
+                // Agregar datos específicos según la acción
+                if (action === 'quantum_encrypt') {
+                    const data = prompt('Ingrese datos a encriptar con algoritmos post-cuánticos:');
+                    if (!data) {
+                        hideLoading();
+                        return;
+                    }
+                    formData.append('data', data);
+                } else if (action === 'quantum_decrypt') {
+                    const encrypted = prompt('Ingrese datos encriptados para desencriptar:');
+                    if (!encrypted) {
+                        hideLoading();
+                        return;
+                    }
+                    formData.append('encrypted', encrypted);
+                } else if (action === 'quantum_generate_keys') {
+                    const length = prompt('Longitud de clave cuántica (bits):', '512');
+                    formData.append('key_length', length || '512');
+                }
+                
+                const response = await fetch('', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    toggleSwitch(toggleId, !currentState);
+                    addConsoleMessage(`✓ ${result.message}`, 'quantum');
+                    
+                    // Mostrar datos adicionales si existen
+                    if (result.data) {
+                        for (const [key, value] of Object.entries(result.data)) {
+                            if (typeof value === 'object') {
+                                addConsoleMessage(`  → ${key}: ${JSON.stringify(value)}`, 'success');
+                            } else {
+                                addConsoleMessage(`  → ${key}: ${value}`, 'success');
+                            }
+                        }
+                        
+                        // Actualizar métricas cuánticas
+                        updateQuantumMetrics(action, result.data);
+                    }
+                    
+                    // Auto-desactivar después de 8 segundos
+                    setTimeout(() => {
+                        toggleSwitch(toggleId, false);
+                    }, 8000);
+                } else {
+                    addConsoleMessage(`✗ ERROR CUÁNTICO: ${result.message}`, 'error');
+                }
+            } catch (error) {
+                addConsoleMessage(`✗ ERROR CRÍTICO DEL SISTEMA: ${error.message}`, 'error');
+            } finally {
+                hideLoading();
+            }
+        }
+        
+        async function executeMilitaryAction(action) {
+            if (!hasMilitaryAccess) {
+                addConsoleMessage('ERROR: Acceso militar denegado - Se requiere autorización TOP SECRET', 'error');
+                return;
+            }
+            
+            // Confirmación para acciones críticas
+            const criticalActions = ['military_emergency_access', 'military_protocol_x', 'military_defcon'];
+            if (criticalActions.includes(action)) {
+                if (!confirm('⚠️ ADVERTENCIA MILITAR: Esta acción requiere autorización de alto nivel. ¿Continuar?')) {
+                    return;
+                }
+            }
+            
+            showLoading();
+            addConsoleMessage(`Ejecutando protocolo militar: ${action.replace('military_', '').toUpperCase()}...`, 'warning');
+            
+            const toggleId = action + '_toggle';
+            
+            try {
+                const formData = new FormData();
+                formData.append('action', action);
+                formData.append('csrf_token', csrfToken);
+                
+                const response = await fetch('', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    toggleSwitch(toggleId, true);
+                    addConsoleMessage(`✓ PROTOCOLO MILITAR: ${result.message}`, 'success');
+                    
+                    if (result.data) {
+                        for (const [key, value] of Object.entries(result.data)) {
+                            addConsoleMessage(`  → ${key}: ${value}`, 'warning');
+                        }
+                        
+                        updateMilitaryMetrics(action, result.data);
+                    }
+                    
+                    // Mantener activo por más tiempo para acciones militares
+                    setTimeout(() => {
+                        toggleSwitch(toggleId, false);
+                    }, 15000);
+                } else {
+                    addConsoleMessage(`✗ ERROR MILITAR: ${result.message}`, 'error');
+                }
+            } catch (error) {
+                addConsoleMessage(`✗ ERROR CRÍTICO MILITAR: ${error.message}`, 'error');
+            } finally {
+                hideLoading();
+            }
+        }
+        
+        async function executeAIAction(action) {
+            showLoading();
+            addConsoleMessage(`Ejecutando análisis de IA: ${action.replace('ai_', '').toUpperCase()}...`, 'quantum');
+            
+            const toggleId = action + '_toggle';
+            
+            // Simular procesamiento de IA
+            setTimeout(() => {
+                toggleSwitch(toggleId, true);
+                
+                switch(action) {
+                    case 'ai_threat_analysis':
+                        addConsoleMessage('✓ Análisis de amenazas completado - 0 amenazas detectadas', 'success');
+                        addConsoleMessage('  → Patrones anómalos: Ninguno', 'success');
+                        addConsoleMessage('  → Nivel de confianza: 98.7%', 'success');
+                        break;
+                    case 'ai_pattern_recognition':
+                        addConsoleMessage('✓ Reconocimiento de patrones activo', 'success');
+                        addConsoleMessage('  → Patrones cuánticos: ESTABLES', 'quantum');
+                        addConsoleMessage('  → Patrones de red: NORMALES', 'success');
+                        break;
+                    case 'ai_predictive_analysis':
+                        addConsoleMessage('✓ Análisis predictivo en curso', 'success');
+                        addConsoleMessage('  → Predicción de amenazas: BAJO RIESGO', 'success');
+                        addConsoleMessage('  → Optimización sugerida: +5% eficiencia', 'quantum');
+                        break;
+                    case 'ai_neural_optimization':
+                        addConsoleMessage('✓ Optimización neural completada', 'success');
+                        addConsoleMessage('  → Redes neuronales: OPTIMIZADAS', 'quantum');
+                        addConsoleMessage('  → Rendimiento: +12% mejora', 'success');
+                        break;
+                }
+                
+                setTimeout(() => {
+                    toggleSwitch(toggleId, false);
+                }, 10000);
+                
+                hideLoading();
+            }, 2000);
+        }
+        
+        function updateQuantumMetrics(action, data) {
+            if (data.quantum_volume) {
+                document.getElementById('quantum-fidelity').textContent = 
+                    (data.channel_fidelity || 0.97).toFixed(2);
+            }
+            if (data.total_qubits) {
+                document.getElementById('quantum-pairs').textContent = data.total_qubits;
+            }
+            if (data.neural_consciousness) {
+                document.getElementById('quantum-ai').textContent = 
+                    Math.round(data.neural_consciousness * 100) + '%';
+            }
+        }
+        
+        function updateMilitaryMetrics(action, data) {
+            if (data.defcon_level) {
+                document.getElementById('military-defcon').textContent = data.defcon_level;
+            }
+            if (data.threat_level) {
+                document.getElementById('military-threats').textContent = 
+                    data.threat_level === 'ELEVATED' ? '1' : '0';
+            }
+        }
+        
+        function initializeSystemStatus() {
+            // Actualizar métricas iniciales
+            if (hasQuantumAccess) {
+                addConsoleMessage('Sistema cuántico inicializado con 2048 qubits', 'quantum');
+            }
+            if (hasMilitaryAccess) {
+                addConsoleMessage('Protocolos militares cargados - DEFCON 2 activo', 'warning');
+            }
+            if (dbConnected) {
+                addConsoleMessage('Sincronización con base de datos completada', 'success');
+            }
+        }
+        
+        function startRealTimeMonitoring() {
+            // Monitoreo en tiempo real cada 30 segundos
+            setInterval(() => {
+                if (hasQuantumAccess || hasMilitaryAccess) {
+                    addConsoleMessage('Monitoreo automático: Todos los sistemas operacionales', 'quantum');
+                }
+            }, 30000);
+        }
+        
+        // Manejo de teclas de acceso rápido
+        document.addEventListener('keydown', (e) => {
+            // Ctrl+Q para menú cuántico
+            if (e.ctrlKey && e.key === 'q' && hasQuantumAccess) {
+                addConsoleMessage('Modo cuántico rápido activado - Acceso directo habilitado', 'quantum');
+            }
+            // Ctrl+M para menú militar
+            if (e.ctrlKey && e.key === 'm' && hasMilitaryAccess) {
+                addConsoleMessage('Modo militar rápido activado - Protocolos de emergencia listos', 'warning');
+            }
+            // Ctrl+L para limpiar consola
+            if (e.ctrlKey && e.key === 'l') {
+                document.getElementById('console').innerHTML = 
+                    '<div class="console-line quantum">[' + new Date().toLocaleTimeString('es-ES') + '] Consola limpiada - Sistema listo</div>';
+            }
+            // Ctrl+I para información del sistema
+            if (e.ctrlKey && e.key === 'i') {
+                addConsoleMessage('=== INFORMACIÓN DEL SISTEMA ===', 'quantum');
+                addConsoleMessage(`Versión: GuardianIA v4.0 QUANTUM-MILITARY`, 'success');
+                addConsoleMessage(`Acceso Cuántico: ${hasQuantumAccess ? 'AUTORIZADO' : 'DENEGADO'}`, hasQuantumAccess ? 'success' : 'error');
+                addConsoleMessage(`Acceso Militar: ${hasMilitaryAccess ? 'AUTORIZADO' : 'DENEGADO'}`, hasMilitaryAccess ? 'success' : 'error');
+                addConsoleMessage(`Base de Datos: ${dbConnected ? 'CONECTADA' : 'DESCONECTADA'}`, dbConnected ? 'success' : 'error');
+                addConsoleMessage('=== FIN INFORMACIÓN ===', 'quantum');
+            }
+        });
+        
+        // Efectos visuales adicionales
+        setInterval(() => {
+            const indicators = document.querySelectorAll('.status-indicator.active, .status-indicator.quantum');
+            indicators.forEach(indicator => {
+                indicator.style.boxShadow = `0 0 ${Math.random() * 20 + 10}px currentColor`;
+            });
+        }, 1000);
+    {% endraw %}</script>
+</body>
+</html>

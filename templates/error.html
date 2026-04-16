@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Error - GuardianIA v3.0</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>{% raw %}
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; background: #0a0a0f; color: #fff; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+        .error-container { text-align: center; padding: 3rem; background: rgba(26,26,46,0.95); border-radius: 20px; border: 1px solid #2d3748; max-width: 500px; }
+        .error-icon { font-size: 4rem; margin-bottom: 1.5rem; background: linear-gradient(135deg, #667eea, #764ba2); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        h1 { font-size: 1.5rem; margin-bottom: 1rem; }
+        p { color: #a0a9c0; margin-bottom: 2rem; }
+        .btn { display: inline-block; padding: 0.75rem 2rem; background: linear-gradient(135deg, #667eea, #764ba2); color: #fff; text-decoration: none; border-radius: 12px; font-weight: 600; transition: all 0.3s; }
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(102,126,234,0.3); }
+    {% endraw %}</style>
+</head>
+<body>
+    <div class="error-container">
+        <div class="error-icon"><i class="fas fa-shield-halved"></i></div>
+        <h1>{{ message|default('Ha ocurrido un error') }}</h1>
+        <p>GuardianIA v3.0 - Sistema de Seguridad Militar</p>
+        <a href="{{ url_for('pages.index') }}" class="btn"><i class="fas fa-home"></i> Volver al Inicio</a>
+    </div>
+</body>
+</html>

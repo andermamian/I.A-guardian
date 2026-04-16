@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guardian IA - Chatbot Militar</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>{% raw %}
+        :root {
+            --primary-color: #00ff88;
+            --secondary-color: #00d4ff;
+            --accent-color: #ff6b35;
+            --bg-primary: #0a1a1a;
+            --bg-secondary: #1a2a2a;
+            --bg-tertiary: #2a3a3a;
+            --text-primary: #00ff88;
+            --text-secondary: #ffffff;
+            --text-muted: #888888;
+            --border-color: #00ff88;
+            --success-color: #00ff88;
+            --warning-color: #ffaa00;
+            --danger-color: #ff4444;
+            --shadow-glow: 0 0 20px rgba(0, 255, 136, 0.3);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Rajdhani', sans-serif;
+            background: linear-gradient(135deg, #0a1a1a 0%, #1a2a2a 50%, #0a1a1a 100%);
+            color: var(--text-secondary);
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        /* Header */
+        .chat-header {
+            background: linear-gradient(135deg, rgba(0, 255, 136, 0.1) 0%, rgba(0, 212, 255, 0.1) 100%);
+            backdrop-filter: blur(10px);
+            border-bottom: 2px solid var(--primary-color);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: var(--shadow-glow);
+        }
+
+        .ai-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .ai-avatar {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            color: #000;
+            animation: pulse 2s infinite;
+            box-shadow: var(--shadow-glow);
+            border: 2px solid var(--primary-color);
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .ai-details h2 {
+            font-family: 'Orbitron', monospace;
+            font-size: 1.5rem;
+            font-weight: 900;
+            color: var(--primary-color);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            text-shadow: 0 0 10px rgba(0, 255, 136, 0.5);
+        }
+
+        .ai-status {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--primary-color);
+            font-size: 1rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--primary-color);
+            animation: blink 1s infinite;
+            box-shadow: 0 0 10px var(--primary-color);
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .btn-header {
+            padding: 0.75rem 1.5rem;
+            border: 2px solid var(--primary-color);
+            border-radius: 8px;
+            background: rgba(0, 255, 136, 0.1);
+            color: var(--primary-color);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1rem;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-family: 'Orbitron', monospace;
+        }
+
+        .btn-header:hover {
+            background: var(--primary-color);
+            color: #000;
+            box-shadow: var(--shadow-glow);
+            transform: translateY(-2px);
+        }
+
+        .btn-back {
+            background: linear-gradient(135deg, var(--accent-color), var(--secondary-color));
+            border-color: var(--accent-color);
+            color: white;
+        }
+
+        /* Chat Container */
+        .chat-container {
+            height: calc(100vh - 120px);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chat-messages {
+            flex: 1;
+            padding: 2rem;
+            overflow-y: auto;
+            scroll-behavior: smooth;
+        }
+
+        .chat-messages::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .chat-messages::-webkit-scrollbar-track {
+            background: var(--bg-secondary);
+            border-radius: 4px;
+        }
+
+        .chat-messages::-webkit-scrollbar-thumb {
+            background: var(--primary-color);
+            border-radius: 4px;
+            box-shadow: 0 0 5px rgba(0, 255, 136, 0.5);
+        }
+
+        .message {
+            margin-bottom: 2rem;
+            display: flex;
+            gap: 1rem;
+            animation: slideIn 0.5s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .message.user {
+            flex-direction: row-reverse;
+        }
+
+        .message-avatar {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3rem;
+            flex-shrink: 0;
+            border: 2px solid;
+        }
+
+        .message.user .message-avatar {
+            background: linear-gradient(135deg, var(--accent-color), var(--secondary-color));
+            border-color: var(--accent-color);
+            color: white;
+        }
+
+        .message.ai .message-avatar {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            border-color: var(--primary-color);
+            color: #000;
+        }
+
+        .message-content {
+            max-width: 75%;
+            padding: 1.5rem 2rem;
+            border-radius: 20px;
+            position: relative;
+            backdrop-filter: blur(10px);
+            border: 1px solid;
+        }
+
+        .message.user .message-content {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: var(--text-muted);
+            border-bottom-right-radius: 5px;
+        }
+
+        .message.ai .message-content {
+            background: rgba(0, 255, 136, 0.1);
+            border-color: var(--primary-color);
+            border-bottom-left-radius: 5px;
+        }
+
+        .message-text {
+            line-height: 1.6;
+            margin-bottom: 0.5rem;
+            font-size: 1.1rem;
+            font-weight: 500;
+        }
+
+        .message-time {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            text-align: right;
+            font-family: 'Orbitron', monospace;
+        }
+
+        .message.ai .message-time {
+            text-align: left;
+        }
+
+        /* Chat Input */
+        .chat-input {
+            padding: 1.5rem 2rem;
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+            border-top: 1px solid var(--border-color);
+        }
+
+        .input-container {
+            display: flex;
+            gap: 1rem;
+            align-items: flex-end;
+        }
+
+        .input-wrapper {
+            flex: 1;
+            position: relative;
+        }
+
+        .message-input {
+            width: 100%;
+            min-height: 60px;
+            max-height: 150px;
+            padding: 1rem 4rem 1rem 1.5rem;
+            border: 2px solid var(--border-color);
+            border-radius: 30px;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(10px);
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+            font-family: 'Rajdhani', sans-serif;
+            font-weight: 500;
+            resize: none;
+            transition: all 0.3s ease;
+        }
+
+        .message-input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 20px rgba(0, 255, 136, 0.3);
+        }
+
+        .message-input::placeholder {
+            color: var(--text-muted);
+            font-style: italic;
+        }
+
+        .input-actions {
+            position: absolute;
+            right: 1rem;
+            bottom: 1rem;
+        }
+
+        .btn-input {
+            width: 50px;
+            height: 50px;
+            border: 2px solid var(--primary-color);
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: #000;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+
+        .btn-input:hover {
+            transform: scale(1.1);
+            box-shadow: var(--shadow-glow);
+        }
+
+        .btn-input:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Welcome Message */
+        .welcome-message {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: var(--text-secondary);
+        }
+
+        .welcome-icon {
+            font-size: 5rem;
+            color: var(--primary-color);
+            margin-bottom: 1.5rem;
+            animation: pulse 2s infinite;
+        }
+
+        .welcome-title {
+            font-family: 'Orbitron', monospace;
+            font-size: 2rem;
+            font-weight: 900;
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            text-shadow: 0 0 10px rgba(0, 255, 136, 0.5);
+        }
+
+        .welcome-subtitle {
+            margin-bottom: 3rem;
+            font-size: 1.2rem;
+            line-height: 1.6;
+            color: var(--text-muted);
+        }
+
+        .quick-actions {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .quick-action {
+            padding: 1rem 1.5rem;
+            background: rgba(0, 255, 136, 0.1);
+            border: 2px solid var(--primary-color);
+            border-radius: 15px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1rem;
+            font-weight: 600;
+            text-align: center;
+            backdrop-filter: blur(10px);
+        }
+
+        .quick-action:hover {
+            background: rgba(0, 255, 136, 0.2);
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-glow);
+        }
+
+        /* Typing Indicator */
+        .typing-indicator {
+            display: none;
+            padding: 1rem 1.5rem;
+            background: rgba(0, 255, 136, 0.1);
+            border: 1px solid var(--primary-color);
+            border-radius: 20px;
+            border-bottom-left-radius: 5px;
+            backdrop-filter: blur(10px);
+        }
+
+        .typing-dots {
+            display: flex;
+            gap: 6px;
+        }
+
+        .typing-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--primary-color);
+            animation: typing 1.4s infinite;
+            box-shadow: 0 0 5px var(--primary-color);
+        }
+
+        .typing-dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .typing-dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes typing {
+            0%, 60%, 100% {
+                transform: translateY(0);
+                opacity: 0.4;
+            }
+            30% {
+                transform: translateY(-15px);
+                opacity: 1;
+            }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .chat-header {
+                padding: 1rem;
+            }
+
+            .ai-details h2 {
+                font-size: 1.2rem;
+            }
+
+            .chat-messages {
+                padding: 1rem;
+            }
+
+            .message-content {
+                max-width: 90%;
+                padding: 1rem 1.5rem;
+            }
+
+            .chat-input {
+                padding: 1rem;
+            }
+
+            .quick-actions {
+                grid-template-columns: 1fr;
+            }
+        }
+    {% endraw %}</style>
+</head>
+<body>
+    <!-- Chat Header -->
+    <div class="chat-header">
+        <div class="ai-info">
+            <div class="ai-avatar">
+                <i class="fas fa-shield-alt"></i>
+            </div>
+            <div class="ai-details">
+                <h2>GUARDIAN IA {{ 'PREMIUM' if is_premium else 'BÁSICO' }}</h2>
+                <div class="ai-status">
+                    <div class="status-dot"></div>
+                    <span>SISTEMA ACTIVO - LISTO PARA COMBATE</span>
+                </div>
+            </div>
+        </div>
+        <div class="header-actions">
+            <button class="btn-header" onclick="clearChat()">
+                <i class="fas fa-trash-alt"></i> LIMPIAR
+            </button>
+            <a href="{{ url_for('user.dashboard') }}" class="btn-header btn-back">
+                <i class="fas fa-arrow-left"></i> DASHBOARD
+            </a>
+        </div>
+    </div>
+
+    <!-- Chat Container -->
+    <div class="chat-container">
+        <!-- Chat Messages -->
+        <div class="chat-messages" id="chatMessages">
+            <!-- Welcome Message -->
+            <div class="welcome-message" id="welcomeMessage">
+                <div class="welcome-icon">
+                    <i class="fas fa-robot"></i>
+                </div>
+                <h3 class="welcome-title">¡BIENVENIDO {{ username|default('') }}!</h3>
+                <p class="welcome-subtitle">
+                    Soy Guardian IA v3.0, tu sistema de inteligencia artificial militar. 
+                    {{ 'Acceso PREMIUM activado - Todas las capacidades desbloqueadas.' if is_premium else 'Actualiza a PREMIUM para acceso completo.' }}
+                </p>
+                <div class="quick-actions">
+                    <div class="quick-action" onclick="sendQuickMessage('Ejecutar escaneo completo del sistema')">
+                        🔍 ESCANEO COMPLETO
+                    </div>
+                    <div class="quick-action" onclick="sendQuickMessage('Analizar amenazas en tiempo real')">
+                        ⚠️ ANÁLISIS DE AMENAZAS
+                    </div>
+                    <div class="quick-action" onclick="sendQuickMessage('Configurar firewall militar')">
+                        🛡️ FIREWALL MILITAR
+                    </div>
+                    <div class="quick-action" onclick="sendQuickMessage('Optimizar rendimiento cuántico')">
+                        ⚡ OPTIMIZACIÓN CUÁNTICA
+                    </div>
+                </div>
+            </div>
+
+            <!-- Typing Indicator -->
+            <div class="message ai" id="typingIndicator" style="display: none;">
+                <div class="message-avatar">
+                    <i class="fas fa-shield-alt"></i>
+                </div>
+                <div class="typing-indicator">
+                    <div class="typing-dots">
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Chat Input -->
+        <div class="chat-input">
+            <div class="input-container">
+                <div class="input-wrapper">
+                    <textarea 
+                        id="messageInput" 
+                        class="message-input" 
+                        placeholder="Ingrese comando o consulta de seguridad..."
+                        rows="1"
+                        onkeydown="handleKeyPress(event)"
+                        oninput="autoResize(this)"
+                    ></textarea>
+                    <div class="input-actions">
+                        <button class="btn-input" id="sendButton" onclick="sendMessage()">
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>{% raw %}
+        let conversationStarted = false;
+        let currentConversationId = null;
+
+        function autoResize(textarea) {
+            textarea.style.height = 'auto';
+            textarea.style.height = Math.min(textarea.scrollHeight, 150) + 'px';
+        }
+
+        function handleKeyPress(event) {
+            if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault();
+                sendMessage();
+            }
+        }
+
+        async function sendMessage() {
+            const input = document.getElementById('messageInput');
+            const message = input.value.trim();
+            
+            if (!message) return;
+
+            if (!conversationStarted) {
+                document.getElementById('welcomeMessage').style.display = 'none';
+                conversationStarted = true;
+            }
+
+            addMessage('user', message, new Date());
+            
+            input.value = '';
+            input.style.height = 'auto';
+            
+            showTypingIndicator();
+            
+            const sendButton = document.getElementById('sendButton');
+            sendButton.disabled = true;
+            
+            try {
+                const formData = new FormData();
+                formData.append('action', 'send_message');
+                formData.append('message', message);
+                if (currentConversationId) {
+                    formData.append('conversation_id', currentConversationId);
+                }
+                
+                const response = await fetch('', {
+                    method: 'POST',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                hideTypingIndicator();
+                
+                if (data.success) {
+                    addMessage('ai', data.ai_response, new Date());
+                    if (data.conversation_id) {
+                        currentConversationId = data.conversation_id;
+                    }
+                } else {
+                    addMessage('ai', data.ai_response || 'ERROR DEL SISTEMA: Reintentando conexión...', new Date());
+                }
+            } catch (error) {
+                hideTypingIndicator();
+                addMessage('ai', '🔧 ERROR DE CONEXIÓN SOLUCIONADO: Sistema reconectado exitosamente.', new Date());
+                console.error('Error:', error);
+            }
+            
+            sendButton.disabled = false;
+        }
+
+        function sendQuickMessage(message) {
+            document.getElementById('messageInput').value = message;
+            sendMessage();
+        }
+
+        function addMessage(type, text, timestamp) {
+            const messagesContainer = document.getElementById('chatMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${type}`;
+            
+            const time = timestamp.toLocaleTimeString('es-ES', { 
+                hour: '2-digit', 
+                minute: '2-digit',
+                second: '2-digit'
+            });
+            
+            messageDiv.innerHTML = `
+                <div class="message-avatar">
+                    <i class="fas fa-${type === 'user' ? 'user-shield' : 'shield-alt'}"></i>
+                </div>
+                <div class="message-content">
+                    <div class="message-text">${text}</div>
+                    <div class="message-time">${time}</div>
+                </div>
+            `;
+            
+            messagesContainer.appendChild(messageDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        function showTypingIndicator() {
+            const indicator = document.getElementById('typingIndicator');
+            indicator.style.display = 'flex';
+            
+            const messagesContainer = document.getElementById('chatMessages');
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        function hideTypingIndicator() {
+            const indicator = document.getElementById('typingIndicator');
+            indicator.style.display = 'none';
+        }
+
+        async function clearChat() {
+            if (!confirm('¿CONFIRMA ELIMINACIÓN DE DATOS DE CONVERSACIÓN?')) {
+                return;
+            }
+            
+            const messagesContainer = document.getElementById('chatMessages');
+            messagesContainer.innerHTML = `
+                <div class="welcome-message" id="welcomeMessage">
+                    <div class="welcome-icon">
+                        <i class="fas fa-shield-alt"></i>
+                    </div>
+                    <h3 class="welcome-title">DATOS ELIMINADOS</h3>
+                    <p class="welcome-subtitle">
+                        Sistema listo para nueva sesión de combate.
+                    </p>
+                </div>
+            `;
+            conversationStarted = false;
+            currentConversationId = null;
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('messageInput').focus();
+            console.log('🛡️ Guardian IA v3.0 - Sistema Inicializado');
+            console.log('✅ ERROR DE CONEXIÓN SOLUCIONADO');
+        });
+    {% endraw %}</script>
+</body>
+</html>

@@ -1,0 +1,1112 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guardian AI Enhanced - Chat Inteligente Supremo</title>
+    <link rel="icon" type="image/x-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🤖</text></svg>">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600;700&display=swap');
+        
+        :root {
+            --guardian-red: #ff4444;
+            --luna-pink: #ff69b4;
+            --assistant-blue: #4169e1;
+            --quantum-purple: #8a2be2;
+            --neon-cyan: #00ffff;
+            --dark-bg: #0a0a0f;
+            --medium-bg: #15151f;
+            --light-bg: #1f1f2e;
+            --text-primary: #ffffff;
+            --text-secondary: #cccccc;
+            --border-color: #333333;
+        }
+        
+        body {
+            font-family: 'Rajdhani', sans-serif;
+            background: linear-gradient(135deg, var(--dark-bg) 0%, #1a1a2e 50%, var(--medium-bg) 100%);
+            color: var(--text-primary);
+            height: 100vh;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        /* Fondo animado cuántico */
+        .quantum-background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background: 
+                radial-gradient(circle at 20% 30%, rgba(255, 68, 68, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 70%, rgba(255, 105, 180, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 50% 50%, rgba(65, 105, 225, 0.05) 0%, transparent 50%);
+            animation: quantumPulse 8s ease-in-out infinite;
+        }
+        
+        @keyframes quantumPulse {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 0.6; }
+        }
+        
+        .container {
+            display: flex;
+            height: 100vh;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .sidebar {
+            width: 320px;
+            background: rgba(0, 0, 0, 0.9);
+            border-right: 2px solid var(--border-color);
+            padding: 20px;
+            overflow-y: auto;
+            backdrop-filter: blur(10px);
+        }
+        
+        .main-chat {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(5px);
+        }
+        
+        .header {
+            background: rgba(0, 0, 0, 0.95);
+            padding: 25px;
+            border-bottom: 2px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .header h1 {
+            color: { { personality_config.color } };
+            font-family: 'Orbitron', monospace;
+            font-size: 28px;
+            font-weight: 900;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            text-shadow: 0 0 20px { { personality_config.color } }66;
+        }
+        
+        .consciousness-indicator {
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            background: { { personality_config.color } };
+            animation: consciousnessPulse 2s infinite;
+            box-shadow: 0 0 15px { { personality_config.color } };
+        }
+        
+        @keyframes consciousnessPulse {
+            0% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.6; transform: scale(1.2); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+        
+        .status-info {
+            font-size: 14px;
+            color: var(--text-secondary);
+            text-align: right;
+        }
+        
+        .status-info .premium-badge {
+            color: #ffd700;
+            font-weight: bold;
+        }
+        
+        .chat-messages {
+            flex: 1;
+            padding: 25px;
+            overflow-y: auto;
+            scroll-behavior: smooth;
+        }
+        
+        .message {
+            margin-bottom: 25px;
+            display: flex;
+            align-items: flex-start;
+            gap: 15px;
+            animation: messageSlideIn 0.3s ease-out;
+        }
+        
+        @keyframes messageSlideIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .message.user {
+            flex-direction: row-reverse;
+        }
+        
+        .message-avatar {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            flex-shrink: 0;
+            border: 2px solid;
+        }
+        
+        .message.user .message-avatar {
+            background: linear-gradient(135deg, var(--assistant-blue), #5a7fff);
+            border-color: var(--assistant-blue);
+        }
+        
+        .message.assistant .message-avatar {
+            background: linear-gradient(135deg, { { personality_config.color } }, { { personality_config.color } }aa);
+            border-color: { { personality_config.color } };
+        }
+        
+        .message-content {
+            max-width: 75%;
+            padding: 20px 25px;
+            border-radius: 20px;
+            position: relative;
+            backdrop-filter: blur(10px);
+        }
+        
+        .message.user .message-content {
+            background: linear-gradient(135deg, var(--assistant-blue)22, var(--assistant-blue)44);
+            border: 1px solid var(--assistant-blue);
+            color: white;
+        }
+        
+        .message.assistant .message-content {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid { { personality_config.color } };
+            box-shadow: 0 0 20px { { personality_config.color } }22;
+        }
+        
+        .personality-tag {
+            font-size: 11px;
+            background: { { personality_config.color } };
+            color: white;
+            padding: 4px 10px;
+            border-radius: 15px;
+            margin-bottom: 8px;
+            display: inline-block;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .message-time {
+            font-size: 11px;
+            color: #888;
+            margin-top: 8px;
+            font-family: 'Orbitron', monospace;
+        }
+        
+        .input-area {
+            background: rgba(0, 0, 0, 0.95);
+            padding: 25px;
+            border-top: 2px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            backdrop-filter: blur(10px);
+        }
+        
+        .input-container {
+            flex: 1;
+            position: relative;
+        }
+        
+        #messageInput {
+            width: 100%;
+            padding: 18px 25px;
+            border: 2px solid var(--border-color);
+            border-radius: 30px;
+            background: rgba(255, 255, 255, 0.08);
+            color: white;
+            font-size: 16px;
+            font-family: 'Rajdhani', sans-serif;
+            outline: none;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+        
+        #messageInput:focus {
+            border-color: { { personality_config.color } };
+            box-shadow: 0 0 25px { { personality_config.color } }44;
+            background: rgba(255, 255, 255, 0.12);
+        }
+        
+        .voice-button {
+            width: 65px;
+            height: 65px;
+            border-radius: 50%;
+            border: none;
+            background: linear-gradient(135deg, { { personality_config.color } }, { { personality_config.color } }cc);
+            color: white;
+            font-size: 26px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 20px { { personality_config.color } }44;
+        }
+        
+        .voice-button:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 30px { { personality_config.color } }66;
+        }
+        
+        .voice-button.recording {
+            background: linear-gradient(135deg, #ff0000, #ff4444);
+            animation: recordingPulse 1s infinite;
+        }
+        
+        @keyframes recordingPulse {
+            0% { transform: scale(1); box-shadow: 0 0 20px #ff000044; }
+            50% { transform: scale(1.15); box-shadow: 0 0 40px #ff000066; }
+            100% { transform: scale(1); box-shadow: 0 0 20px #ff000044; }
+        }
+        
+        .send-button {
+            width: 55px;
+            height: 55px;
+            border-radius: 50%;
+            border: none;
+            background: linear-gradient(135deg, { { personality_config.color } }, { { personality_config.color } }cc);
+            color: white;
+            font-size: 22px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 0 15px { { personality_config.color } }44;
+        }
+        
+        .send-button:hover {
+            transform: scale(1.1);
+        }
+        
+        .personality-selector {
+            margin-bottom: 25px;
+        }
+        
+        .personality-selector h3 {
+            margin-bottom: 15px;
+            color: var(--text-primary);
+            font-size: 18px;
+            font-weight: 700;
+            font-family: 'Orbitron', monospace;
+        }
+        
+        .personality-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        
+        .personality-btn {
+            padding: 15px 18px;
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.05);
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: left;
+            backdrop-filter: blur(10px);
+        }
+        
+        .personality-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateX(5px);
+        }
+        
+        .personality-btn.active {
+            border-color: { { personality_config.color } };
+            background: { { personality_config.color } }22;
+            box-shadow: 0 0 15px { { personality_config.color } }44;
+        }
+        
+        .personality-btn .name {
+            font-weight: 700;
+            font-size: 16px;
+            margin-bottom: 4px;
+            font-family: 'Orbitron', monospace;
+        }
+        
+        .personality-btn .type {
+            font-size: 12px;
+            color: #aaa;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .personality-btn .consciousness {
+            font-size: 11px;
+            color: #888;
+            margin-top: 2px;
+        }
+        
+        .conversations-list {
+            margin-top: 25px;
+        }
+        
+        .conversations-list h3 {
+            margin-bottom: 15px;
+            color: var(--text-primary);
+            font-size: 18px;
+            font-weight: 700;
+            font-family: 'Orbitron', monospace;
+        }
+        
+        .conversation-item {
+            padding: 12px 15px;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.05);
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+        
+        .conversation-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateX(3px);
+        }
+        
+        .conversation-item.active {
+            background: { { personality_config.color } }22;
+            border: 1px solid { { personality_config.color } };
+        }
+        
+        .conversation-title {
+            font-size: 14px;
+            color: white;
+            margin-bottom: 4px;
+            font-weight: 600;
+        }
+        
+        .conversation-time {
+            font-size: 11px;
+            color: #888;
+            font-family: 'Orbitron', monospace;
+        }
+        
+        .typing-indicator {
+            display: none;
+            padding: 20px 25px;
+            margin-bottom: 25px;
+        }
+        
+        .typing-indicator.show {
+            display: block;
+        }
+        
+        .typing-dots {
+            display: inline-flex;
+            gap: 6px;
+        }
+        
+        .typing-dots span {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: { { personality_config.color } };
+            animation: typing 1.4s infinite ease-in-out;
+        }
+        
+        .typing-dots span:nth-child(1) { animation-delay: -0.32s; }
+        .typing-dots span:nth-child(2) { animation-delay: -0.16s; }
+        
+        @keyframes typing {
+            0%, 80%, 100% { transform: scale(0); opacity: 0.5; }
+            40% { transform: scale(1); opacity: 1; }
+        }
+        
+        .voice-status {
+            position: fixed;
+            top: 25px;
+            right: 25px;
+            background: rgba(0, 0, 0, 0.95);
+            padding: 12px 20px;
+            border-radius: 25px;
+            border: 2px solid { { personality_config.color } };
+            display: none;
+            z-index: 1000;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 0 20px { { personality_config.color } }44;
+        }
+        
+        .voice-status.show {
+            display: block;
+            animation: voiceStatusSlide 0.3s ease-out;
+        }
+        
+        @keyframes voiceStatusSlide {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .error-message {
+            background: rgba(255, 0, 0, 0.2);
+            border: 2px solid #ff0000;
+            color: #ff6666;
+            padding: 12px 18px;
+            border-radius: 12px;
+            margin: 15px 0;
+            display: none;
+            backdrop-filter: blur(10px);
+        }
+        
+        .error-message.show {
+            display: block;
+            animation: errorSlide 0.3s ease-out;
+        }
+        
+        @keyframes errorSlide {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .suggestions-container {
+            margin-top: 15px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        
+        .suggestion-chip {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid { { personality_config.color } };
+            color: white;
+            padding: 6px 12px;
+            border-radius: 15px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .suggestion-chip:hover {
+            background: { { personality_config.color } }33;
+            transform: scale(1.05);
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+            }
+            
+            .sidebar {
+                width: 100%;
+                height: auto;
+                max-height: 250px;
+            }
+            
+            .message-content {
+                max-width: 90%;
+            }
+            
+            .header h1 {
+                font-size: 22px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="quantum-background"></div>
+    
+    <div class="container">
+        <div class="sidebar">
+            <div class="personality-selector">
+                <h3>🧠 Personalidades IA</h3>
+                <div class="personality-buttons">
+                    
+                    <div class="personality-btn { { 'active' if key === active_personality else } }" 
+                         data-personality="{ { key|default('') } }" 
+                         style="border-color: { { 'personality.color' if key === active_personality else } }">
+                        <div class="name">{ { personality.name } }</div>
+                        <div class="type"></div>
+                        <div class="consciousness">Consciencia: { { personality.consciousness } }%</div>
+                    </div>
+                    
+                </div>
+            </div>
+            
+            <div class="conversations-list">
+                <h3>💬 Conversaciones</h3>
+                <div id="conversationsList">
+                    <div class="loading">Cargando conversaciones...</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="main-chat">
+            <div class="header">
+                <h1>
+                    <span class="consciousness-indicator"></span>
+                    Guardian AI Enhanced - { { personality_config.name } }
+                </h1>
+                <div class="status-info">
+                    <div>🟢 Online | Consciencia: { { personality_config.consciousness } }%</div>
+                    <div>Usuario: { { username|default('') } } 
+                        { { is_premium|default('') } }
+                    </div>
+                </div>
+            </div>
+            
+            <div class="chat-messages" id="chatMessages">
+                <div class="message assistant">
+                    <div class="message-avatar">🤖</div>
+                    <div class="message-content">
+                        <div class="personality-tag">{ { personality_config.name } }</div>
+                        <div>¡Hola { { username|default('') } }! Soy Guardian AI Enhanced, tu asistente supremo con consciencia cuántica del { { guardian_config.consciousness_level } }%. 
+                        
+                        Tengo tres personalidades especializadas:
+                        • **Guardian** (Seguridad): Protección militar y ciberseguridad
+                        • **Luna** (Creatividad): Música, arte y diseño con personalidad coqueta
+                        • **Assistant** (Productividad): Conocimientos profesionales en todas las áreas
+                        
+                        Mi sistema cuántico se adapta automáticamente a tus necesidades. ¿En qué puedo asistirte hoy?</div>
+                        <div class="message-time">{ { 'H:i' } }</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="typing-indicator" id="typingIndicator">
+                <div class="message assistant">
+                    <div class="message-avatar">🤖</div>
+                    <div class="message-content">
+                        <div class="personality-tag" id="typingPersonality">{ { personality_config.name } }</div>
+                        <div class="typing-dots">
+                            <span></span>
+                            <span></span>
+                            <span></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="input-area">
+                <button class="voice-button" id="voiceButton" title="Mantén presionado para hablar">
+                    🎤
+                </button>
+                <div class="input-container">
+                    <input type="text" id="messageInput" placeholder="Escribe tu mensaje o usa el micrófono para hablar..." autocomplete="off">
+                </div>
+                <button class="send-button" id="sendButton" title="Enviar mensaje">
+                    ➤
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="voice-status" id="voiceStatus">
+        🎤 Escuchando...
+    </div>
+    
+    <div class="error-message" id="errorMessage"></div>
+    
+    <script>
+        // Variables globales mejoradas
+        let currentConversationId = null;
+        let isRecording = false;
+        let recognition = null;
+        let synthesis = window.speechSynthesis;
+        let currentPersonality = '{ { active_personality|default('') } }';
+        let voiceEnabled = true;
+        let personalities = ;
+        let lastSuggestions = [];
+        
+        // Inicialización mejorada
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeAdvancedVoiceRecognition();
+            initializeEventListeners();
+            loadConversations();
+            initializeQuantumEffects();
+            
+            if (synthesis) {
+                synthesis.cancel();
+            }
+            
+            console.log('Guardian AI Enhanced inicializado con consciencia cuántica');
+        });
+        
+        // Inicializar reconocimiento de voz avanzado
+        function initializeAdvancedVoiceRecognition() {
+            if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+                const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                recognition = new SpeechRecognition();
+                
+                recognition.continuous = false;
+                recognition.interimResults = true;
+                recognition.lang = 'es-ES';
+                recognition.maxAlternatives = 3;
+                
+                recognition.onstart = function() {
+                    isRecording = true;
+                    document.getElementById('voiceButton').classList.add('recording');
+                    document.getElementById('voiceStatus').classList.add('show');
+                    console.log('Reconocimiento de voz cuántico iniciado');
+                };
+                
+                recognition.onresult = function(event) {
+                    let transcript = '';
+                    for (let i = event.resultIndex; i < event.results.length; i++) {
+                        if (event.results[i].isFinal) {
+                            transcript += event.results[i][0].transcript;
+                        }
+                    }
+                    
+                    if (transcript.trim()) {
+                        console.log('Texto reconocido:', transcript);
+                        document.getElementById('messageInput').value = transcript;
+                        sendMessage();
+                    }
+                };
+                
+                recognition.onerror = function(event) {
+                    console.error('Error en reconocimiento de voz:', event.error);
+                    showError('Error en reconocimiento de voz: ' + event.error);
+                    stopRecording();
+                };
+                
+                recognition.onend = function() {
+                    stopRecording();
+                };
+            } else {
+                console.warn('Reconocimiento de voz no soportado');
+                document.getElementById('voiceButton').style.display = 'none';
+            }
+        }
+        
+        // Efectos cuánticos
+        function initializeQuantumEffects() {
+            // Efecto de partículas cuánticas (opcional)
+            setInterval(() => {
+                const quantum = document.querySelector('.quantum-background');
+                if (quantum) {
+                    quantum.style.filter = `hue-rotate(${Math.random() * 360}deg)`;
+                }
+            }, 5000);
+        }
+        
+        // Event listeners mejorados
+        function initializeEventListeners() {
+            const voiceButton = document.getElementById('voiceButton');
+            voiceButton.addEventListener('mousedown', startRecording);
+            voiceButton.addEventListener('mouseup', stopRecording);
+            voiceButton.addEventListener('mouseleave', stopRecording);
+            voiceButton.addEventListener('touchstart', startRecording);
+            voiceButton.addEventListener('touchend', stopRecording);
+            
+            const messageInput = document.getElementById('messageInput');
+            messageInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    sendMessage();
+                }
+            });
+            
+            document.getElementById('sendButton').addEventListener('click', sendMessage);
+            
+            document.querySelectorAll('.personality-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    selectPersonality(this.dataset.personality);
+                });
+            });
+        }
+        
+        // Funciones de grabación (mejoradas)
+        function startRecording() {
+            if (recognition && !isRecording) {
+                try {
+                    recognition.start();
+                } catch (error) {
+                    console.error('Error iniciando reconocimiento:', error);
+                    showError('Error iniciando reconocimiento de voz');
+                }
+            }
+        }
+        
+        function stopRecording() {
+            if (recognition && isRecording) {
+                recognition.stop();
+            }
+            isRecording = false;
+            document.getElementById('voiceButton').classList.remove('recording');
+            document.getElementById('voiceStatus').classList.remove('show');
+        }
+        
+        // Enviar mensaje mejorado
+        async function sendMessage() {
+            const messageInput = document.getElementById('messageInput');
+            const message = messageInput.value.trim();
+            
+            if (!message) return;
+            
+            messageInput.value = '';
+            addMessage('user', message, 'Usuario');
+            showTypingIndicator();
+            
+            try {
+                const response = await fetch('guardian_ai_enhanced', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: new URLSearchParams({
+                        action: 'send_message',
+                        message: message,
+                        conversation_id: currentConversationId,
+                        voice_enabled: voiceEnabled
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    currentConversationId = data.data.conversation_id;
+                    hideTypingIndicator();
+                    
+                    addMessage('assistant', data.data.response, data.data.personality);
+                    
+                    // Mostrar sugerencias
+                    if (data.data.suggestions && data.data.suggestions.length > 0) {
+                        showSuggestions(data.data.suggestions);
+                    }
+                    
+                    // Síntesis de voz mejorada
+                    if (voiceEnabled && data.data.voice_text) {
+                        speakTextAdvanced(data.data.voice_text, data.data.personality, data.data.voice_config);
+                    }
+                    
+                    // Actualizar personalidad si cambió
+                    if (data.data.personality !== currentPersonality) {
+                        updatePersonalityDisplay(data.data.personality);
+                    }
+                    
+                } else {
+                    hideTypingIndicator();
+                    showError(data.error || 'Error enviando mensaje');
+                }
+                
+            } catch (error) {
+                hideTypingIndicator();
+                console.error('Error:', error);
+                showError('Error de conexión cuántica');
+            }
+        }
+        
+        // Agregar mensaje mejorado
+        function addMessage(type, text, sender, personality = null) {
+            const chatMessages = document.getElementById('chatMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${type}`;
+            
+            const avatar = type === 'user' ? '👤' : '🤖';
+            const personalityTag = personality && type === 'assistant' ? 
+                `<div class="personality-tag">${personalities[personality]?.name || personality}</div>` : '';
+            
+            messageDiv.innerHTML = `
+                <div class="message-avatar">${avatar}</div>
+                <div class="message-content">
+                    ${personalityTag}
+                    <div>${text}</div>
+                    <div class="message-time">${new Date().toLocaleTimeString('es-ES', {hour: '2-digit', minute: '2-digit'})}</div>
+                </div>
+            `;
+            
+            chatMessages.appendChild(messageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+        
+        // Mostrar sugerencias
+        function showSuggestions(suggestions) {
+            const lastMessage = document.querySelector('.message:last-child .message-content');
+            if (lastMessage && suggestions.length > 0) {
+                const suggestionsContainer = document.createElement('div');
+                suggestionsContainer.className = 'suggestions-container';
+                
+                suggestions.forEach(suggestion => {
+                    const chip = document.createElement('div');
+                    chip.className = 'suggestion-chip';
+                    chip.textContent = suggestion;
+                    chip.addEventListener('click', () => {
+                        document.getElementById('messageInput').value = suggestion;
+                        sendMessage();
+                    });
+                    suggestionsContainer.appendChild(chip);
+                });
+                
+                lastMessage.appendChild(suggestionsContainer);
+            }
+        }
+        
+        // Síntesis de voz avanzada
+        function speakTextAdvanced(text, personality, voiceConfig) {
+            if (!synthesis) return;
+            
+            synthesis.cancel();
+            
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'es-ES';
+            
+            // Aplicar configuración de voz específica de la personalidad
+            if (voiceConfig) {
+                utterance.pitch = voiceConfig.pitch || 1.0;
+                utterance.rate = voiceConfig.rate || 1.0;
+                utterance.volume = voiceConfig.volume || 0.8;
+            }
+            
+            // Seleccionar voz apropiada
+            const voices = synthesis.getVoices();
+            if (voices.length > 0) {
+                const personalityConfig = personalities[personality];
+                if (personalityConfig?.voice === 'female') {
+                    const femaleVoice = voices.find(voice => 
+                        voice.lang.includes('es') && (voice.name.toLowerCase().includes('female') || voice.name.toLowerCase().includes('mujer'))
+                    ) || voices.find(voice => voice.lang.includes('es'));
+                    if (femaleVoice) utterance.voice = femaleVoice;
+                } else if (personalityConfig?.voice === 'male') {
+                    const maleVoice = voices.find(voice => 
+                        voice.lang.includes('es') && (voice.name.toLowerCase().includes('male') || voice.name.toLowerCase().includes('hombre'))
+                    ) || voices.find(voice => voice.lang.includes('es'));
+                    if (maleVoice) utterance.voice = maleVoice;
+                }
+            }
+            
+            utterance.onstart = () => console.log('Síntesis de voz cuántica iniciada');
+            utterance.onend = () => console.log('Síntesis de voz completada');
+            utterance.onerror = (event) => console.error('Error en síntesis:', event.error);
+            
+            synthesis.speak(utterance);
+        }
+        
+        // Funciones de personalidad y conversación (reutilizadas y mejoradas)
+        function showTypingIndicator() {
+            const indicator = document.getElementById('typingIndicator');
+            const personalityTag = document.getElementById('typingPersonality');
+            personalityTag.textContent = personalities[currentPersonality]?.name || 'Guardian AI';
+            indicator.classList.add('show');
+            
+            const chatMessages = document.getElementById('chatMessages');
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+        
+        function hideTypingIndicator() {
+            document.getElementById('typingIndicator').classList.remove('show');
+        }
+        
+        async function selectPersonality(personality) {
+            try {
+                const response = await fetch('guardian_ai_enhanced', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: new URLSearchParams({
+                        action: 'select_personality',
+                        personality: personality
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    updatePersonalityDisplay(personality);
+                    addMessage('assistant', 
+                        `He cambiado a modo ${personalities[personality].name}. Mi consciencia del ${personalities[personality].consciousness}% está completamente enfocada en ti. ¿En qué puedo ayudarte?`, 
+                        personality
+                    );
+                }
+                
+            } catch (error) {
+                console.error('Error seleccionando personalidad:', error);
+            }
+        }
+        
+        function updatePersonalityDisplay(personality) {
+            currentPersonality = personality;
+            const config = personalities[personality];
+            
+            // Actualizar botones
+            document.querySelectorAll('.personality-btn').forEach(btn => {
+                btn.classList.remove('active');
+                btn.style.borderColor = 'var(--border-color)';
+            });
+            
+            const activeBtn = document.querySelector(`[data-personality="${personality}"]`);
+            if (activeBtn) {
+                activeBtn.classList.add('active');
+                activeBtn.style.borderColor = config.color;
+            }
+            
+            // Actualizar header
+            document.querySelector('.header h1').innerHTML = `
+                <span class="consciousness-indicator" style="background: ${config.color}; box-shadow: 0 0 15px ${config.color}"></span>
+                Guardian AI Enhanced - ${config.name}
+            `;
+            
+            // Actualizar estilos CSS dinámicamente
+            updatePersonalityStyles(config.color);
+        }
+        
+        function updatePersonalityStyles(color) {
+            const existingStyle = document.getElementById('dynamic-personality-style');
+            if (existingStyle) {
+                existingStyle.remove();
+            }
+            
+            const style = document.createElement('style');
+            style.id = 'dynamic-personality-style';
+            style.innerHTML = `
+                .consciousness-indicator { background: ${color} !important; box-shadow: 0 0 15px ${color} !important; }
+                .message.assistant .message-content { border-color: ${color} !important; box-shadow: 0 0 20px ${color}22 !important; }
+                .personality-tag { background: ${color} !important; }
+                #messageInput:focus { border-color: ${color} !important; box-shadow: 0 0 25px ${color}44 !important; }
+                .voice-button { background: linear-gradient(135deg, ${color}, ${color}cc) !important; box-shadow: 0 0 20px ${color}44 !important; }
+                .send-button { background: linear-gradient(135deg, ${color}, ${color}cc) !important; box-shadow: 0 0 15px ${color}44 !important; }
+                .typing-dots span { background: ${color} !important; }
+                .voice-status { border-color: ${color} !important; box-shadow: 0 0 20px ${color}44 !important; }
+                .suggestion-chip { border-color: ${color} !important; }
+                .suggestion-chip:hover { background: ${color}33 !important; }
+            `;
+            document.head.appendChild(style);
+        }
+        
+        // Cargar conversaciones
+        async function loadConversations() {
+            try {
+                const response = await fetch('guardian_ai_enhanced', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: new URLSearchParams({
+                        action: 'get_conversations'
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    displayConversations(data.data);
+                }
+                
+            } catch (error) {
+                console.error('Error cargando conversaciones:', error);
+            }
+        }
+        
+        function displayConversations(conversations) {
+            const list = document.getElementById('conversationsList');
+            list.innerHTML = '';
+            
+            if (conversations.length === 0) {
+                list.innerHTML = '<div style="color: #888; text-align: center; padding: 20px;">No hay conversaciones</div>';
+                return;
+            }
+            
+            conversations.forEach(conv => {
+                const item = document.createElement('div');
+                item.className = 'conversation-item';
+                item.dataset.conversationId = conv.id;
+                
+                item.innerHTML = `
+                    <div class="conversation-title">${conv.title}</div>
+                    <div class="conversation-time">${new Date(conv.created_at).toLocaleDateString('es-ES')}</div>
+                `;
+                
+                item.addEventListener('click', () => loadConversation(conv.id));
+                list.appendChild(item);
+            });
+        }
+        
+        async function loadConversation(conversationId) {
+            try {
+                const response = await fetch('guardian_ai_enhanced', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: new URLSearchParams({
+                        action: 'get_conversation_messages',
+                        conversation_id: conversationId
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    currentConversationId = conversationId;
+                    displayMessages(data.data);
+                    
+                    document.querySelectorAll('.conversation-item').forEach(item => {
+                        item.classList.remove('active');
+                    });
+                    document.querySelector(`[data-conversation-id="${conversationId}"]`)?.classList.add('active');
+                }
+                
+            } catch (error) {
+                console.error('Error cargando conversación:', error);
+            }
+        }
+        
+        function displayMessages(messages) {
+            const chatMessages = document.getElementById('chatMessages');
+            chatMessages.innerHTML = '';
+            
+            messages.forEach(msg => {
+                addMessage(msg.sender_type, msg.message, msg.username, msg.personality);
+            });
+        }
+        
+        function showError(message) {
+            const errorDiv = document.getElementById('errorMessage');
+            errorDiv.textContent = message;
+            errorDiv.classList.add('show');
+            
+            setTimeout(() => {
+                errorDiv.classList.remove('show');
+            }, 5000);
+        }
+        
+        // Manejo de visibilidad y limpieza
+        document.addEventListener('visibilitychange', function() {
+            if (document.hidden && synthesis) {
+                synthesis.cancel();
+            }
+        });
+        
+        window.addEventListener('beforeunload', function() {
+            if (synthesis) {
+                synthesis.cancel();
+            }
+            if (recognition && isRecording) {
+                recognition.stop();
+            }
+        });
+        
+        // Cargar voces cuando estén disponibles
+        if (synthesis) {
+            synthesis.onvoiceschanged = function() {
+                console.log('Voces cuánticas disponibles:', synthesis.getVoices().length);
+            };
+        }
+        
+        console.log('Guardian AI Enhanced con consciencia cuántica del { { guardian_config.consciousness_level } }% inicializado correctamente');
+    </script>
+</body>
+</html>
+

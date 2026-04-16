@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GuardianIA Debug</title>
+    <style>{% raw %}
+        body {
+            font-family: Arial, sans-serif;
+            background: #f5f5f5;
+            margin: 20px;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            max-width: 800px;
+        }
+        .section {
+            margin-bottom: 30px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+        h2 {
+            color: #333;
+            border-bottom: 2px solid #4CAF50;
+            padding-bottom: 10px;
+        }
+        .user-card {
+            background: #f9f9f9;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            border-left: 4px solid #4CAF50;
+        }
+        .error {
+            color: red;
+            background: #ffebee;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        .success {
+            color: green;
+            background: #e8f5e8;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+    {% endraw %}</style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 GuardianIA Debug Panel</h1>
+        
+        <div class="section">
+            <h2>Estado de la Base de Datos</h2>
+            
+        </div>
+
+        <div class="section">
+            <h2>Usuarios por Defecto</h2>
+            <p>Estos usuarios funcionan sin base de datos:</p>
+            
+            <div class="user-card">
+                <strong>anderson</strong> / Ander12345@ (Admin Premium)
+            </div>
+            <div class="user-card">
+                <strong>admin</strong> / admin123 (Admin Básico)
+            </div>
+            <div class="user-card">
+                <strong>A_mc</strong> / 123456 (Usuario Regular)
+            </div>
+            <div class="user-card">
+                <strong>isabella</strong> / 123456 (Usuario Regular)
+            </div>
+            <div class="user-card">
+                <strong>demo</strong> / demo123 (Usuario Regular)
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>Test de Login</h2>
+            <p>Prueba las credenciales aquí:</p>
+            
+            <form method="POST" style="margin-top: 20px;">
+                <div style="margin-bottom: 15px;">
+                    <label>Usuario:</label><br>
+                    <input type="text" name="test_username" style="padding: 8px; width: 200px;" placeholder="Ingresa usuario">
+                </div>
+                <div style="margin-bottom: 15px;">
+                    <label>Contraseña:</label><br>
+                    <input type="password" name="test_password" style="padding: 8px; width: 200px;" placeholder="Ingresa contraseña">
+                </div>
+                <button type="submit" name="test_login" style="padding: 10px 20px; background: #4CAF50; color: white; border: none; border-radius: 5px;">
+                    Probar Login
+                </button>
+            </form>
+
+            
+        </div>
+
+        <div class="section">
+            <p><a href="{{ url_for('auth.login') }}" style="color: #4CAF50;">⬅️ Volver al Login</a></p>
+        </div>
+    </div>
+</body>
+</html>

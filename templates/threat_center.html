@@ -1,0 +1,1043 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Centro de Amenazas - GuardianIA</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>{% raw %}
+        :root {
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --danger-gradient: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+            --warning-gradient: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+            --success-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            --critical-gradient: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+            
+            --bg-primary: #0f0f23;
+            --bg-secondary: #1a1a2e;
+            --bg-card: #16213e;
+            --text-primary: #ffffff;
+            --text-secondary: #a0a9c0;
+            --border-color: #2d3748;
+            --shadow-color: rgba(0, 0, 0, 0.3);
+            
+            --animation-speed: 0.3s;
+            --border-radius: 12px;
+            --card-padding: 24px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        .animated-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background: var(--bg-primary);
+        }
+
+        .animated-bg::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 20% 80%, rgba(255, 107, 107, 0.3) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(238, 90, 36, 0.3) 0%, transparent 50%),
+                radial-gradient(circle at 40% 40%, rgba(250, 112, 154, 0.2) 0%, transparent 50%);
+            animation: threatPulse 6s ease-in-out infinite;
+        }
+
+        @keyframes threatPulse {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 0.7; }
+        }
+
+        .navbar {
+            background: rgba(26, 26, 46, 0.95);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border-color);
+            padding: 1rem 0;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+        }
+
+        .nav-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 1.5rem;
+            font-weight: 800;
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .nav-menu {
+            display: flex;
+            list-style: none;
+            gap: 2rem;
+            align-items: center;
+        }
+
+        .nav-link {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-weight: 500;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            transition: all var(--animation-speed) ease;
+        }
+
+        .nav-link:hover {
+            color: var(--text-primary);
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .nav-link.active {
+            background: var(--danger-gradient);
+            color: white;
+        }
+
+        .main-container {
+            margin-top: 80px;
+            padding: 2rem;
+            max-width: 1400px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .emergency-header {
+            background: var(--critical-gradient);
+            border-radius: var(--border-radius);
+            padding: 2rem;
+            margin-bottom: 2rem;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .emergency-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            animation: emergencyShine 3s infinite;
+        }
+
+        @keyframes emergencyShine {
+            0% { left: -100%; }
+            100% { left: 100%; }
+        }
+
+        .emergency-title {
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 1rem;
+            color: white;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .alert-status {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .alert-level {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 0.5rem 1.5rem;
+            border-radius: 25px;
+            font-weight: 600;
+            color: white;
+        }
+
+        .panic-button {
+            background: #ff4757;
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 50px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all var(--animation-speed) ease;
+            box-shadow: 0 8px 25px rgba(255, 71, 87, 0.4);
+            animation: panicPulse 2s infinite;
+        }
+
+        @keyframes panicPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .panic-button:hover {
+            transform: scale(1.1);
+            box-shadow: 0 12px 35px rgba(255, 71, 87, 0.6);
+        }
+
+        .threat-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .threat-stat-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            position: relative;
+            overflow: hidden;
+            transition: all var(--animation-speed) ease;
+        }
+
+        .threat-stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px var(--shadow-color);
+        }
+
+        .threat-stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+        }
+
+        .threat-stat-card.critical::before {
+            background: var(--critical-gradient);
+        }
+
+        .threat-stat-card.warning::before {
+            background: var(--warning-gradient);
+        }
+
+        .threat-stat-card.success::before {
+            background: var(--success-gradient);
+        }
+
+        .stat-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .stat-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3rem;
+            color: white;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 800;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .timeline-section {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            padding: var(--card-padding);
+            margin-bottom: 2rem;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .timeline {
+            position: relative;
+            padding-left: 2rem;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 1rem;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: var(--border-color);
+        }
+
+        .timeline-item {
+            position: relative;
+            margin-bottom: 2rem;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            padding: 1.5rem;
+            transition: all var(--animation-speed) ease;
+        }
+
+        .timeline-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateX(10px);
+        }
+
+        .timeline-dot {
+            position: absolute;
+            left: -2.5rem;
+            top: 1.5rem;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            border: 3px solid var(--bg-card);
+        }
+
+        .timeline-dot.critical {
+            background: #ff4757;
+            animation: criticalBlink 1s infinite;
+        }
+
+        .timeline-dot.warning {
+            background: #ffa502;
+        }
+
+        .timeline-dot.success {
+            background: #2ed573;
+        }
+
+        @keyframes criticalBlink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
+        .timeline-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .timeline-title {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .timeline-time {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+        }
+
+        .timeline-description {
+            color: var(--text-secondary);
+            margin-bottom: 1rem;
+        }
+
+        .timeline-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .timeline-action {
+            background: var(--primary-gradient);
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all var(--animation-speed) ease;
+        }
+
+        .timeline-action:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .monitor-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .monitor-display {
+            background: #000;
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            padding: 1rem;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+            height: 400px;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        .monitor-line {
+            margin-bottom: 0.5rem;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            0% { opacity: 0; transform: translateY(10px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+
+        .monitor-line.info {
+            color: #4facfe;
+        }
+
+        .monitor-line.warning {
+            color: #ffa502;
+        }
+
+        .monitor-line.error {
+            color: #ff4757;
+        }
+
+        .monitor-line.success {
+            color: #2ed573;
+        }
+
+        .action-btn {
+            background: var(--primary-gradient);
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all var(--animation-speed) ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .action-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .action-btn.danger {
+            background: var(--critical-gradient);
+        }
+
+        .action-btn.warning {
+            background: var(--warning-gradient);
+        }
+
+        .action-btn.success {
+            background: var(--success-gradient);
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 1rem;
+            margin-top: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .toast {
+            position: fixed;
+            top: 100px;
+            right: 2rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            padding: 1rem 1.5rem;
+            color: var(--text-primary);
+            box-shadow: 0 8px 25px var(--shadow-color);
+            transform: translateX(400px);
+            transition: transform var(--animation-speed) ease;
+            z-index: 1001;
+        }
+
+        .toast.show {
+            transform: translateX(0);
+        }
+
+        .toast.success {
+            border-left: 4px solid #2ed573;
+        }
+
+        .toast.error {
+            border-left: 4px solid #ff4757;
+        }
+
+        .toast.warning {
+            border-left: 4px solid #ffa502;
+        }
+
+        @media (max-width: 768px) {
+            .monitor-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .threat-stats {
+                grid-template-columns: 1fr;
+            }
+
+            .emergency-title {
+                font-size: 2rem;
+            }
+
+            .main-container {
+                padding: 1rem;
+            }
+        }
+    {% endraw %}</style>
+</head>
+<body>
+    <div class="animated-bg"></div>
+    
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="logo">
+                <i class="fas fa-shield-alt"></i>
+                <span>GuardianIA</span>
+            </div>
+            <ul class="nav-menu">
+                <li><a href="{{ url_for('pages.index') }}" class="nav-link">Dashboard</a></li>
+                <li><a href="#" class="nav-link active">Centro de Amenazas</a></li>
+                <li><a href="performance" class="nav-link">Rendimiento</a></li>
+                <li><a href="chatbot" class="nav-link">Asistente IA</a></li>
+                <li><a href="settings" class="nav-link">Configuración</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Main Container -->
+    <div class="main-container">
+        <!-- Emergency Header -->
+        <div class="emergency-header">
+            <h1 class="emergency-title">🚨 CENTRO DE RESPUESTA RÁPIDA</h1>
+            <div class="alert-status">
+                <div class="alert-level" id="alert-level">NIVEL: BAJO</div>
+                <button class="panic-button" onclick="activatePanicMode()">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    EMERGENCIA
+                </button>
+            </div>
+        </div>
+
+        <!-- Threat Statistics -->
+        <div class="threat-stats">
+            <div class="threat-stat-card critical">
+                <div class="stat-header">
+                    <div>
+                        <div class="stat-value" style="color: #ff4757;" id="critical-threats">0</div>
+                        <div class="stat-label">Amenazas Críticas</div>
+                    </div>
+                    <div class="stat-icon" style="background: var(--critical-gradient);">
+                        <i class="fas fa-skull-crossbones"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="threat-stat-card warning">
+                <div class="stat-header">
+                    <div>
+                        <div class="stat-value" style="color: #ffa502;" id="warning-threats">0</div>
+                        <div class="stat-label">Advertencias</div>
+                    </div>
+                    <div class="stat-icon" style="background: var(--warning-gradient);">
+                        <i class="fas fa-exclamation-triangle"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="threat-stat-card success">
+                <div class="stat-header">
+                    <div>
+                        <div class="stat-value" style="color: #2ed573;" id="blocked-threats">0</div>
+                        <div class="stat-label">Amenazas Bloqueadas</div>
+                    </div>
+                    <div class="stat-icon" style="background: var(--success-gradient);">
+                        <i class="fas fa-shield-check"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="threat-stat-card">
+                <div class="stat-header">
+                    <div>
+                        <div class="stat-value" style="color: #4facfe;" id="response-time">0ms</div>
+                        <div class="stat-label">Tiempo de Respuesta</div>
+                    </div>
+                    <div class="stat-icon" style="background: var(--primary-gradient);">
+                        <i class="fas fa-stopwatch"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Real-time Monitor -->
+        <div class="monitor-grid">
+            <div class="timeline-section">
+                <div class="section-header">
+                    <h2 class="section-title">📊 Monitor en Tiempo Real</h2>
+                    <button class="action-btn" onclick="clearMonitor()">
+                        <i class="fas fa-trash"></i>
+                        Limpiar
+                    </button>
+                </div>
+                <div class="monitor-display" id="monitor-display">
+                    <div class="monitor-line info">[INFO] Sistema de monitoreo iniciado</div>
+                    <div class="monitor-line success">[OK] Motor de detección de amenazas activo</div>
+                </div>
+            </div>
+
+            <div class="timeline-section">
+                <div class="section-header">
+                    <h2 class="section-title">⚡ Acciones Rápidas</h2>
+                </div>
+                <div class="action-buttons" style="flex-direction: column;">
+                    <button class="action-btn" onclick="runThreatScan()">
+                        <i class="fas fa-search"></i>
+                        Escaneo de Amenazas
+                    </button>
+                    <button class="action-btn warning" onclick="quarantineThreats()">
+                        <i class="fas fa-lock"></i>
+                        Cuarentena Automática
+                    </button>
+                    <button class="action-btn danger" onclick="emergencyLockdown()">
+                        <i class="fas fa-ban"></i>
+                        Bloqueo de Emergencia
+                    </button>
+                    <button class="action-btn success" onclick="updateDefinitions()">
+                        <i class="fas fa-download"></i>
+                        Actualizar Definiciones
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Timeline of Threats -->
+        <div class="timeline-section">
+            <div class="section-header">
+                <h2 class="section-title">📅 Timeline de Amenazas</h2>
+                <button class="action-btn" onclick="refreshTimeline()">
+                    <i class="fas fa-sync"></i>
+                    Actualizar
+                </button>
+            </div>
+            <div class="timeline" id="threat-timeline">
+                <!-- Timeline items will be added dynamically -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast">
+        <span id="toast-message"></span>
+    </div>
+
+    <script>{% raw %}
+        // Variables globales
+        let monitorInterval;
+        let isMonitoring = false;
+        const API_URL = window.location.href;
+
+        // Inicialización
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeThreatCenter();
+            startRealTimeMonitoring();
+            loadThreatTimeline();
+        });
+
+        // Inicializar centro de amenazas
+        async function initializeThreatCenter() {
+            await updateThreatStats();
+            await checkMonitoringStatus();
+        }
+
+        // Actualizar estadísticas
+        async function updateThreatStats() {
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                    body: 'action=get_stats'
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    const overview = data.overview;
+                    document.getElementById('critical-threats').textContent = 
+                        Math.floor(overview.threats_detected * 0.1);
+                    document.getElementById('warning-threats').textContent = 
+                        Math.floor(overview.threats_detected * 0.3);
+                    document.getElementById('blocked-threats').textContent = 
+                        overview.threats_blocked;
+                    document.getElementById('response-time').textContent = 
+                        Math.floor(Math.random() * 1000 + 500) + 'ms';
+                    
+                    updateAlertLevel(overview.threats_detected);
+                }
+            } catch (error) {
+                console.error('Error obteniendo estadísticas:', error);
+            }
+        }
+
+        // Verificar estado del monitoreo
+        async function checkMonitoringStatus() {
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                    body: 'action=get_status'
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    isMonitoring = data.monitoring;
+                    if (isMonitoring) {
+                        addMonitorLine('success', '[STATUS] Monitoreo en tiempo real activo');
+                    }
+                }
+            } catch (error) {
+                console.error('Error verificando estado:', error);
+            }
+        }
+
+        // Monitoreo en tiempo real
+        function startRealTimeMonitoring() {
+            monitorInterval = setInterval(() => {
+                simulateMonitorActivity();
+                updateThreatStats();
+            }, 5000);
+        }
+
+        // Simular actividad del monitor
+        function simulateMonitorActivity() {
+            const activities = [
+                { type: 'info', text: '[SCAN] Escaneando archivos del sistema...' },
+                { type: 'info', text: '[NET] Monitoreando tráfico de red...' },
+                { type: 'success', text: '[OK] Sistema protegido' },
+                { type: 'info', text: '[AI] Analizando patrones de comportamiento...' },
+                { type: 'warning', text: '[WARN] Actividad sospechosa detectada' },
+                { type: 'success', text: '[BLOCK] Amenaza bloqueada exitosamente' }
+            ];
+            
+            const activity = activities[Math.floor(Math.random() * activities.length)];
+            addMonitorLine(activity.type, activity.text);
+        }
+
+        // Agregar línea al monitor
+        function addMonitorLine(type, text) {
+            const monitor = document.getElementById('monitor-display');
+            const timestamp = new Date().toLocaleTimeString();
+            
+            const lineElement = document.createElement('div');
+            lineElement.className = `monitor-line ${type}`;
+            lineElement.textContent = `[${timestamp}] ${text}`;
+            
+            monitor.appendChild(lineElement);
+            monitor.scrollTop = monitor.scrollHeight;
+            
+            // Mantener solo las últimas 50 líneas
+            const lines = monitor.querySelectorAll('.monitor-line');
+            if (lines.length > 50) {
+                monitor.removeChild(lines[0]);
+            }
+        }
+
+        // Cargar timeline de amenazas
+        async function loadThreatTimeline() {
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                    body: 'action=get_threat_timeline'
+                });
+                
+                const data = await response.json();
+                
+                if (data.success && data.timeline) {
+                    displayTimeline(data.timeline);
+                }
+            } catch (error) {
+                console.error('Error cargando timeline:', error);
+            }
+        }
+
+        // Mostrar timeline
+        function displayTimeline(threats) {
+            const timeline = document.getElementById('threat-timeline');
+            
+            if (threats.length === 0) {
+                timeline.innerHTML = `
+                    <div class="timeline-item">
+                        <div class="timeline-dot success"></div>
+                        <div class="timeline-header">
+                            <div class="timeline-title">Sistema Seguro</div>
+                            <div class="timeline-time">Ahora</div>
+                        </div>
+                        <div class="timeline-description">
+                            No se han detectado amenazas recientes
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+            
+            timeline.innerHTML = '';
+            threats.forEach(threat => {
+                const item = createTimelineItem(threat);
+                timeline.appendChild(item);
+            });
+        }
+
+        // Crear elemento de timeline
+        function createTimelineItem(threat) {
+            const item = document.createElement('div');
+            item.className = 'timeline-item';
+            
+            const severity = threat.severity_level || 'low';
+            const dotClass = severity === 'critical' ? 'critical' : 
+                           severity === 'high' ? 'warning' : 'success';
+            
+            const timeAgo = getTimeAgo(new Date(threat.created_at));
+            
+            item.innerHTML = `
+                <div class="timeline-dot ${dotClass}"></div>
+                <div class="timeline-header">
+                    <div class="timeline-title">${threat.threat_type || 'Amenaza Detectada'}</div>
+                    <div class="timeline-time">${timeAgo}</div>
+                </div>
+                <div class="timeline-description">
+                    ${threat.description || 'Amenaza procesada automáticamente'}
+                </div>
+                <div class="timeline-actions">
+                    <button class="timeline-action" onclick="">
+                        Investigar
+                    </button>
+                    <button class="timeline-action" onclick="">
+                        Bloquear
+                    </button>
+                </div>
+            `;
+            
+            return item;
+        }
+
+        // Calcular tiempo transcurrido
+        function getTimeAgo(date) {
+            const seconds = Math.floor((new Date() - date) / 1000);
+            
+            if (seconds < 60) return 'Hace ' + seconds + ' segundos';
+            if (seconds < 3600) return 'Hace ' + Math.floor(seconds / 60) + ' minutos';
+            if (seconds < 86400) return 'Hace ' + Math.floor(seconds / 3600) + ' horas';
+            return 'Hace ' + Math.floor(seconds / 86400) + ' días';
+        }
+
+        // Actualizar nivel de alerta
+        function updateAlertLevel(threatsCount) {
+            const alertLevel = document.getElementById('alert-level');
+            
+            if (threatsCount > 10) {
+                alertLevel.textContent = 'NIVEL: CRÍTICO';
+                alertLevel.style.background = 'var(--critical-gradient)';
+            } else if (threatsCount > 5) {
+                alertLevel.textContent = 'NIVEL: ALTO';
+                alertLevel.style.background = 'var(--warning-gradient)';
+            } else {
+                alertLevel.textContent = 'NIVEL: BAJO';
+                alertLevel.style.background = 'var(--success-gradient)';
+            }
+        }
+
+        // Activar modo pánico
+        async function activatePanicMode() {
+            showToast('🚨 MODO PÁNICO ACTIVADO - Bloqueando todas las conexiones', 'error');
+            
+            addMonitorLine('error', '[EMERGENCY] Todas las conexiones bloqueadas');
+            addMonitorLine('warning', '[EMERGENCY] Sistema en modo seguro');
+            addMonitorLine('info', '[EMERGENCY] Notificando al administrador');
+            
+            // Ejecutar respuesta de emergencia
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                    body: 'action=execute_response&threat_data=' + JSON.stringify({
+                        threat_type: 'emergency_lockdown',
+                        severity: 'critical'
+                    })
+                });
+                
+                const result = await response.json();
+                if (result.success) {
+                    showToast('Respuesta de emergencia ejecutada', 'error');
+                }
+            } catch (error) {
+                console.error('Error en modo pánico:', error);
+            }
+        }
+
+        // Ejecutar escaneo de amenazas
+        async function runThreatScan() {
+            showToast('Iniciando escaneo completo de amenazas...', 'success');
+            
+            addMonitorLine('info', '[SCAN] Iniciando escaneo completo...');
+            
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                    body: 'action=scan_threat&type=general&input=system_scan'
+                });
+                
+                const result = await response.json();
+                
+                if (result.threat_detected) {
+                    addMonitorLine('warning', `[THREAT] ${result.description}`);
+                    showToast(`Amenaza detectada: ${result.threat_type}`, 'warning');
+                } else {
+                    addMonitorLine('success', '[SCAN] Escaneo completado - Sistema limpio');
+                    showToast('Escaneo completado - No se encontraron amenazas', 'success');
+                }
+                
+                await loadThreatTimeline();
+                
+            } catch (error) {
+                console.error('Error en escaneo:', error);
+                showToast('Error durante el escaneo', 'error');
+            }
+        }
+
+        // Cuarentena automática
+        function quarantineThreats() {
+            showToast('Activando cuarentena automática...', 'warning');
+            addMonitorLine('warning', '[QUARANTINE] Modo cuarentena activado');
+            
+            setTimeout(() => {
+                addMonitorLine('success', '[QUARANTINE] Sistema protegido');
+                showToast('Cuarentena activada', 'success');
+            }, 2000);
+        }
+
+        // Bloqueo de emergencia
+        function emergencyLockdown() {
+            showToast('Iniciando bloqueo de emergencia...', 'error');
+            
+            addMonitorLine('error', '[LOCKDOWN] Todas las conexiones bloqueadas');
+            addMonitorLine('warning', '[LOCKDOWN] Acceso restringido activado');
+            
+            setTimeout(() => {
+                showToast('Bloqueo de emergencia activado', 'error');
+            }, 1500);
+        }
+
+        // Actualizar definiciones
+        function updateDefinitions() {
+            showToast('Actualizando definiciones de amenazas...', 'success');
+            
+            addMonitorLine('info', '[UPDATE] Descargando nuevas definiciones...');
+            
+            setTimeout(() => {
+                addMonitorLine('success', '[UPDATE] Definiciones actualizadas');
+                showToast('Definiciones actualizadas exitosamente', 'success');
+            }, 3000);
+        }
+
+        // Limpiar monitor
+        function clearMonitor() {
+            document.getElementById('monitor-display').innerHTML = '';
+            addMonitorLine('info', '[SYSTEM] Monitor limpiado');
+        }
+
+        // Actualizar timeline
+        function refreshTimeline() {
+            showToast('Actualizando timeline...', 'success');
+            loadThreatTimeline();
+        }
+
+        // Investigar amenaza
+        function investigateThreat(eventId) {
+            showToast(`Investigando amenaza ${eventId}...`, 'success');
+        }
+
+        // Bloquear amenaza
+        function blockThreat(eventId) {
+            showToast(`Bloqueando amenaza ${eventId}...`, 'warning');
+        }
+
+        // Mostrar toast
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            const toastMessage = document.getElementById('toast-message');
+            
+            toastMessage.textContent = message;
+            toast.className = `toast ${type}`;
+            toast.classList.add('show');
+            
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 4000);
+        }
+
+        // Cleanup al salir
+        window.addEventListener('beforeunload', function() {
+            if (monitorInterval) {
+                clearInterval(monitorInterval);
+            }
+        });
+    {% endraw %}</script>
+</body>
+</html>

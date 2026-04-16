@@ -1,0 +1,1097 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Optimización y Rendimiento - GuardianIA</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>{% raw %}
+        :root {
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --performance-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            --success-gradient: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+            --warning-gradient: linear-gradient(135deg, #ffa726 0%, #fb8c00 100%);
+            --energy-gradient: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+            
+            --bg-primary: #0f0f23;
+            --bg-secondary: #1a1a2e;
+            --bg-card: #16213e;
+            --text-primary: #ffffff;
+            --text-secondary: #a0a9c0;
+            --border-color: #2d3748;
+            --shadow-color: rgba(0, 0, 0, 0.3);
+            
+            --animation-speed: 0.3s;
+            --border-radius: 12px;
+            --card-padding: 24px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        .animated-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background: var(--bg-primary);
+        }
+
+        .animated-bg::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 20% 80%, rgba(79, 172, 254, 0.3) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(0, 242, 254, 0.3) 0%, transparent 50%),
+                radial-gradient(circle at 40% 40%, rgba(67, 233, 123, 0.2) 0%, transparent 50%);
+            animation: performancePulse 8s ease-in-out infinite;
+        }
+
+        @keyframes performancePulse {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 0.6; }
+        }
+
+        .navbar {
+            background: rgba(26, 26, 46, 0.95);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border-color);
+            padding: 1rem 0;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+        }
+
+        .nav-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 1.5rem;
+            font-weight: 800;
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .nav-menu {
+            display: flex;
+            list-style: none;
+            gap: 2rem;
+            align-items: center;
+        }
+
+        .nav-link {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-weight: 500;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            transition: all var(--animation-speed) ease;
+        }
+
+        .nav-link:hover {
+            color: var(--text-primary);
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .nav-link.active {
+            background: var(--performance-gradient);
+            color: white;
+        }
+
+        .main-container {
+            margin-top: 80px;
+            padding: 2rem;
+            max-width: 1400px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .performance-header {
+            background: var(--performance-gradient);
+            border-radius: var(--border-radius);
+            padding: 2rem;
+            margin-bottom: 2rem;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .performance-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            animation: performanceShine 4s infinite;
+        }
+
+        @keyframes performanceShine {
+            0% { left: -100%; }
+            100% { left: 100%; }
+        }
+
+        .performance-title {
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 1rem;
+            color: white;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .performance-subtitle {
+            font-size: 1.1rem;
+            color: rgba(255, 255, 255, 0.9);
+            margin-bottom: 1.5rem;
+        }
+
+        .performance-score {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 2rem;
+            margin-top: 1rem;
+        }
+
+        .score-item {
+            text-align: center;
+        }
+
+        .score-value {
+            font-size: 2rem;
+            font-weight: 800;
+            color: white;
+        }
+
+        .score-label {
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .metric-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            padding: var(--card-padding);
+            position: relative;
+            overflow: hidden;
+            transition: all var(--animation-speed) ease;
+        }
+
+        .metric-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px var(--shadow-color);
+        }
+
+        .metric-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+        }
+
+        .metric-card.cpu::before {
+            background: var(--performance-gradient);
+        }
+
+        .metric-card.ram::before {
+            background: var(--success-gradient);
+        }
+
+        .metric-card.storage::before {
+            background: var(--warning-gradient);
+        }
+
+        .metric-card.battery::before {
+            background: var(--energy-gradient);
+        }
+
+        .metric-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .metric-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            color: white;
+        }
+
+        .metric-info h3 {
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .metric-info p {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .circular-progress {
+            position: relative;
+            width: 120px;
+            height: 120px;
+            margin: 0 auto 1rem;
+        }
+
+        .circular-progress svg {
+            width: 100%;
+            height: 100%;
+            transform: rotate(-90deg);
+        }
+
+        .circular-progress .bg-circle {
+            fill: none;
+            stroke: rgba(255, 255, 255, 0.1);
+            stroke-width: 8;
+        }
+
+        .circular-progress .progress-circle {
+            fill: none;
+            stroke-width: 8;
+            stroke-linecap: round;
+            transition: stroke-dasharray 1s ease;
+        }
+
+        .circular-progress .progress-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: var(--text-primary);
+        }
+
+        .optimization-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .optimization-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            padding: var(--card-padding);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .card-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .optimization-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            transition: all var(--animation-speed) ease;
+        }
+
+        .optimization-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateX(5px);
+        }
+
+        .optimization-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .optimization-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            color: white;
+        }
+
+        .optimization-details h4 {
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+
+        .optimization-details p {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+        }
+
+        .optimization-btn {
+            background: var(--primary-gradient);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all var(--animation-speed) ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .optimization-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .optimization-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .action-btn {
+            background: var(--primary-gradient);
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all var(--animation-speed) ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .action-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .progress-container {
+            margin: 1rem 0;
+        }
+
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .progress-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 1s ease;
+            position: relative;
+        }
+
+        .progress-fill.cpu {
+            background: var(--performance-gradient);
+        }
+
+        .progress-fill.ram {
+            background: var(--success-gradient);
+        }
+
+        .progress-fill.storage {
+            background: var(--warning-gradient);
+        }
+
+        .progress-fill.battery {
+            background: var(--energy-gradient);
+        }
+
+        .fab {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            width: 60px;
+            height: 60px;
+            background: var(--performance-gradient);
+            border: none;
+            border-radius: 50%;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+            box-shadow: 0 8px 25px rgba(79, 172, 254, 0.4);
+            transition: all var(--animation-speed) ease;
+            z-index: 1000;
+        }
+
+        .fab:hover {
+            transform: scale(1.1);
+            box-shadow: 0 12px 35px rgba(79, 172, 254, 0.6);
+        }
+
+        .toast {
+            position: fixed;
+            top: 100px;
+            right: 2rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            padding: 1rem 1.5rem;
+            color: var(--text-primary);
+            box-shadow: 0 8px 25px var(--shadow-color);
+            transform: translateX(400px);
+            transition: transform var(--animation-speed) ease;
+            z-index: 1001;
+        }
+
+        .toast.show {
+            transform: translateX(0);
+        }
+
+        .toast.success {
+            border-left: 4px solid #2ed573;
+        }
+
+        .toast.error {
+            border-left: 4px solid #ff4757;
+        }
+
+        .toast.warning {
+            border-left: 4px solid #ffa502;
+        }
+
+        @media (max-width: 768px) {
+            .optimization-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .metrics-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .performance-title {
+                font-size: 2rem;
+            }
+
+            .performance-score {
+                flex-direction: column;
+                gap: 1rem;
+            }
+        }
+    {% endraw %}</style>
+</head>
+<body>
+    <div class="animated-bg"></div>
+    
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="logo">
+                <i class="fas fa-shield-alt"></i>
+                <span>GuardianIA</span>
+            </div>
+            <ul class="nav-menu">
+                <li><a href="{{ url_for('pages.index') }}" class="nav-link">Dashboard</a></li>
+                <li><a href="threat_center" class="nav-link">Centro de Amenazas</a></li>
+                <li><a href="#" class="nav-link active">Rendimiento</a></li>
+                <li><a href="chatbot" class="nav-link">Asistente IA</a></li>
+                <li><a href="settings" class="nav-link">Configuración</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Main Container -->
+    <div class="main-container">
+        <!-- Performance Header -->
+        <div class="performance-header">
+            <h1 class="performance-title">⚡ OPTIMIZADOR IA INTELIGENTE</h1>
+            <p class="performance-subtitle">
+                Optimización automática impulsada por inteligencia artificial
+            </p>
+            <div class="performance-score">
+                <div class="score-item">
+                    <div class="score-value" id="ram-freed">2.4 GB</div>
+                    <div class="score-label">RAM Liberada</div>
+                </div>
+                <div class="score-item">
+                    <div class="score-value" id="battery-optimized">+3.2h</div>
+                    <div class="score-label">Batería Optimizada</div>
+                </div>
+                <div class="score-item">
+                    <div class="score-value" id="storage-cleaned">1.8 GB</div>
+                    <div class="score-label">Almacenamiento Limpio</div>
+                </div>
+                <div class="score-item">
+                    <div class="score-value" id="performance-score">94</div>
+                    <div class="score-label">Score de Rendimiento</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- System Metrics -->
+        <div class="metrics-grid">
+            <div class="metric-card cpu">
+                <div class="metric-header">
+                    <div class="metric-info">
+                        <h3>Procesador (CPU)</h3>
+                        <p>Intel Core i7-12700K</p>
+                    </div>
+                    <div class="metric-icon" style="background: var(--performance-gradient);">
+                        <i class="fas fa-microchip"></i>
+                    </div>
+                </div>
+                <div class="circular-progress">
+                    <svg viewBox="0 0 100 100">
+                        <circle class="bg-circle" cx="50" cy="50" r="40"></circle>
+                        <circle class="progress-circle" cx="50" cy="50" r="40" 
+                                stroke="url(#cpuGradient)" 
+                                stroke-dasharray="0 251.2" 
+                                id="cpu-circle"></circle>
+                        <defs>
+                            <linearGradient id="cpuGradient">
+                                <stop offset="0%" stop-color="#4facfe"/>
+                                <stop offset="100%" stop-color="#00f2fe"/>
+                            </linearGradient>
+                        </defs>
+                    </svg>
+                    <div class="progress-text" id="cpu-percentage">45%</div>
+                </div>
+                <div class="progress-container">
+                    <div class="progress-header">
+                        <span>Uso actual</span>
+                        <span id="cpu-usage">45%</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill cpu" style="width: 45%" id="cpu-bar"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="metric-card ram">
+                <div class="metric-header">
+                    <div class="metric-info">
+                        <h3>Memoria RAM</h3>
+                        <p>16 GB DDR4</p>
+                    </div>
+                    <div class="metric-icon" style="background: var(--success-gradient);">
+                        <i class="fas fa-memory"></i>
+                    </div>
+                </div>
+                <div class="circular-progress">
+                    <svg viewBox="0 0 100 100">
+                        <circle class="bg-circle" cx="50" cy="50" r="40"></circle>
+                        <circle class="progress-circle" cx="50" cy="50" r="40" 
+                                stroke="url(#ramGradient)" 
+                                stroke-dasharray="0 251.2" 
+                                id="ram-circle"></circle>
+                        <defs>
+                            <linearGradient id="ramGradient">
+                                <stop offset="0%" stop-color="#43e97b"/>
+                                <stop offset="100%" stop-color="#38f9d7"/>
+                            </linearGradient>
+                        </defs>
+                    </svg>
+                    <div class="progress-text" id="ram-percentage">67%</div>
+                </div>
+                <div class="progress-container">
+                    <div class="progress-header">
+                        <span>10.7 GB / 16 GB</span>
+                        <span id="ram-usage">67%</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill ram" style="width: 67%" id="ram-bar"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="metric-card storage">
+                <div class="metric-header">
+                    <div class="metric-info">
+                        <h3>Almacenamiento</h3>
+                        <p>SSD 1TB NVMe</p>
+                    </div>
+                    <div class="metric-icon" style="background: var(--warning-gradient);">
+                        <i class="fas fa-hdd"></i>
+                    </div>
+                </div>
+                <div class="circular-progress">
+                    <svg viewBox="0 0 100 100">
+                        <circle class="bg-circle" cx="50" cy="50" r="40"></circle>
+                        <circle class="progress-circle" cx="50" cy="50" r="40" 
+                                stroke="url(#storageGradient)" 
+                                stroke-dasharray="0 251.2" 
+                                id="storage-circle"></circle>
+                        <defs>
+                            <linearGradient id="storageGradient">
+                                <stop offset="0%" stop-color="#ffa726"/>
+                                <stop offset="100%" stop-color="#fb8c00"/>
+                            </linearGradient>
+                        </defs>
+                    </svg>
+                    <div class="progress-text" id="storage-percentage">78%</div>
+                </div>
+                <div class="progress-container">
+                    <div class="progress-header">
+                        <span>780 GB / 1 TB</span>
+                        <span id="storage-usage">78%</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill storage" style="width: 78%" id="storage-bar"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="metric-card battery">
+                <div class="metric-header">
+                    <div class="metric-info">
+                        <h3>Batería</h3>
+                        <p>Li-ion 4500mAh</p>
+                    </div>
+                    <div class="metric-icon" style="background: var(--energy-gradient);">
+                        <i class="fas fa-battery-three-quarters"></i>
+                    </div>
+                </div>
+                <div class="circular-progress">
+                    <svg viewBox="0 0 100 100">
+                        <circle class="bg-circle" cx="50" cy="50" r="40"></circle>
+                        <circle class="progress-circle" cx="50" cy="50" r="40" 
+                                stroke="url(#batteryGradient)" 
+                                stroke-dasharray="0 251.2" 
+                                id="battery-circle"></circle>
+                        <defs>
+                            <linearGradient id="batteryGradient">
+                                <stop offset="0%" stop-color="#a8edea"/>
+                                <stop offset="100%" stop-color="#fed6e3"/>
+                            </linearGradient>
+                        </defs>
+                    </svg>
+                    <div class="progress-text" id="battery-percentage">89%</div>
+                </div>
+                <div class="progress-container">
+                    <div class="progress-header">
+                        <span>Tiempo restante</span>
+                        <span id="battery-time">6h 23m</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill battery" style="width: 89%" id="battery-bar"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Optimization Actions -->
+        <div class="optimization-grid">
+            <div class="optimization-card">
+                <div class="card-header">
+                    <h2 class="card-title">🤖 Optimización Automática</h2>
+                    <button class="action-btn" onclick="runFullOptimization()">
+                        <i class="fas fa-magic"></i>
+                        Optimizar Todo
+                    </button>
+                </div>
+
+                <div class="optimization-item">
+                    <div class="optimization-info">
+                        <div class="optimization-icon" style="background: var(--success-gradient);">
+                            <i class="fas fa-broom"></i>
+                        </div>
+                        <div class="optimization-details">
+                            <h4>Limpieza Inteligente de Archivos</h4>
+                            <p>Elimina archivos temporales, caché y duplicados</p>
+                        </div>
+                    </div>
+                    <button class="optimization-btn" onclick="cleanFiles()">
+                        <i class="fas fa-play"></i>
+                        Limpiar
+                    </button>
+                </div>
+
+                <div class="optimization-item">
+                    <div class="optimization-info">
+                        <div class="optimization-icon" style="background: var(--performance-gradient);">
+                            <i class="fas fa-memory"></i>
+                        </div>
+                        <div class="optimization-details">
+                            <h4>Gestión de Memoria RAM</h4>
+                            <p>Libera memoria no utilizada y optimiza procesos</p>
+                        </div>
+                    </div>
+                    <button class="optimization-btn" onclick="optimizeRAM()">
+                        <i class="fas fa-play"></i>
+                        Optimizar
+                    </button>
+                </div>
+
+                <div class="optimization-item">
+                    <div class="optimization-info">
+                        <div class="optimization-icon" style="background: var(--energy-gradient);">
+                            <i class="fas fa-battery-half"></i>
+                        </div>
+                        <div class="optimization-details">
+                            <h4>Optimización de Batería por IA</h4>
+                            <p>Ajusta configuraciones para maximizar duración</p>
+                        </div>
+                    </div>
+                    <button class="optimization-btn" onclick="optimizeBattery()">
+                        <i class="fas fa-play"></i>
+                        Optimizar
+                    </button>
+                </div>
+
+                <div class="optimization-item">
+                    <div class="optimization-info">
+                        <div class="optimization-icon" style="background: var(--warning-gradient);">
+                            <i class="fas fa-compress"></i>
+                        </div>
+                        <div class="optimization-details">
+                            <h4>Compresión Inteligente</h4>
+                            <p>Comprime archivos grandes sin pérdida de calidad</p>
+                        </div>
+                    </div>
+                    <button class="optimization-btn" onclick="compressFiles()">
+                        <i class="fas fa-play"></i>
+                        Comprimir
+                    </button>
+                </div>
+            </div>
+
+            <div class="optimization-card">
+                <div class="card-header">
+                    <h2 class="card-title">📊 Estadísticas del Sistema</h2>
+                </div>
+                <div id="system-stats" style="padding: 1rem;">
+                    <p style="color: var(--text-secondary); margin-bottom: 1rem;">
+                        Cargando estadísticas...
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Floating Action Button -->
+    <button class="fab" onclick="quickOptimization()" title="Optimización Rápida">
+        <i class="fas fa-bolt"></i>
+    </button>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast">
+        <span id="toast-message"></span>
+    </div>
+
+    <script>{% raw %}
+        // Variables globales
+        let isOptimizing = false;
+        const API_URL = window.location.href;
+
+        // Inicialización
+        document.addEventListener('DOMContentLoaded', function() {
+            initializePerformance();
+            startRealTimeUpdates();
+            loadSystemStats();
+        });
+
+        // Inicializar página
+        function initializePerformance() {
+            updateMetricsFromServer();
+        }
+
+        // Actualizar métricas desde el servidor
+        async function updateMetricsFromServer() {
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                    body: 'action=get_metrics'
+                });
+                
+                const data = await response.json();
+                
+                updateUIMetrics(data);
+            } catch (error) {
+                console.error('Error obteniendo métricas:', error);
+            }
+        }
+
+        // Actualizar UI con métricas
+        function updateUIMetrics(metrics) {
+            // Actualizar valores de cabecera
+            document.getElementById('ram-freed').textContent = metrics.ram_freed + ' GB';
+            document.getElementById('battery-optimized').textContent = metrics.battery_optimized;
+            document.getElementById('storage-cleaned').textContent = metrics.storage_cleaned + ' GB';
+            document.getElementById('performance-score').textContent = metrics.performance_score;
+            
+            // Actualizar métricas individuales
+            updateCircle('cpu-circle', 'cpu-percentage', metrics.cpu);
+            updateCircle('ram-circle', 'ram-percentage', metrics.ram);
+            updateCircle('storage-circle', 'storage-percentage', metrics.storage);
+            updateCircle('battery-circle', 'battery-percentage', metrics.battery);
+            
+            document.getElementById('cpu-usage').textContent = metrics.cpu + '%';
+            document.getElementById('ram-usage').textContent = metrics.ram + '%';
+            document.getElementById('storage-usage').textContent = metrics.storage + '%';
+            document.getElementById('battery-time').textContent = calculateBatteryTime(metrics.battery);
+            
+            document.getElementById('cpu-bar').style.width = metrics.cpu + '%';
+            document.getElementById('ram-bar').style.width = metrics.ram + '%';
+            document.getElementById('storage-bar').style.width = metrics.storage + '%';
+            document.getElementById('battery-bar').style.width = metrics.battery + '%';
+        }
+
+        // Actualizar círculo de progreso
+        function updateCircle(circleId, textId, percentage) {
+            const circle = document.getElementById(circleId);
+            const text = document.getElementById(textId);
+            const circumference = 2 * Math.PI * 40;
+            const offset = circumference - (percentage / 100) * circumference;
+            
+            circle.style.strokeDasharray = `${circumference} ${circumference}`;
+            circle.style.strokeDashoffset = offset;
+            text.textContent = percentage + '%';
+        }
+
+        // Calcular tiempo de batería
+        function calculateBatteryTime(percentage) {
+            const hours = Math.floor((percentage / 100) * 8);
+            const minutes = Math.floor(((percentage / 100) * 8 - hours) * 60);
+            return `${hours}h ${minutes}m`;
+        }
+
+        // Optimización completa
+        async function runFullOptimization() {
+            if (isOptimizing) {
+                showToast('Optimización ya en progreso...', 'warning');
+                return;
+            }
+            
+            isOptimizing = true;
+            showToast('Iniciando optimización completa del sistema...', 'success');
+            
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                    body: 'action=run_optimization&type=full_optimization'
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showToast('Optimización completa finalizada', 'success');
+                    updateMetricsFromServer();
+                    loadSystemStats();
+                } else {
+                    showToast('Error en la optimización', 'error');
+                }
+            } catch (error) {
+                showToast('Error conectando con el servidor', 'error');
+            } finally {
+                isOptimizing = false;
+            }
+        }
+
+        // Limpiar archivos
+        async function cleanFiles() {
+            await runOptimization('clean_files');
+        }
+
+        // Optimizar RAM
+        async function optimizeRAM() {
+            await runOptimization('optimize_ram');
+        }
+
+        // Optimizar batería
+        async function optimizeBattery() {
+            await runOptimization('optimize_battery');
+        }
+
+        // Comprimir archivos
+        async function compressFiles() {
+            await runOptimization('compress_files');
+        }
+
+        // Optimización rápida
+        async function quickOptimization() {
+            await runOptimization('quick_optimization');
+        }
+
+        // Función genérica de optimización
+        async function runOptimization(type) {
+            showToast('Iniciando optimización...', 'success');
+            
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                    body: `action=run_optimization&type=${type}`
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showToast(result.message, 'success');
+                    updateMetricsFromServer();
+                } else {
+                    showToast(result.message || 'Error en la optimización', 'error');
+                }
+            } catch (error) {
+                showToast('Error conectando con el servidor', 'error');
+            }
+        }
+
+        // Cargar estadísticas del sistema
+        async function loadSystemStats() {
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                    body: 'action=get_stats'
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    displaySystemStats(result.stats);
+                }
+            } catch (error) {
+                console.error('Error cargando estadísticas:', error);
+            }
+        }
+
+        // Mostrar estadísticas
+        function displaySystemStats(stats) {
+            const statsContainer = document.getElementById('system-stats');
+            
+            statsContainer.innerHTML = `
+                <div style="margin-bottom: 1rem;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                        <span>Total Optimizaciones</span>
+                        <span style="font-weight: 600">${stats.total_configurations || 0}</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                        <span>Éxito</span>
+                        <span style="color: #2ed573; font-weight: 600">${stats.optimization_success_rate || '0%'}</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                        <span>Mejora Promedio</span>
+                        <span style="color: #4facfe; font-weight: 600">${stats.performance_improvement || '0%'}</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                        <span>Cambios Adaptativos</span>
+                        <span style="font-weight: 600">${stats.adaptive_changes_count || 0}</span>
+                    </div>
+                </div>
+                <button class="optimization-btn" onclick="runAdaptiveConfig()" style="width: 100%;">
+                    <i class="fas fa-robot"></i>
+                    Configuración Adaptativa
+                </button>
+            `;
+        }
+
+        // Ejecutar configuración adaptativa
+        async function runAdaptiveConfig() {
+            showToast('Aplicando configuración adaptativa...', 'success');
+            
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                    body: 'action=adaptive_config'
+                });
+                
+                const result = await response.json();
+                
+                if (result.adaptations_applied > 0) {
+                    showToast(`Se aplicaron ${result.adaptations_applied} adaptaciones`, 'success');
+                    updateMetricsFromServer();
+                } else {
+                    showToast('No se requieren adaptaciones en este momento', 'success');
+                }
+            } catch (error) {
+                showToast('Error en configuración adaptativa', 'error');
+            }
+        }
+
+        // Iniciar actualizaciones en tiempo real
+        function startRealTimeUpdates() {
+            setInterval(updateMetricsFromServer, 10000); // Cada 10 segundos
+            setInterval(loadSystemStats, 30000); // Cada 30 segundos
+        }
+
+        // Mostrar notificación toast
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            const toastMessage = document.getElementById('toast-message');
+            
+            toastMessage.textContent = message;
+            toast.className = `toast ${type}`;
+            toast.classList.add('show');
+            
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 4000);
+        }
+    {% endraw %}</script>
+</body>
+</html>

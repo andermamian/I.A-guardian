@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Completo - GuardianIA v3.0 MILITARY</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+            padding: 20px; 
+            min-height: 100vh;
+        }
+        
+        .container { 
+            background: rgba(255, 255, 255, 0.95); 
+            padding: 30px; 
+            border-radius: 15px; 
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1); 
+            max-width: 1200px; 
+            margin: 0 auto;
+            backdrop-filter: blur(10px);
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 20px;
+        }
+        
+        .header h1 {
+            color: #333;
+            margin: 0;
+            font-size: 2.5em;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .success { 
+            color: #155724; 
+            background: #d4edda; 
+            padding: 15px; 
+            border-radius: 8px; 
+            margin: 10px 0; 
+            border-left: 4px solid #28a745;
+        }
+        
+        .error { 
+            color: #721c24; 
+            background: #f8d7da; 
+            padding: 15px; 
+            border-radius: 8px; 
+            margin: 10px 0; 
+            border-left: 4px solid #dc3545;
+        }
+        
+        .warning { 
+            color: #856404; 
+            background: #fff3cd; 
+            padding: 15px; 
+            border-radius: 8px; 
+            margin: 10px 0; 
+            border-left: 4px solid #ffc107;
+        }
+        
+        .info {
+            color: #0c5460;
+            background: #d1ecf1;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            border-left: 4px solid #17a2b8;
+        }
+        
+        .military {
+            color: #fff;
+            background: linear-gradient(135deg, #28a745, #20c997);
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            border-left: 4px solid #28a745;
+        }
+        
+        pre { 
+            background: #f8f9fa; 
+            padding: 20px; 
+            border-radius: 8px; 
+            overflow-x: auto; 
+            font-size: 0.9em;
+            border: 1px solid #e9ecef;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        .btn { 
+            background: linear-gradient(135deg, #667eea, #764ba2); 
+            color: white; 
+            padding: 12px 24px; 
+            border: none; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            margin: 5px; 
+            text-decoration: none; 
+            display: inline-block; 
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .btn:hover { 
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+        
+        .btn.logout { background: linear-gradient(135deg, #dc3545, #c82333); }
+        .btn.warning { background: linear-gradient(135deg, #ffc107, #e0a800); }
+        .btn.success { background: linear-gradient(135deg, #28a745, #20c997); }
+        
+        .section {
+            margin: 30px 0;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border: 1px solid #e9ecef;
+        }
+        
+        .section h2 {
+            color: #495057;
+            margin-top: 0;
+            border-bottom: 2px solid #dee2e6;
+            padding-bottom: 10px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+            background: white;
+        }
+        
+        table th, table td {
+            border: 1px solid #dee2e6;
+            padding: 12px;
+            text-align: left;
+        }
+        
+        table th {
+            background: #e9ecef;
+            font-weight: 600;
+        }
+        
+        .test-form {
+            background: #e3f2fd;
+            padding: 20px;
+            border-radius: 10px;
+            border: 1px solid #bbdefb;
+            margin: 20px 0;
+        }
+        
+        .flex-container {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .flex-item {
+            flex: 1;
+            min-width: 300px;
+        }
+        
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        
+        .status-online { background: #28a745; }
+        .status-offline { background: #dc3545; }
+        .status-warning { background: #ffc107; }
+        
+        .input-field {
+            padding: 10px;
+            margin: 5px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin: 15px 0;
+        }
+        
+        .grid-item {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
+        }
+        
+        .grid-item strong {
+            color: #495057;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🛡️ Debug GuardianIA v3.0 MILITARY</h1>
+            <p>Sistema de Diagnostico Completo - Version Militar</p>
+            <p style="color: #666; font-size: 0.9em;">
+                { { 'Y-m-d H:i:s' } } | 
+                PHP { { PHP_VERSION|default('') } } | 
+                Session: { { session_id|default('') } }
+            </p>
+        </div>
+
+        <!-- Estado de Configuracion -->
+        <div class="section">
+            <h2><span class="status-indicator { { 'status-online' if config_loaded else '' } }"></span>1. Estado de Configuracion</h2>
+            
+            <div class="grid">
+                <div class="grid-item">
+                    <strong>config:</strong><br>
+                    { % if config_loaded % }
+                        <span style="color: green;">✅ Cargado correctamente</span>
+                    { % else % }
+                        <span style="color: red;">❌ Error: { { '' if config_error else '' } }</span>
+                    { % endif % }
+                </div>
+                
+                <div class="grid-item">
+                    <strong>config_military:</strong><br>
+                    { % if military_loaded % }
+                        <span style="color: green;">✅ Cargado correctamente</span>
+                    { % else % }
+                        <span style="color: orange;">⚠️ No cargado</span>
+                    { % endif % }
+                </div>
+                
+                { % if config_loaded % }
+                <div class="grid-item">
+                    <strong>Version:</strong><br>
+                    { { 'No definida' } }
+                </div>
+                
+                <div class="grid-item">
+                    <strong>Developer:</strong><br>
+                    { { 'No definido' } }
+                </div>
+                { % endif % }
+            </div>
+            
+            { % if config_loaded and defined('MILITARY_ENCRYPTION_ENABLED') and MILITARY_ENCRYPTION_ENABLED % }
+                <div class="military">
+                    🔐 ENCRIPTACION MILITAR ACTIVA<br>
+                    FIPS 140-2: { { 'COMPLIANT' if FIPS_140_2_COMPLIANCE else '' } }<br>
+                    Quantum Resistance: { { 'ENABLED' if QUANTUM_RESISTANCE_ENABLED else '' } }
+                </div>
+            { % endif % }
+        </div>
+
+        <!-- Estado de Base de Datos -->
+        <div class="section">
+            <h2>2. Estado de la Base de Datos</h2>
+            
+                <div class="success">✅ Base de datos conectada correctamente</div>
+                
+                <div class="grid">
+                    <div class="grid-item">
+                        <strong>Tipo:</strong> { { db_info.type |default( 'unknown') } }
+                    </div>
+                    <div class="grid-item">
+                        <strong>Usuario:</strong> { { db_info.user |default( 'unknown') } }
+                    </div>
+                    <div class="grid-item">
+                        <strong>Host:</strong> { { db_info.host |default( 'unknown') } }
+                    </div>
+                    <div class="grid-item">
+                        <strong>Database:</strong> { { db_info.database |default( 'unknown') } }
+                    </div>
+                </div>
+                
+                
+                <div class="error">❌ Base de datos NO conectada</div>
+                <div class="warning">⚠️ Modo fallback activado - Usando usuarios por defecto</div>
+                
+                { % if GLOBALS.DEFAULT_USERS % }
+                <div class="info">
+                    <strong>Usuarios disponibles en modo fallback:</strong><br>
+                    
+                        • <strong>{ { username|default('') } }</strong> 
+                        ({ { user.user_type } } - { { user.premium_status } })<br>
+                    
+                </div>
+                { % endif % }
+            
+        </div>
+
+        <!-- Verificacion de Tabla de Usuarios -->
+        <div class="section">
+            <h2>3. Tabla de Usuarios</h2>
+            { % if db_status % }
+                
+            { % else % }
+                <div class="warning">⚠️ No se puede verificar - Base de datos no conectada</div>
+                <div class="info">
+                    <h3>Usuarios por defecto disponibles (modo fallback):</h3>
+                    <table>
+                        <tr><th>Usuario</th><th>Contraseña</th><th>Tipo</th><th>Premium</th><th>Clearance</th></tr>
+                        <tr>
+                            <td><strong>anderson</strong></td>
+                            <td>Ander12345@</td>
+                            <td>admin</td>
+                            <td>✅ Premium</td>
+                            <td>TOP_SECRET</td>
+                        </tr>
+                        <tr>
+                            <td><strong>admin</strong></td>
+                            <td>admin123</td>
+                            <td>admin</td>
+                            <td>❌ Basic</td>
+                            <td>SECRET</td>
+                        </tr>
+                    </table>
+                </div>
+            { % endif % }
+        </div>
+
+        <!-- Estado de la Sesion -->
+        <div class="section">
+            <h2>4. Estado de la Sesion</h2>
+            
+            <div class="flex-container">
+                <div class="flex-item">
+                    
+                        <div class="error">❌ No hay datos de sesion activa</div>
+                        <p>La sesion esta vacia. Necesitas hacer login primero.</p>
+                    { % else % }
+                        <div class="success">✅ Sesion activa detectada</div>
+                        <h3>Variables de sesion principales:</h3>
+                        <table>
+                            <tr><th>Variable</th><th>Valor</th></tr>
+                            
+                        </table>
+                        
+                        <details style="margin-top: 15px;">
+                            <summary style="cursor: pointer; font-weight: bold;">📋 Todas las variables de sesion</summary>
+                            <pre style="margin-top: 10px;">{ { print_r(_SESSION, true) } }</pre>
+                        </details>
+                    { % endif % }
+                </div>
+                
+                <div class="flex-item">
+                    <h3>Verificaciones de Acceso:</h3>
+                    
+                    
+                    
+                    <h3>Informacion del Usuario:</h3>
+                    
+                    
+                    <table>
+                        <tr><td><strong>Usuario:</strong></td><td>{ { username|default('') } }</td></tr>
+                        <tr><td><strong>Tipo:</strong></td><td>{ { user_type|default('') } }</td></tr>
+                        <tr><td><strong>ID:</strong></td><td>{ { user_id|default('') } }</td></tr>
+                        <tr><td><strong>Session ID:</strong></td><td>{ { session_id|default('') } }</td></tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Test de Autenticacion -->
+        <div class="section">
+            <h2>5. Test de Autenticacion</h2>
+            
+            <div class="test-form">
+                <h3>Probar funcion de autenticacion:</h3>
+                <form method="POST">
+                    <input type="hidden" name="test_auth" value="1">
+                    <input type="text" name="test_username" placeholder="Usuario" value="anderson" class="input-field">
+                    <input type="password" name="test_password" placeholder="Contraseña" value="Ander12345@" class="input-field">
+                    <button type="submit" class="btn">🔑 Probar Autenticacion</button>
+                </form>
+                
+                
+            </div>
+        </div>
+
+        <!-- Login Manual Simulado -->
+        <div class="section">
+            <h2>6. Login Manual (Establecer Sesion)</h2>
+            <div class="test-form">
+                <h3>Establecer sesion manualmente para testing:</h3>
+                <form method="POST">
+                    <input type="hidden" name="manual_login" value="1">
+                    <button type="submit" name="login_user" value="anderson" class="btn success">👨‍💼 Login como Anderson (Admin Premium)</button>
+                    <button type="submit" name="login_user" value="admin" class="btn">🔧 Login como Admin (Basic)</button>
+                    <button type="submit" name="login_user" value="user" class="btn warning">👤 Login como Usuario Regular</button>
+                </form>
+                
+                
+            </div>
+        </div>
+
+        <!-- Acciones Disponibles -->
+        <div class="section">
+            <h2>7. Acciones Disponibles</h2>
+            
+            <div style="margin-bottom: 15px;">
+                <a href="{ { url_for('auth.login') } }" class="btn">🔑 Ir al Login</a>
+                <a href="{ { _SERVER.PHP_SELF } }" class="btn warning">🔄 Recargar Debug</a>
+                
+                
+                    <a href="{ { url_for('auth.logout') } }" class="btn logout">🚪 Cerrar Sesion</a>
+                { % endif % }
+            </div>
+            
+            
+                <h3>Paginas disponibles segun tu sesion:</h3>
+                <div>
+                    <a href="{ { url_for('user.dashboard') } }" class="btn">📊 User Dashboard</a>
+                    <a href="user_assistant" class="btn">🤖 Asistente IA</a>
+                    
+                    { % if _SESSION.user_type) and _SESSION.user_type == 'admin' % }
+                        <a href="{ { url_for('admin.dashboard') } }" class="btn success">⚙️ Admin Dashboard</a>
+                        <a href="security_audit" class="btn success">🔒 Security Audit</a>
+                    { % endif % }
+                    
+                    { % if _SESSION.military_access) and _SESSION.military_access % }
+                        <a href="firewall_quantum" class="btn success">⚛️ Quantum Firewall</a>
+                    
+                </div>
+            { % else % }
+                <div class="warning">⚠️ Debes iniciar sesion para acceder a las paginas del sistema</div>
+            
+        </div>
+
+        <!-- Informacion del Sistema -->
+        <div class="section">
+            <h2>8. Informacion del Sistema</h2>
+            <div class="grid">
+                <div class="grid-item">
+                    <strong>PHP Version:</strong><br>
+                    { { PHP_VERSION|default('') } }
+                </div>
+                <div class="grid-item">
+                    <strong>Server Software:</strong><br>
+                    { { _SERVER.SERVER_SOFTWARE |default( 'Unknown') } }
+                </div>
+                <div class="grid-item">
+                    <strong>Session Status:</strong><br>
+                    
+                </div>
+                <div class="grid-item">
+                    <strong>Memory Usage:</strong><br>
+                     MB
+                </div>
+                <div class="grid-item">
+                    <strong>Max Execution Time:</strong><br>
+                     segundos
+                </div>
+                <div class="grid-item">
+                    <strong>Upload Max Size:</strong><br>
+                    
+                </div>
+            </div>
+        </div>
+
+        <!-- Variables Globales del Sistema -->
+        <div class="section">
+            <h2>9. Constantes del Sistema</h2>
+            { % if config_loaded % }
+                <div class="grid">
+                    <div class="grid-item">
+                        <strong>APP_NAME:</strong><br>
+                        { { 'No definido' } }
+                    </div>
+                    <div class="grid-item">
+                        <strong>APP_VERSION:</strong><br>
+                        { { 'No definido' } }
+                    </div>
+                    <div class="grid-item">
+                        <strong>DEVELOPER:</strong><br>
+                        { { 'No definido' } }
+                    </div>
+                    <div class="grid-item">
+                        <strong>PREMIUM_ENABLED:</strong><br>
+                        { { 'PREMIUM_ENABLED' } }
+                    </div>
+                    <div class="grid-item">
+                        <strong>MILITARY_ENCRYPTION:</strong><br>
+                        { { 'MILITARY_ENCRYPTION_ENABLED' } }
+                    </div>
+                    <div class="grid-item">
+                        <strong>QUANTUM_RESISTANCE:</strong><br>
+                        { { 'QUANTUM_RESISTANCE_ENABLED' } }
+                    </div>
+                    <div class="grid-item">
+                        <strong>AI_LEARNING:</strong><br>
+                        { { 'AI_LEARNING_ENABLED' } }
+                    </div>
+                    <div class="grid-item">
+                        <strong>VPN_ENABLED:</strong><br>
+                        { { 'VPN_ENABLED' } }
+                    </div>
+                </div>
+            { % else % }
+                <div class="error">Configuracion no cargada - No se pueden mostrar las constantes</div>
+            
+        </div>
+
+        <!-- Footer -->
+        <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #dee2e6; color: #666;">
+            <p>GuardianIA v3.0 MILITARY - Sistema de Diagnostico</p>
+            <p style="font-size: 0.9em;">Desarrollado por Anderson Mamian Chicangana</p>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,17 @@
+__pycache__/
+*.pyc
+*.pyo
+.env
+*.db
+*.sqlite
+logs/*.log
+cache/
+military/
+keys/
+uploads/*
+!uploads/.gitkeep
+*.egg-info/
+dist/
+build/
+.venv/
+venv/

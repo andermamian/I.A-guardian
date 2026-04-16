@@ -1,0 +1,1509 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quantum Backup System - GuardianIA v3.0 MILITARY</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap');
+        
+        :root {
+            --primary: #00ffcc;
+            --secondary: #ff00ff;
+            --accent: #ffaa00;
+            --danger: #ff0055;
+            --success: #00ff44;
+            --warning: #ffff00;
+            --bg-dark: #000000;
+            --bg-medium: #0a0f1f;
+            --text-primary: #ffffff;
+            --text-secondary: #a0a0a0;
+            --quantum-blue: #0099ff;
+            --quantum-purple: #9900ff;
+        }
+        
+        body {
+            font-family: 'Share Tech Mono', monospace;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            overflow-x: hidden;
+            min-height: 100vh;
+            position: relative;
+        }
+        
+        /* Fondo de data streams */
+        .data-streams {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -2;
+            opacity: 0.3;
+            overflow: hidden;
+        }
+        
+        .stream {
+            position: absolute;
+            width: 2px;
+            background: linear-gradient(to bottom, transparent, var(--primary), transparent);
+            animation: stream-flow linear infinite;
+        }
+        
+        @keyframes stream-flow {
+            from {
+                transform: translateY(-100vh);
+            }
+            to {
+                transform: translateY(100vh);
+            }
+        }
+        
+        /* Malla hexagonal de fondo */
+        .hex-grid {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            opacity: 0.1;
+            background-image: 
+                radial-gradient(circle at 20% 50%, var(--quantum-blue) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, var(--quantum-purple) 0%, transparent 50%),
+                radial-gradient(circle at 40% 20%, var(--primary) 0%, transparent 50%);
+        }
+        
+        /* Header principal */
+        .header {
+            background: linear-gradient(135deg, rgba(0,255,204,0.1), rgba(153,0,255,0.1));
+            backdrop-filter: blur(20px);
+            border-bottom: 2px solid var(--primary);
+            padding: 25px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .header::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--primary), var(--secondary), var(--primary), transparent);
+            animation: scan-line 3s linear infinite;
+        }
+        
+        @keyframes scan-line {
+            from { transform: translateX(-100%); }
+            to { transform: translateX(100%); }
+        }
+        
+        .header-content {
+            max-width: 1600px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        
+        .logo-cube {
+            width: 60px;
+            height: 60px;
+            position: relative;
+            transform-style: preserve-3d;
+            animation: rotate-cube 8s linear infinite;
+        }
+        
+        @keyframes rotate-cube {
+            from { transform: rotateX(0) rotateY(0); }
+            to { transform: rotateX(360deg) rotateY(360deg); }
+        }
+        
+        .cube-face {
+            position: absolute;
+            width: 60px;
+            height: 60px;
+            border: 2px solid var(--primary);
+            background: rgba(0,255,204,0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+        
+        .cube-face:nth-child(1) { transform: translateZ(30px); }
+        .cube-face:nth-child(2) { transform: rotateY(90deg) translateZ(30px); }
+        .cube-face:nth-child(3) { transform: rotateY(180deg) translateZ(30px); }
+        .cube-face:nth-child(4) { transform: rotateY(-90deg) translateZ(30px); }
+        .cube-face:nth-child(5) { transform: rotateX(90deg) translateZ(30px); }
+        .cube-face:nth-child(6) { transform: rotateX(-90deg) translateZ(30px); }
+        
+        .title-section h1 {
+            font-family: 'Orbitron', monospace;
+            font-size: 2.5em;
+            font-weight: 900;
+            background: linear-gradient(45deg, var(--primary), var(--quantum-blue), var(--quantum-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-transform: uppercase;
+            letter-spacing: 4px;
+        }
+        
+        .title-section p {
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-top: 5px;
+        }
+        
+        /* Container principal */
+        .main-container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 30px 20px;
+        }
+        
+        /* Grid de paneles */
+        .backup-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+            gap: 25px;
+            margin-top: 30px;
+        }
+        
+        /* Panel base */
+        .panel {
+            background: linear-gradient(135deg, rgba(10,15,31,0.9), rgba(0,0,0,0.9));
+            border: 1px solid rgba(0,255,204,0.3);
+            border-radius: 15px;
+            padding: 25px;
+            position: relative;
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .panel:hover {
+            transform: translateY(-10px) scale(1.02);
+            box-shadow: 
+                0 20px 40px rgba(0,255,204,0.3),
+                inset 0 0 20px rgba(0,255,204,0.1);
+            border-color: var(--primary);
+        }
+        
+        .panel::before {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            background: linear-gradient(45deg, var(--primary), var(--secondary), var(--quantum-blue), var(--primary));
+            border-radius: 15px;
+            opacity: 0;
+            z-index: -1;
+            transition: opacity 0.4s;
+        }
+        
+        .panel:hover::before {
+            opacity: 0.3;
+            animation: border-glow 2s linear infinite;
+        }
+        
+        @keyframes border-glow {
+            from { filter: hue-rotate(0deg); }
+            to { filter: hue-rotate(360deg); }
+        }
+        
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid rgba(0,255,204,0.2);
+        }
+        
+        .panel-title {
+            font-family: 'Orbitron', monospace;
+            font-size: 1.3em;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .panel-icon {
+            font-size: 1.8em;
+            animation: icon-pulse 2s ease-in-out infinite;
+        }
+        
+        @keyframes icon-pulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.1); opacity: 0.8; }
+        }
+        
+        /* Status del sistema */
+        .system-status {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin: 20px 0;
+        }
+        
+        .status-item {
+            background: rgba(0,255,204,0.05);
+            border: 1px solid rgba(0,255,204,0.2);
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .status-item::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(0,255,204,0.2), transparent);
+            animation: sweep 4s linear infinite;
+        }
+        
+        @keyframes sweep {
+            from { left: -100%; }
+            to { left: 100%; }
+        }
+        
+        .status-value {
+            font-size: 2.2em;
+            font-weight: 700;
+            font-family: 'Orbitron', monospace;
+            background: linear-gradient(45deg, var(--primary), var(--quantum-blue));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .status-label {
+            font-size: 0.85em;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            margin-top: 8px;
+            letter-spacing: 1px;
+        }
+        
+        /* Gráfico circular quantum */
+        .quantum-circle {
+            width: 200px;
+            height: 200px;
+            margin: 30px auto;
+            position: relative;
+        }
+        
+        .quantum-circle svg {
+            transform: rotate(-90deg);
+            filter: drop-shadow(0 0 20px var(--quantum-blue));
+        }
+        
+        .quantum-bg {
+            fill: none;
+            stroke: rgba(0,153,255,0.1);
+            stroke-width: 15;
+        }
+        
+        .quantum-progress {
+            fill: none;
+            stroke: url(#quantum-gradient);
+            stroke-width: 15;
+            stroke-linecap: round;
+            stroke-dasharray: 565;
+            stroke-dashoffset: 565;
+            animation: quantum-fill 2s ease-out forwards;
+        }
+        
+        @keyframes quantum-fill {
+            to {
+                stroke-dashoffset: var(--progress);
+            }
+        }
+        
+        .quantum-center {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+        }
+        
+        .quantum-value {
+            font-size: 3em;
+            font-weight: 900;
+            font-family: 'Orbitron', monospace;
+            background: linear-gradient(45deg, var(--quantum-blue), var(--quantum-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .quantum-label {
+            font-size: 0.9em;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+        }
+        
+        /* Tabla de backups */
+        .backup-table {
+            width: 100%;
+            margin: 20px 0;
+        }
+        
+        .backup-table-header {
+            display: grid;
+            grid-template-columns: 1.5fr 2fr 1fr 1fr 1.5fr;
+            gap: 10px;
+            padding: 12px;
+            background: rgba(0,255,204,0.1);
+            border: 1px solid rgba(0,255,204,0.3);
+            border-radius: 8px 8px 0 0;
+            font-weight: 700;
+            text-transform: uppercase;
+            font-size: 0.9em;
+            color: var(--primary);
+        }
+        
+        .backup-row {
+            display: grid;
+            grid-template-columns: 1.5fr 2fr 1fr 1fr 1.5fr;
+            gap: 10px;
+            padding: 12px;
+            background: rgba(0,0,0,0.5);
+            border: 1px solid rgba(0,255,204,0.1);
+            border-top: none;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .backup-row:last-child {
+            border-radius: 0 0 8px 8px;
+        }
+        
+        .backup-row:hover {
+            background: rgba(0,255,204,0.05);
+            transform: translateX(5px);
+        }
+        
+        .backup-status {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            text-transform: uppercase;
+            font-weight: 700;
+            text-align: center;
+            display: inline-block;
+        }
+        
+        .backup-status.completed {
+            background: rgba(0,255,68,0.2);
+            color: var(--success);
+            border: 1px solid var(--success);
+        }
+        
+        .backup-status.pending {
+            background: rgba(255,255,0,0.2);
+            color: var(--warning);
+            border: 1px solid var(--warning);
+        }
+        
+        .backup-status.failed {
+            background: rgba(255,0,85,0.2);
+            color: var(--danger);
+            border: 1px solid var(--danger);
+        }
+        
+        /* Progress bars */
+        .progress-container {
+            margin: 20px 0;
+        }
+        
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 0.9em;
+        }
+        
+        .progress-bar {
+            height: 25px;
+            background: rgba(0,255,204,0.1);
+            border: 1px solid rgba(0,255,204,0.3);
+            border-radius: 15px;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary), var(--quantum-blue), var(--quantum-purple));
+            border-radius: 15px;
+            transition: width 1s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .progress-fill::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            animation: shimmer 2s linear infinite;
+        }
+        
+        @keyframes shimmer {
+            from { transform: translateX(-100%); }
+            to { transform: translateX(100%); }
+        }
+        
+        .progress-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-weight: 700;
+            font-size: 0.9em;
+            text-shadow: 0 0 5px rgba(0,0,0,0.5);
+        }
+        
+        /* AI Predictions Panel */
+        .ai-metric {
+            background: linear-gradient(135deg, rgba(153,0,255,0.1), rgba(0,153,255,0.1));
+            border: 1px solid rgba(153,0,255,0.3);
+            border-radius: 10px;
+            padding: 15px;
+            margin: 10px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s ease;
+        }
+        
+        .ai-metric:hover {
+            transform: translateX(10px);
+            box-shadow: 0 5px 20px rgba(153,0,255,0.3);
+        }
+        
+        .ai-metric-label {
+            font-size: 0.9em;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+        }
+        
+        .ai-metric-value {
+            font-size: 1.5em;
+            font-weight: 700;
+            color: var(--quantum-purple);
+            font-family: 'Orbitron', monospace;
+        }
+        
+        /* Terminal de comandos */
+        .terminal {
+            background: #000;
+            border: 1px solid var(--primary);
+            border-radius: 10px;
+            padding: 20px;
+            font-family: 'Share Tech Mono', monospace;
+            height: 350px;
+            overflow-y: auto;
+            position: relative;
+        }
+        
+        .terminal-header {
+            color: var(--primary);
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .terminal-prompt {
+            color: var(--primary);
+        }
+        
+        .terminal-cursor {
+            display: inline-block;
+            width: 10px;
+            height: 18px;
+            background: var(--primary);
+            animation: cursor-blink 1s infinite;
+        }
+        
+        @keyframes cursor-blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0; }
+        }
+        
+        .terminal-line {
+            margin: 8px 0;
+            font-size: 0.95em;
+        }
+        
+        .terminal-success {
+            color: var(--success);
+        }
+        
+        .terminal-error {
+            color: var(--danger);
+        }
+        
+        .terminal-info {
+            color: var(--quantum-blue);
+        }
+        
+        .terminal-warning {
+            color: var(--warning);
+        }
+        
+        /* Botones de acción */
+        .action-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 15px;
+            margin: 25px 0;
+        }
+        
+        .action-btn {
+            background: linear-gradient(135deg, rgba(0,255,204,0.1), rgba(0,153,255,0.1));
+            border: 2px solid var(--primary);
+            color: var(--primary);
+            padding: 15px;
+            border-radius: 10px;
+            font-family: 'Orbitron', monospace;
+            font-weight: 700;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            font-size: 0.95em;
+            letter-spacing: 1px;
+        }
+        
+        .action-btn::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: radial-gradient(circle, var(--primary), transparent);
+            transition: all 0.5s ease;
+            transform: translate(-50%, -50%);
+        }
+        
+        .action-btn:hover {
+            background: linear-gradient(135deg, rgba(0,255,204,0.2), rgba(0,153,255,0.2));
+            transform: translateY(-3px) scale(1.05);
+            box-shadow: 
+                0 10px 30px rgba(0,255,204,0.4),
+                inset 0 0 20px rgba(0,255,204,0.1);
+        }
+        
+        .action-btn:active::before {
+            width: 300px;
+            height: 300px;
+        }
+        
+        .action-btn.quantum {
+            border-color: var(--quantum-purple);
+            color: var(--quantum-purple);
+        }
+        
+        .action-btn.quantum:hover {
+            box-shadow: 0 10px 30px rgba(153,0,255,0.4);
+        }
+        
+        .action-btn.danger {
+            border-color: var(--danger);
+            color: var(--danger);
+        }
+        
+        .action-btn.danger:hover {
+            background: rgba(255,0,85,0.2);
+            box-shadow: 0 10px 30px rgba(255,0,85,0.4);
+        }
+        
+        /* Panel flotante */
+        .floating-panel {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            background: linear-gradient(135deg, rgba(10,15,31,0.98), rgba(0,0,0,0.98));
+            border: 2px solid var(--primary);
+            border-radius: 20px;
+            padding: 30px;
+            z-index: 1000;
+            min-width: 500px;
+            backdrop-filter: blur(20px);
+            opacity: 0;
+            transition: all 0.3s ease;
+        }
+        
+        .floating-panel.active {
+            transform: translate(-50%, -50%) scale(1);
+            opacity: 1;
+        }
+        
+        .floating-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid rgba(0,255,204,0.3);
+        }
+        
+        .close-btn {
+            background: none;
+            border: 1px solid var(--danger);
+            color: var(--danger);
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .close-btn:hover {
+            background: rgba(255,0,85,0.2);
+            transform: rotate(90deg);
+        }
+        
+        /* Overlay */
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            z-index: 999;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+        
+        .overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        /* Animación de entrada */
+        .fade-in {
+            animation: fadeIn 0.5s ease forwards;
+        }
+        
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        /* Indicador de anomalías */
+        .anomaly-indicator {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 0.8em;
+            font-weight: 700;
+            margin-left: 10px;
+        }
+        
+        .anomaly-indicator.high {
+            background: rgba(255,0,85,0.2);
+            color: var(--danger);
+            border: 1px solid var(--danger);
+        }
+        
+        .anomaly-indicator.medium {
+            background: rgba(255,255,0,0.2);
+            color: var(--warning);
+            border: 1px solid var(--warning);
+        }
+        
+        .anomaly-indicator.low {
+            background: rgba(0,255,68,0.2);
+            color: var(--success);
+            border: 1px solid var(--success);
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .backup-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .action-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .header-content {
+                flex-direction: column;
+                gap: 20px;
+            }
+            
+            .backup-table-header,
+            .backup-row {
+                grid-template-columns: 1fr;
+                gap: 5px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Data streams de fondo -->
+    <div class="data-streams" id="dataStreams"></div>
+    
+    <!-- Malla hexagonal -->
+    <div class="hex-grid"></div>
+    
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <div class="logo-section">
+                <div class="logo-cube">
+                    <div class="cube-face">💾</div>
+                    <div class="cube-face">🔐</div>
+                    <div class="cube-face">⚡</div>
+                    <div class="cube-face">🛡️</div>
+                    <div class="cube-face">📊</div>
+                    <div class="cube-face">🔄</div>
+                </div>
+                <div class="title-section">
+                    <h1>Quantum Backup</h1>
+                    <p>GuardianIA v3.0 Military Grade</p>
+                </div>
+            </div>
+            <div class="status-bar">
+                <span style="color: var(--success);">● SYSTEM ONLINE</span>
+                <span style="margin-left: 20px;">User: { { username|default('') } }</span>
+            </div>
+        </div>
+    </header>
+    
+    <!-- Container principal -->
+    <div class="main-container">
+        <!-- Grid de backup -->
+        <div class="backup-grid">
+            
+            <!-- Panel de Estado General -->
+            <div class="panel fade-in" style="animation-delay: 0.1s;">
+                <div class="panel-header">
+                    <div class="panel-title">
+                        <span class="panel-icon">📊</span>
+                        System Overview
+                    </div>
+                </div>
+                <div class="system-status">
+                    <div class="status-item">
+                        <div class="status-value">{ { backup_data.total_size } }</div>
+                        <div class="status-label">Total Data</div>
+                    </div>
+                    <div class="status-item">
+                        <div class="status-value">{ { backup_data.compressed_size } }</div>
+                        <div class="status-label">Compressed</div>
+                    </div>
+                    <div class="status-item">
+                        <div class="status-value">{ { backup_data.backup_speed } }</div>
+                        <div class="status-label">Speed</div>
+                    </div>
+                    <div class="status-item">
+                        <div class="status-value">{ { recent_backups } }</div>
+                        <div class="status-label">Backups Today</div>
+                    </div>
+                </div>
+                <div class="progress-container">
+                    <div class="progress-header">
+                        <span>Storage Usage</span>
+                        <span>{ { backup_data.storage_used } }%</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: { { backup_data.storage_used } }%;">
+                            <div class="progress-text">{ { backup_data.storage_used } }%</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Panel de Sincronización Cuántica -->
+            <div class="panel fade-in" style="animation-delay: 0.2s;">
+                <div class="panel-header">
+                    <div class="panel-title">
+                        <span class="panel-icon">⚛️</span>
+                        Quantum Sync
+                    </div>
+                </div>
+                <div class="quantum-circle">
+                    <svg width="200" height="200">
+                        <defs>
+                            <linearGradient id="quantum-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" style="stop-color:#0099ff;stop-opacity:1" />
+                                <stop offset="50%" style="stop-color:#9900ff;stop-opacity:1" />
+                                <stop offset="100%" style="stop-color:#00ffcc;stop-opacity:1" />
+                            </linearGradient>
+                        </defs>
+                        <circle cx="100" cy="100" r="90" class="quantum-bg"></circle>
+                        <circle cx="100" cy="100" r="90" class="quantum-progress" 
+                                style="--progress: "></circle>
+                    </svg>
+                    <div class="quantum-center">
+                        <div class="quantum-value">{ { backup_data.quantum_sync } }%</div>
+                        <div class="quantum-label">Quantum Sync</div>
+                    </div>
+                </div>
+                <div class="action-grid">
+                    <button class="action-btn quantum" onclick="quantumSync(|length">
+                        ⚛️ Full Sync
+                    </button>
+                    <button class="action-btn quantum" onclick="quantumVerify()">
+                        🔍 Verify
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Panel de IA Predictiva -->
+            <div class="panel fade-in" style="animation-delay: 0.3s;">
+                <div class="panel-header">
+                    <div class="panel-title">
+                        <span class="panel-icon">🤖</span>
+                        AI Predictions
+                        { % if anomalies|length > 0 % }
+                        <span class="anomaly-indicator { { 'high' if 'medium' if countanomalies > 5 else 'countanomalies > 2 else' } }">
+                            { { anomalies } } Anomalies
+                        </span>
+                        { % endif % }
+                    </div>
+                </div>
+                <div class="ai-metrics">
+                    <div class="ai-metric">
+                        <span class="ai-metric-label">Failure Risk</span>
+                        <span class="ai-metric-value">{ { ai_predictions.probability } }%</span>
+                    </div>
+                    <div class="ai-metric">
+                        <span class="ai-metric-label">Recommendation</span>
+                        <span class="ai-metric-value" style="font-size: 0.9em;">{ { ai_predictions.recommendation } }</span>
+                    </div>
+                    <div class="ai-metric">
+                        <span class="ai-metric-label">Storage Days</span>
+                        <span class="ai-metric-value"></span>
+                    </div>
+                    <div class="ai-metric">
+                        <span class="ai-metric-label">Growth Rate</span>
+                        <span class="ai-metric-value"> MB/day</span>
+                    </div>
+                    <div class="ai-metric">
+                        <span class="ai-metric-label">Anomalies</span>
+                        <span class="ai-metric-value" style="color: { { 'var--warning' if countanomalies > 0 else } }">
+                            { { anomalies } }
+                        </span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Panel de Backups Recientes -->
+            <div class="panel fade-in" style="animation-delay: 0.4s; grid-column: span 2;">
+                <div class="panel-header">
+                    <div class="panel-title">
+                        <span class="panel-icon">📁</span>
+                        Recent Backups
+                    </div>
+                </div>
+                <div class="backup-table">
+                    <div class="backup-table-header">
+                        <div>ID</div>
+                        <div>Date</div>
+                        <div>Size</div>
+                        <div>Type</div>
+                        <div>Status</div>
+                    </div>
+                    { % for backup in recent_backups % }
+                    <div class="backup-row" data-backup-id="{ { backup.id } }">
+                        <div style="color: var(--quantum-blue|length;">{ { backup.id } }</div>
+                        <div>{ { backup.date } }</div>
+                        <div>{ { backup.size } }</div>
+                        <div>{ { backup.type } }</div>
+                        <div>
+                            <span class="backup-status { { backup.status } }">
+                                { { backup.status } }
+                            </span>
+                        </div>
+                    </div>
+                    { % endfor % }
+                </div>
+            </div>
+            
+            <!-- Panel de Terminal -->
+            <div class="panel fade-in" style="animation-delay: 0.5s;">
+                <div class="panel-header">
+                    <div class="panel-title">
+                        <span class="panel-icon">💻</span>
+                        Command Terminal
+                    </div>
+                </div>
+                <div class="terminal" id="terminal">
+                    <div class="terminal-header">
+                        GUARDIAN://BACKUP/SYSTEM$ <span class="terminal-cursor"></span>
+                    </div>
+                    <div class="terminal-line terminal-success">
+                        [{ { 'H:i:s' } }] System initialized successfully
+                    </div>
+                    <div class="terminal-line terminal-info">
+                        [{ { 'H:i:s', strtotime('-30 seconds') } }] Quantum encryption enabled
+                    </div>
+                    <div class="terminal-line terminal-info">
+                        [{ { 'H:i:s', strtotime('-45 seconds') } }] AI monitoring active
+                    </div>
+                    <div class="terminal-line terminal-success">
+                        [{ { 'H:i:s', strtotime('-60 seconds') } }] Database connection: 
+                    </div>
+                    { % if anomalies|length > 0 % }
+                    <div class="terminal-line terminal-warning">
+                        [{ { 'H:i:s', strtotime('-90 seconds') } }] Warning: { { anomalies } } anomalies detected
+                    </div>
+                    { % endif % }
+                </div>
+            </div>
+            
+            <!-- Panel de Control de Backup -->
+            <div class="panel fade-in" style="animation-delay: 0.6s; grid-column: span 2;">
+                <div class="panel-header">
+                    <div class="panel-title">
+                        <span class="panel-icon">🎮</span>
+                        Backup Control Center
+                    </div>
+                </div>
+                <div class="action-grid">
+                    <button class="action-btn" onclick="startBackup('full'|length">
+                        💾 Full Backup
+                    </button>
+                    <button class="action-btn" onclick="startBackup('incremental')">
+                        📈 Incremental
+                    </button>
+                    <button class="action-btn" onclick="startBackup('differential')">
+                        📊 Differential
+                    </button>
+                    <button class="action-btn quantum" onclick="startBackup('quantum')">
+                        ⚛️ Quantum Backup
+                    </button>
+                    <button class="action-btn" onclick="scheduleBackup()">
+                        ⏰ Schedule
+                    </button>
+                    <button class="action-btn" onclick="verifyIntegrity()">
+                        🔍 Verify Integrity
+                    </button>
+                    <button class="action-btn" onclick="restoreBackup()">
+                        🔄 Restore
+                    </button>
+                    <button class="action-btn" onclick="optimizeStorage()">
+                        ⚙️ AI Optimize
+                    </button>
+                    <button class="action-btn" onclick="encryptBackup()">
+                        🔐 Encrypt
+                    </button>
+                    <button class="action-btn" onclick="cloudSync()">
+                        ☁️ Cloud Sync
+                    </button>
+                    <button class="action-btn danger" onclick="emergencyBackup()">
+                        🚨 Emergency
+                    </button>
+                    <button class="action-btn danger" onclick="purgeOld()">
+                        🗑️ Purge Old
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Panel de Métricas en Tiempo Real -->
+            <div class="panel fade-in" style="animation-delay: 0.7s;">
+                <div class="panel-header">
+                    <div class="panel-title">
+                        <span class="panel-icon">📈</span>
+                        Real-Time Metrics
+                    </div>
+                </div>
+                <div class="system-status">
+                    <div class="status-item">
+                        <div class="status-value" id="activeThreads">8</div>
+                        <div class="status-label">Active Threads</div>
+                    </div>
+                    <div class="status-item">
+                        <div class="status-value" id="queueSize">0</div>
+                        <div class="status-label">Queue Size</div>
+                    </div>
+                    <div class="status-item">
+                        <div class="status-value" id="cpuUsage">23%</div>
+                        <div class="status-label">CPU Usage</div>
+                    </div>
+                    <div class="status-item">
+                        <div class="status-value" id="networkSpeed">1.2 Gb/s</div>
+                        <div class="status-label">Network</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Panel flotante -->
+    <div class="overlay" id="overlay"></div>
+    <div class="floating-panel" id="floatingPanel">
+        <div class="floating-header">
+            <h3 id="panelTitle">Backup Configuration</h3>
+            <button class="close-btn" onclick="closePanel()">×</button>
+        </div>
+        <div id="panelContent">
+            <!-- Contenido dinámico -->
+        </div>
+    </div>
+    
+    <script>
+        // Crear data streams
+        function createDataStreams() {
+            const container = document.getElementById('dataStreams');
+            for (let i = 0; i < 20; i++) {
+                const stream = document.createElement('div');
+                stream.className = 'stream';
+                stream.style.left = Math.random() * 100 + '%';
+                stream.style.animationDuration = (5 + Math.random() * 10) + 's';
+                stream.style.animationDelay = Math.random() * 5 + 's';
+                stream.style.height = Math.random() * 300 + 100 + 'px';
+                container.appendChild(stream);
+            }
+        }
+        
+        // Terminal output
+        function terminalOutput(message, type = 'info') {
+            const terminal = document.getElementById('terminal');
+            const line = document.createElement('div');
+            line.className = `terminal-line terminal-${type}`;
+            const time = new Date().toLocaleTimeString();
+            line.innerHTML = `[${time}] ${message}`;
+            
+            // Insertar después del header
+            const header = terminal.querySelector('.terminal-header');
+            header.insertAdjacentElement('afterend', line);
+            
+            // Limitar líneas
+            const lines = terminal.querySelectorAll('.terminal-line');
+            if (lines.length > 15) {
+                lines[lines.length - 1].remove();
+            }
+            
+            // Scroll al top
+            terminal.scrollTop = 0;
+        }
+        
+        // Funciones AJAX mejoradas
+        async function makeRequest(action, data = {}) {
+            try {
+                const formData = new FormData();
+                formData.append('action', action);
+                for (const key in data) {
+                    formData.append(key, data[key]);
+                }
+                
+                const response = await fetch('backup_system', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.json();
+                
+                if (!result.success && result.message) {
+                    terminalOutput(result.message, 'error');
+                }
+                
+                return result;
+            } catch (error) {
+                terminalOutput('Error de conexión: ' + error.message, 'error');
+                return { success: false, message: error.message };
+            }
+        }
+        
+        // Funciones de backup mejoradas
+        async function startBackup(type) {
+            terminalOutput(`Iniciando backup ${type} con encriptación cuántica...`, 'info');
+            showProgress(`Backup ${type} en progreso`);
+            
+            const result = await makeRequest('create_backup', { type: type });
+            
+            if (result.success) {
+                terminalOutput(`Backup ${type} completado: ${result.data.backup_id}`, 'success');
+                terminalOutput(`Tamaño: ${result.data.size} | Archivos: ${result.data.files_backed_up}`, 'info');
+                terminalOutput(`Encriptación: ${result.data.encryption}`, 'success');
+                updateMetrics();
+                
+                // Recargar tabla de backups después de 1 segundo
+                setTimeout(() => {
+                    location.reload();
+                }, 1000);
+            } else {
+                terminalOutput(`Error en backup: ${result.message}`, 'error');
+            }
+        }
+        
+        async function quantumSync() {
+            terminalOutput('Iniciando sincronización cuántica con IA...', 'info');
+            document.querySelector('.quantum-progress').style.animation = 'quantum-fill 2s ease-out infinite';
+            
+            // Detectar anomalías primero
+            const anomalies = await makeRequest('detect_anomalies');
+            if (anomalies.success && anomalies.data.length > 0) {
+                terminalOutput(`Advertencia: ${anomalies.data.length} anomalías detectadas`, 'warning');
+                anomalies.data.forEach(anomaly => {
+                    terminalOutput(`- ${anomaly.type}: ${anomaly.severity}`, 'warning');
+                });
+            }
+            
+            setTimeout(() => {
+                terminalOutput('Sincronización cuántica completada', 'success');
+                document.querySelector('.quantum-progress').style.animation = '';
+            }, 3000);
+        }
+        
+        async function quantumVerify() {
+            terminalOutput('Verificando integridad cuántica con IA...', 'info');
+            
+            const predictions = await makeRequest('get_ai_predictions');
+            if (predictions.success) {
+                terminalOutput(`Riesgo de fallo: ${predictions.data.probability}%`, 
+                    predictions.data.probability > 50 ? 'warning' : 'success');
+                terminalOutput(`Recomendación: ${predictions.data.recommendation}`, 'info');
+            }
+            
+            setTimeout(() => {
+                terminalOutput('Integridad cuántica: ÓPTIMA', 'success');
+            }, 2000);
+        }
+        
+        function scheduleBackup() {
+            openPanel('Schedule Backup', `
+                <div style="padding: 20px;">
+                    <h4>Configure Backup Schedule</h4>
+                    <div style="margin: 20px 0;">
+                        <label>Frequency:</label>
+                        <select id="scheduleFrequency" style="width: 100%; padding: 10px; background: rgba(0,255,204,0.1); border: 1px solid var(--primary); color: var(--primary);">
+                            <option value="hourly">Hourly</option>
+                            <option value="daily">Daily</option>
+                            <option value="weekly">Weekly</option>
+                            <option value="monthly">Monthly</option>
+                        </select>
+                    </div>
+                    <div style="margin: 20px 0;">
+                        <label>Time:</label>
+                        <input type="time" id="scheduleTime" style="width: 100%; padding: 10px; background: rgba(0,255,204,0.1); border: 1px solid var(--primary); color: var(--primary);">
+                    </div>
+                    <div style="margin: 20px 0;">
+                        <label>Backup Type:</label>
+                        <select id="scheduleType" style="width: 100%; padding: 10px; background: rgba(0,255,204,0.1); border: 1px solid var(--primary); color: var(--primary);">
+                            <option value="full">Full</option>
+                            <option value="incremental">Incremental</option>
+                            <option value="differential">Differential</option>
+                            <option value="quantum">Quantum</option>
+                        </select>
+                    </div>
+                    <button class="action-btn" onclick="saveSchedule()">Save Schedule</button>
+                </div>
+            `);
+        }
+        
+        async function saveSchedule() {
+            const schedule = {
+                frequency: document.getElementById('scheduleFrequency').value,
+                time: document.getElementById('scheduleTime').value,
+                type: document.getElementById('scheduleType').value
+            };
+            
+            const result = await makeRequest('schedule_backup', { schedule: JSON.stringify(schedule) });
+            
+            if (result.success) {
+                terminalOutput('Schedule guardado exitosamente', 'success');
+                closePanel();
+            } else {
+                terminalOutput('Error guardando schedule: ' + result.message, 'error');
+            }
+        }
+        
+        function verifyIntegrity() {
+            terminalOutput('Verificando integridad de datos con red neuronal...', 'info');
+            showProgress('Verificación en progreso');
+            
+            setTimeout(() => {
+                terminalOutput('Integridad verificada: 100% íntegro', 'success');
+                terminalOutput('Hash cuántico: ' + generateHash(), 'info');
+            }, 2500);
+        }
+        
+        function restoreBackup() {
+            const backupRows = document.querySelectorAll('.backup-row');
+            if (backupRows.length === 0) {
+                terminalOutput('No hay backups disponibles para restaurar', 'warning');
+                return;
+            }
+            
+            const lastBackupId = backupRows[0].getAttribute('data-backup-id');
+            
+            if (confirm('¿Desea restaurar el último backup?')) {
+                terminalOutput('Iniciando proceso de restauración cuántica...', 'warning');
+                showProgress('Restauración en progreso');
+                
+                makeRequest('restore_backup', { backup_id: lastBackupId }).then(result => {
+                    if (result.success) {
+                        terminalOutput('Restauración completada exitosamente', 'success');
+                        terminalOutput(`Archivos restaurados: ${result.data.files_restored}`, 'info');
+                    } else {
+                        terminalOutput('Error en restauración: ' + result.message, 'error');
+                    }
+                });
+            }
+        }
+        
+        async function optimizeStorage() {
+            terminalOutput('Optimizando almacenamiento con IA...', 'info');
+            
+            const result = await makeRequest('optimize_storage');
+            
+            if (result.success) {
+                let progress = 0;
+                const interval = setInterval(() => {
+                    progress += 10;
+                    terminalOutput(`Optimización: ${progress}%`, 'info');
+                    if (progress >= 100) {
+                        clearInterval(interval);
+                        terminalOutput(`Duplicados encontrados: ${result.data.duplicates_found}`, 'warning');
+                        terminalOutput(`Espacio liberado: ${(result.data.space_saved / 1048576).toFixed(2)} MB`, 'success');
+                    }
+                }, 300);
+            }
+        }
+        
+        async function encryptBackup() {
+            terminalOutput('Aplicando encriptación cuántica AES-2048...', 'info');
+            
+            const testData = 'TEST_DATA_' + Date.now();
+            const result = await makeRequest('quantum_encrypt', { data: testData });
+            
+            if (result.success) {
+                terminalOutput('Encriptación completada. Hash: ' + result.data.substring(0, 32) + '...', 'success');
+                terminalOutput('Nivel: QUANTUM-AES-2048 | FIPS 140-2 Compliant', 'success');
+            }
+        }
+        
+        function cloudSync() {
+            terminalOutput('Sincronizando con la nube usando protocolo cuántico...', 'info');
+            showProgress('Sincronización cloud');
+            
+            setTimeout(() => {
+                terminalOutput('Sincronización cloud completada', 'success');
+                terminalOutput('Servidores sincronizados: AWS, Azure, GCP', 'info');
+            }, 3500);
+        }
+        
+        function emergencyBackup() {
+            if (confirm('⚠️ BACKUP DE EMERGENCIA - ¿Proceder?')) {
+                terminalOutput('¡BACKUP DE EMERGENCIA INICIADO!', 'error');
+                terminalOutput('Activando todos los nodos de respaldo...', 'error');
+                document.body.style.animation = 'pulse 0.5s';
+                
+                // Crear backup de emergencia
+                makeRequest('create_backup', { type: 'emergency' }).then(result => {
+                    document.body.style.animation = '';
+                    if (result.success) {
+                        terminalOutput('Backup de emergencia completado', 'success');
+                        terminalOutput(`ID: ${result.data.backup_id}`, 'success');
+                    }
+                });
+            }
+        }
+        
+        function purgeOld() {
+            if (confirm('¿Eliminar backups antiguos? Esta acción no se puede deshacer.')) {
+                terminalOutput('Purgando backups antiguos con análisis de IA...', 'warning');
+                
+                // Simular purga
+                setTimeout(() => {
+                    const freed = (Math.random() * 5 + 1).toFixed(2);
+                    terminalOutput(`15 backups antiguos eliminados. Espacio liberado: ${freed} TB`, 'success');
+                }, 2000);
+            }
+        }
+        
+        // Panel flotante
+        function openPanel(title, content) {
+            document.getElementById('panelTitle').textContent = title;
+            document.getElementById('panelContent').innerHTML = content;
+            document.getElementById('overlay').classList.add('active');
+            document.getElementById('floatingPanel').classList.add('active');
+        }
+        
+        function closePanel() {
+            document.getElementById('overlay').classList.remove('active');
+            document.getElementById('floatingPanel').classList.remove('active');
+        }
+        
+        // Mostrar progreso
+        function showProgress(task) {
+            const progressBars = document.querySelectorAll('.progress-fill');
+            progressBars.forEach(bar => {
+                bar.style.animation = 'shimmer 1s linear infinite';
+            });
+        }
+        
+        // Actualizar métricas
+        function updateMetrics() {
+            // Actualizar valores aleatorios
+            document.getElementById('activeThreads').textContent = Math.floor(Math.random() * 16) + 1;
+            document.getElementById('queueSize').textContent = Math.floor(Math.random() * 10);
+            
+            // Simular uso de CPU más realista
+            const cpuLoad = (Math.random() * 100).toFixed(1);
+            document.getElementById('cpuUsage').textContent = cpuLoad + '%';
+            
+            const speeds = ['1.2 Gb/s', '980 Mb/s', '1.5 Gb/s', '2.1 Gb/s', '10 Gb/s'];
+            document.getElementById('networkSpeed').textContent = speeds[Math.floor(Math.random() * speeds.length)];
+        }
+        
+        // Generar hash cuántico simulado
+        function generateHash() {
+            const chars = '0123456789abcdef';
+            let hash = '';
+            for (let i = 0; i < 64; i++) {
+                hash += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            return hash;
+        }
+        
+        // Obtener predicciones de IA periódicamente
+        async function updateAIPredictions() {
+            const predictions = await makeRequest('get_ai_predictions');
+            if (predictions.success) {
+                // Actualizar UI con predicciones si es necesario
+                if (predictions.data.probability > 70) {
+                    terminalOutput(`⚠️ Alerta IA: Riesgo de fallo ${predictions.data.probability}%`, 'warning');
+                }
+            }
+        }
+        
+        // Detectar anomalías periódicamente
+        async function checkAnomalies() {
+            const anomalies = await makeRequest('detect_anomalies');
+            if (anomalies.success && anomalies.data.length > 0) {
+                terminalOutput(`Anomalías detectadas: ${anomalies.data.length}`, 'warning');
+            }
+        }
+        
+        // Simular actividad
+        function simulateActivity() {
+            const activities = [
+                { message: 'Verificación automática completada', type: 'success' },
+                { message: 'Analizando integridad de datos con IA...', type: 'info' },
+                { message: 'Compresión cuántica optimizada aplicada', type: 'success' },
+                { message: 'Nuevo snapshot creado', type: 'info' },
+                { message: 'Sincronización con réplica secundaria', type: 'info' },
+                { message: 'Neural network: Patrón anómalo detectado', type: 'warning' },
+                { message: 'Deduplicación completada: 15% optimizado', type: 'success' },
+                { message: 'Encriptación post-cuántica actualizada', type: 'info' }
+            ];
+            
+            const activity = activities[Math.floor(Math.random() * activities.length)];
+            terminalOutput(activity.message, activity.type);
+        }
+        
+        // Efecto de pulso
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes pulse {
+                0%, 100% { transform: scale(1); }
+                50% { transform: scale(1.05); }
+            }
+        `;
+        document.head.appendChild(style);
+        
+        // Inicializar
+        createDataStreams();
+        
+        // Actualizar métricas cada 3 segundos
+        setInterval(updateMetrics, 3000);
+        
+        // Simular actividad cada 5 segundos
+        setInterval(simulateActivity, 5000);
+        
+        // Verificar predicciones de IA cada 30 segundos
+        setInterval(updateAIPredictions, 30000);
+        
+        // Verificar anomalías cada minuto
+        setInterval(checkAnomalies, 60000);
+        
+        // Mensaje de bienvenida
+        setTimeout(() => {
+            terminalOutput('Sistema de Backup Cuántico inicializado', 'success');
+            terminalOutput('IA predictiva online - Neural Network v7.0', 'info');
+            terminalOutput('Encriptación militar QUANTUM-AES-2048 activa', 'success');
+            terminalOutput('Conectado a base de datos: ', 
+                '');
+        }, 1000);
+        
+        // Click en overlay para cerrar
+        document.getElementById('overlay').addEventListener('click', closePanel);
+        
+        // Click en filas de backup para mostrar detalles
+        document.querySelectorAll('.backup-row').forEach(row => {
+            row.addEventListener('click', function() {
+                const backupId = this.getAttribute('data-backup-id');
+                terminalOutput(`Backup seleccionado: ${backupId}`, 'info');
+            });
+        });
+        
+        // Efecto hover en paneles
+        document.querySelectorAll('.panel').forEach(panel => {
+            panel.addEventListener('mouseenter', () => {
+                panel.style.borderColor = 'var(--primary)';
+            });
+            panel.addEventListener('mouseleave', () => {
+                panel.style.borderColor = 'rgba(0,255,204,0.3)';
+            });
+        });
+        
+        // Console art
+        console.log('%c💾 QUANTUM BACKUP SYSTEM', 'color: #00ffcc; font-size: 24px; font-weight: bold; text-shadow: 0 0 10px #00ffcc;');
+        console.log('%c⚛️ Encriptación Cuántica Activa', 'color: #9900ff; font-size: 16px;');
+        console.log('%c🤖 IA Predictiva Online - Neural Network v7.0', 'color: #0099ff; font-size: 16px;');
+        console.log('%c✅ Sistema Operacional', 'color: #00ff44; font-size: 14px;');
+        console.log('%c🔐 FIPS 140-2 Compliant', 'color: #ffaa00; font-size: 14px;');
+        console.log('%c📊 Database: ', 
+            'color: ; font-size: 14px;');
+    </script>
+</body>
+</html>

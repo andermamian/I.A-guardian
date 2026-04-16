@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ app_name|default('GuardianIA v3.0') }} - Login</title>
+    <style>{% raw %}
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Particulas de fondo */
+        .particles {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .particle {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            animation: float 6s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-20px) rotate(180deg); }
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            padding: 40px;
+            width: 100%;
+            max-width: 450px;
+            position: relative;
+            z-index: 10;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .logo {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .logo h1 {
+            color: #333;
+            font-size: 2.5em;
+            font-weight: 700;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .logo p {
+            color: #666;
+            font-size: 1.1em;
+            font-weight: 500;
+        }
+
+        .form-container {
+            position: relative;
+        }
+
+        .form-tabs {
+            display: flex;
+            margin-bottom: 30px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 5px;
+        }
+
+        .tab-button {
+            flex: 1;
+            padding: 12px 20px;
+            border: none;
+            background: transparent;
+            color: #666;
+            font-size: 1em;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .tab-button.active {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 600;
+            font-size: 0.95em;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e1e5e9;
+            border-radius: 10px;
+            font-size: 1em;
+            transition: all 0.3s ease;
+            background: #fff;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .submit-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 10px;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+        }
+
+        .submit-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .message {
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            font-weight: 500;
+            text-align: center;
+        }
+
+        .message.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .message.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .form-section {
+            display: none;
+        }
+
+        .form-section.active {
+            display: block;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .db-status {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 0.8em;
+            font-weight: 600;
+        }
+
+        .db-status.connected {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .db-status.disconnected {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .military-status {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 0.8em;
+            font-weight: 600;
+            background: #dc3545;
+            color: white;
+        }
+
+        .military-status.enabled {
+            background: #28a745;
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                margin: 20px;
+                padding: 30px 25px;
+            }
+            
+            .logo h1 {
+                font-size: 2em;
+            }
+            
+            .db-status, .military-status {
+                position: static;
+                display: inline-block;
+                margin: 5px;
+            }
+        }
+    {% endraw %}</style>
+</head>
+<body>
+    <!-- Particulas de fondo -->
+    <div class="particles" id="particles"></div>
+
+    <div class="container">
+        <!-- Estado del sistema -->
+        <div class="db-status {{ 'connected' if dbConnected else '' }}" title="{{ 'Conectada' }}">
+            {{ '🟢 DB Conectada' if dbConnected else '' }}
+        </div>
+        
+        {% if true %}
+        <div class="military-status {{ 'enabled' if MILITARY_ENCRYPTION_ENABLED else '' }}" title="Encriptacion Militar">
+            {{ '🛡️ MILITAR' if MILITARY_ENCRYPTION_ENABLED else '' }}
+        </div>
+        {% endif %}
+
+        <div class="logo">
+            <h1>🛡️ GuardianIA</h1>
+            <p>{{ 'APP_VERSION' }}</p>
+        </div>
+
+        <div id="message-container"></div>
+        
+        <div class="form-container">
+            <div class="form-tabs">
+                <button class="tab-button active" onclick="switchTab('login')">Iniciar Sesion</button>
+                <button class="tab-button" onclick="switchTab('register')">Registrarse</button>
+            </div>
+
+            <!-- Formulario de Login -->
+            <div id="login-section" class="form-section active">
+                <form id="login-form">
+                    <input type="hidden" name="action" value="login">
+                    <input type="hidden" name="csrf_token" value="">
+                    
+                    <div class="form-group">
+                        <label for="login-username">Usuario</label>
+                        <input type="text" id="login-username" name="username" required autocomplete="username" maxlength="50">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="login-password">Contraseña</label>
+                        <input type="password" id="login-password" name="password" required autocomplete="current-password">
+                    </div>
+                    
+                    <button type="submit" class="submit-btn">Iniciar Sesion</button>
+                </form>
+            </div>
+
+            <!-- Formulario de Registro -->
+            <div id="register-section" class="form-section">
+                <form id="register-form">
+                    <input type="hidden" name="action" value="register">
+                    <input type="hidden" name="csrf_token" value="">
+                    
+                    <div class="form-group">
+                        <label for="register-fullname">Nombre Completo</label>
+                        <input type="text" id="register-fullname" name="fullname" required maxlength="100">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="register-username">Usuario</label>
+                        <input type="text" id="register-username" name="username" required pattern="[a-zA-Z0-9_]{3,20}" title="3-20 caracteres: letras, numeros y guiones bajos" maxlength="20">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="register-email">Email</label>
+                        <input type="email" id="register-email" name="email" required maxlength="100">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="register-password">Contraseña</label>
+                        <input type="password" id="register-password" name="password" required minlength="6" maxlength="255">
+                        <small style="color: #666; font-size: 0.8em;">Minimo 6 caracteres</small>
+                    </div>
+                    
+                    <button type="submit" class="submit-btn">Registrarse</button>
+                </form>
+            </div>
+
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p>Procesando...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>{% raw %}
+        // Crear particulas de fondo
+        function createParticles() {
+            const particlesContainer = document.getElementById('particles');
+            const particleCount = 50;
+
+            for (let i = 0; i < particleCount; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.style.left = Math.random() * 100 + '%';
+                particle.style.top = Math.random() * 100 + '%';
+                particle.style.animationDelay = Math.random() * 6 + 's';
+                particle.style.animationDuration = (Math.random() * 3 + 3) + 's';
+                particlesContainer.appendChild(particle);
+            }
+        }
+
+        // Cambiar entre tabs
+        function switchTab(tab) {
+            document.querySelectorAll('.tab-button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            const buttons = document.querySelectorAll('.tab-button');
+            if (tab === 'login') {
+                buttons[0].classList.add('active');
+            } else {
+                buttons[1].classList.add('active');
+            }
+
+            document.querySelectorAll('.form-section').forEach(section => {
+                section.classList.remove('active');
+            });
+            document.getElementById(tab + '-section').classList.add('active');
+
+            document.getElementById('message-container').innerHTML = '';
+        }
+
+        // Mostrar mensaje
+        function showMessage(message, type) {
+            const container = document.getElementById('message-container');
+            container.innerHTML = `<div class="message ${type}">${message}</div>`;
+            
+            setTimeout(() => {
+                if (container.innerHTML.includes(message)) {
+                    container.innerHTML = '';
+                }
+            }, 5000);
+        }
+
+        // Mostrar loading
+        function showLoading(show) {
+            const loading = document.getElementById('loading');
+            const forms = document.querySelectorAll('.form-section');
+            
+            if (show) {
+                loading.style.display = 'block';
+                forms.forEach(form => form.style.display = 'none');
+            } else {
+                loading.style.display = 'none';
+                document.querySelector('.form-section.active').style.display = 'block';
+            }
+        }
+
+        // Manejar formulario de login
+        document.getElementById('login-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const username = document.getElementById('login-username').value.trim();
+            const password = document.getElementById('login-password').value;
+            
+            if (!username || !password) {
+                showMessage('Por favor, completa todos los campos', 'error');
+                return;
+            }
+            
+            showLoading(true);
+            
+            const formData = new FormData(this);
+            
+            try {
+                const response = await fetch(window.location.href, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.json();
+                
+                showLoading(false);
+                
+                if (result.success) {
+                    showMessage('¡Login exitoso! Redirigiendo...', 'success');
+                    
+                    // Mostrar informacion del usuario
+                    if (result.user) {
+                        console.log('Usuario autenticado:', result.user);
+                        console.log('Tipo de usuario:', result.user.user_type);
+                        console.log('Clearance:', result.user.security_clearance);
+                    }
+                    
+                    setTimeout(() => {
+                        window.location.href = result.redirect;
+                    }, 1500);
+                } else {
+                    showMessage(result.message || 'Error en el login', 'error');
+                }
+            } catch (error) {
+                showLoading(false);
+                showMessage('Error de conexion. Intente nuevamente.', 'error');
+                console.error('Error:', error);
+            }
+        });
+
+        // Manejar formulario de registro
+        document.getElementById('register-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const password = document.getElementById('register-password').value;
+            const username = document.getElementById('register-username').value.trim();
+            const email = document.getElementById('register-email').value.trim();
+            
+            if (password.length < 6) {
+                showMessage('La contraseña debe tener al menos 6 caracteres', 'error');
+                return;
+            }
+            
+            if (!/^[a-zA-Z0-9_]{3,20}$/.test(username)) {
+                showMessage('Usuario invalido (3-20 caracteres: letras, numeros y guiones bajos)', 'error');
+                return;
+            }
+            
+            if (!/\S+@\S+\.\S+/.test(email)) {
+                showMessage('Formato de email invalido', 'error');
+                return;
+            }
+            
+            showLoading(true);
+            
+            const formData = new FormData(this);
+            
+            try {
+                const response = await fetch(window.location.href, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.json();
+                
+                showLoading(false);
+                
+                if (result.success) {
+                    showMessage(result.message, 'success');
+                    this.reset();
+                    
+                    // Si fue el primer usuario, mostrar que es admin
+                    if (result.user_type === 'admin') {
+                        showMessage('Eres el primer usuario registrado. Se te han otorgado permisos de administrador!', 'success');
+                    }
+                    
+                    setTimeout(() => {
+                        switchTab('login');
+                    }, 2000);
+                } else {
+                    showMessage(result.message || 'Error en el registro', 'error');
+                }
+            } catch (error) {
+                showLoading(false);
+                showMessage('Error de conexion. Intente nuevamente.', 'error');
+                console.error('Error:', error);
+            }
+        });
+
+        // Verificar mensaje de logout
+        function checkLogoutMessage() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const message = urlParams.get('message');
+            
+            if (message === 'logout_success') {
+                showMessage('Sesion cerrada correctamente. ¡Hasta pronto!', 'success');
+                
+                const url = new URL(window.location);
+                url.searchParams.delete('message');
+                window.history.replaceState({}, document.title, url.pathname);
+            } else if (message === 'access_denied') {
+                showMessage('Acceso denegado. Por favor, inicia sesion.', 'error');
+                
+                const url = new URL(window.location);
+                url.searchParams.delete('message');
+                window.history.replaceState({}, document.title, url.pathname);
+            }
+        }
+
+        // Inicializar
+        document.addEventListener('DOMContentLoaded', function() {
+            createParticles();
+            checkLogoutMessage();
+        });
+    {% endraw %}</script>
+</body>
+</html>

@@ -1,0 +1,1032 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🧠 Diseñador de Personalidad IA - { { APP_NAME|default('') } }</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --neon-cyan: #00ffff;
+            --neon-purple: #ff00ff;
+            --neon-pink: #ff00aa;
+            --neon-green: #00ff00;
+            --neon-yellow: #ffff00;
+            --neon-orange: #ff8800;
+            --dark-bg: #0a0a0a;
+            --panel-bg: #111111;
+            --border-color: #333333;
+            --text-primary: #ffffff;
+            --text-secondary: #aaaaaa;
+            --gradient-1: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --gradient-2: linear-gradient(135deg, #00ffff 0%, #ff00ff 100%);
+            --gradient-3: linear-gradient(135deg, #00ff88 0%, #00ffff 100%);
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--dark-bg);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* Animated Background */
+        .neural-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            opacity: 0.05;
+            background: 
+                radial-gradient(circle at 20% 50%, var(--neon-cyan) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, var(--neon-purple) 0%, transparent 50%),
+                radial-gradient(circle at 40% 20%, var(--neon-pink) 0%, transparent 50%);
+            animation: neural-pulse 10s ease-in-out infinite;
+        }
+
+        @keyframes neural-pulse {
+            0%, 100% { transform: scale(1) rotate(0deg); }
+            50% { transform: scale(1.1) rotate(5deg); }
+        }
+
+        /* Floating Particles */
+        .particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .particle {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: var(--neon-cyan);
+            border-radius: 50%;
+            box-shadow: 0 0 10px var(--neon-cyan);
+            animation: float-up 20s linear infinite;
+        }
+
+        @keyframes float-up {
+            from {
+                transform: translateY(100vh) translateX(0);
+                opacity: 0;
+            }
+            10% {
+                opacity: 1;
+            }
+            90% {
+                opacity: 1;
+            }
+            to {
+                transform: translateY(-100px) translateX(100px);
+                opacity: 0;
+            }
+        }
+
+        /* Main Container */
+        .container {
+            position: relative;
+            z-index: 1;
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            padding: 30px;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
+            border: 2px solid var(--neon-purple);
+            border-radius: 20px;
+            margin-bottom: 30px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, var(--neon-cyan), transparent);
+            animation: scan 6s linear infinite;
+        }
+
+        @keyframes scan {
+            0% { transform: translateX(-100%) translateY(-100%); }
+            100% { transform: translateX(100%) translateY(100%); }
+        }
+
+        .header h1 {
+            font-size: 3em;
+            margin-bottom: 10px;
+            background: var(--gradient-2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            position: relative;
+            z-index: 1;
+            text-shadow: 0 0 30px rgba(0, 255, 255, 0.5);
+        }
+
+        .header p {
+            color: var(--text-secondary);
+            font-size: 1.2em;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Main Grid */
+        .main-grid {
+            display: grid;
+            grid-template-columns: 300px 1fr 350px;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        /* Presets Panel */
+        .presets-panel {
+            background: var(--panel-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 15px;
+            padding: 20px;
+            height: fit-content;
+        }
+
+        .preset-title {
+            font-size: 1.3em;
+            color: var(--neon-cyan);
+            margin-bottom: 20px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .preset-card {
+            background: rgba(0, 255, 255, 0.05);
+            border: 1px solid rgba(0, 255, 255, 0.2);
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .preset-card:hover {
+            background: rgba(0, 255, 255, 0.1);
+            border-color: var(--neon-cyan);
+            transform: translateX(5px);
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
+        }
+
+        .preset-card.active {
+            background: rgba(0, 255, 255, 0.2);
+            border-color: var(--neon-cyan);
+            box-shadow: 0 0 30px rgba(0, 255, 255, 0.5);
+        }
+
+        .preset-icon {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+
+        .preset-name {
+            font-size: 1.1em;
+            color: var(--text-primary);
+            margin-bottom: 5px;
+        }
+
+        .preset-description {
+            font-size: 0.85em;
+            color: var(--text-secondary);
+        }
+
+        /* Parameters Panel */
+        .parameters-panel {
+            background: var(--panel-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 15px;
+            padding: 20px;
+        }
+
+        .param-section {
+            margin-bottom: 30px;
+        }
+
+        .section-title {
+            font-size: 1.2em;
+            color: var(--neon-purple);
+            margin-bottom: 20px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .parameter {
+            margin-bottom: 25px;
+        }
+
+        .param-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .param-label {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--text-primary);
+        }
+
+        .param-icon {
+            font-size: 1.2em;
+        }
+
+        .param-value {
+            font-size: 1.2em;
+            color: var(--neon-green);
+            font-weight: bold;
+            min-width: 50px;
+            text-align: right;
+        }
+
+        .slider-container {
+            position: relative;
+        }
+
+        .param-slider {
+            width: 100%;
+            height: 8px;
+            border-radius: 4px;
+            background: rgba(255, 255, 255, 0.1);
+            outline: none;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+
+        .param-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--neon-cyan);
+            cursor: pointer;
+            box-shadow: 0 0 10px var(--neon-cyan);
+            transition: all 0.3s ease;
+        }
+
+        .param-slider::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+            box-shadow: 0 0 20px var(--neon-cyan);
+        }
+
+        .param-slider::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--neon-cyan);
+            cursor: pointer;
+            box-shadow: 0 0 10px var(--neon-cyan);
+            border: none;
+        }
+
+        .slider-track {
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 8px;
+            border-radius: 4px;
+            background: linear-gradient(90deg, var(--neon-green), var(--neon-yellow), var(--neon-orange));
+            pointer-events: none;
+            transition: width 0.3s ease;
+        }
+
+        /* Analysis Panel */
+        .analysis-panel {
+            background: var(--panel-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 15px;
+            padding: 20px;
+        }
+
+        .analysis-title {
+            font-size: 1.3em;
+            color: var(--neon-pink);
+            margin-bottom: 20px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        /* 3D Brain Visualization */
+        .brain-container {
+            width: 100%;
+            height: 200px;
+            position: relative;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .brain-3d {
+            width: 150px;
+            height: 150px;
+            position: relative;
+            transform-style: preserve-3d;
+            animation: rotate-brain 10s linear infinite;
+        }
+
+        @keyframes rotate-brain {
+            from { transform: rotateY(0deg) rotateX(10deg); }
+            to { transform: rotateY(360deg) rotateX(10deg); }
+        }
+
+        .brain-hemisphere {
+            position: absolute;
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            border: 2px solid var(--neon-cyan);
+            background: radial-gradient(circle at 30% 30%, var(--neon-purple), transparent);
+            opacity: 0.6;
+        }
+
+        .brain-hemisphere:nth-child(1) {
+            transform: rotateY(0deg);
+        }
+
+        .brain-hemisphere:nth-child(2) {
+            transform: rotateY(60deg);
+        }
+
+        .brain-hemisphere:nth-child(3) {
+            transform: rotateY(120deg);
+        }
+
+        .neuron {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background: var(--neon-green);
+            border-radius: 50%;
+            box-shadow: 0 0 10px var(--neon-green);
+            animation: neuron-pulse 2s infinite;
+        }
+
+        @keyframes neuron-pulse {
+            0%, 100% { transform: scale(1); opacity: 0.5; }
+            50% { transform: scale(1.5); opacity: 1; }
+        }
+
+        /* Balance Chart */
+        .balance-chart {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: rgba(0, 255, 255, 0.05);
+            border-radius: 10px;
+            border: 1px solid rgba(0, 255, 255, 0.2);
+        }
+
+        .balance-bar {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .balance-label {
+            flex: 0 0 100px;
+            color: var(--text-secondary);
+            font-size: 0.9em;
+        }
+
+        .balance-progress {
+            flex: 1;
+            height: 20px;
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 0 10px;
+        }
+
+        .balance-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--neon-cyan), var(--neon-purple));
+            transition: width 0.5s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .balance-fill::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            animation: shine 2s infinite;
+        }
+
+        @keyframes shine {
+            to { left: 100%; }
+        }
+
+        .balance-value {
+            flex: 0 0 50px;
+            text-align: right;
+            color: var(--neon-green);
+            font-weight: bold;
+        }
+
+        /* Personality Type */
+        .personality-type {
+            text-align: center;
+            padding: 20px;
+            background: var(--gradient-1);
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .type-label {
+            font-size: 0.9em;
+            color: rgba(255, 255, 255, 0.8);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 5px;
+        }
+
+        .type-value {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: white;
+            text-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
+        }
+
+        /* Warnings */
+        .warnings {
+            margin-bottom: 20px;
+        }
+
+        .warning-item {
+            padding: 10px;
+            background: rgba(255, 136, 0, 0.1);
+            border-left: 3px solid var(--neon-orange);
+            border-radius: 5px;
+            margin-bottom: 10px;
+            font-size: 0.9em;
+            color: var(--neon-orange);
+        }
+
+        /* Action Buttons */
+        .actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 30px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 15px;
+            border: 2px solid var(--neon-cyan);
+            background: transparent;
+            color: var(--neon-cyan);
+            border-radius: 10px;
+            font-size: 1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .btn:hover {
+            background: var(--neon-cyan);
+            color: var(--dark-bg);
+            box-shadow: 0 0 20px var(--neon-cyan);
+            transform: translateY(-2px);
+        }
+
+        .btn-primary {
+            background: var(--gradient-2);
+            border: none;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            box-shadow: 0 0 30px rgba(0, 255, 255, 0.5);
+        }
+
+        /* Voice Settings */
+        .voice-settings {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .voice-option {
+            padding: 15px;
+            background: rgba(255, 0, 255, 0.05);
+            border: 1px solid rgba(255, 0, 255, 0.2);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+
+        .voice-option:hover {
+            background: rgba(255, 0, 255, 0.1);
+            border-color: var(--neon-purple);
+        }
+
+        .voice-option.selected {
+            background: rgba(255, 0, 255, 0.2);
+            border-color: var(--neon-purple);
+            box-shadow: 0 0 20px rgba(255, 0, 255, 0.3);
+        }
+
+        /* Traits Grid */
+        .traits-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .trait {
+            padding: 10px;
+            background: rgba(0, 255, 136, 0.05);
+            border: 1px solid rgba(0, 255, 136, 0.2);
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .trait-name {
+            color: var(--text-secondary);
+            font-size: 0.9em;
+        }
+
+        .trait-level {
+            color: var(--neon-green);
+            font-weight: bold;
+        }
+
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .presets-panel {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+                gap: 15px;
+            }
+            
+            .preset-card {
+                display: flex;
+                align-items: center;
+                gap: 15px;
+            }
+            
+            .preset-icon {
+                font-size: 1.5em;
+                margin-bottom: 0;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2em;
+            }
+            
+            .voice-settings {
+                grid-template-columns: 1fr;
+            }
+            
+            .traits-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .actions {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Neural Background -->
+    <div class="neural-bg"></div>
+    
+    <!-- Floating Particles -->
+    <div class="particles" id="particles"></div>
+    
+    <!-- Main Container -->
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>🧠 Diseñador de Personalidad IA</h1>
+            <p>{ { APP_NAME|default('') } } - Configuración Neural Avanzada</p>
+        </div>
+        
+        <!-- Main Grid -->
+        <div class="main-grid">
+            <!-- Presets Panel -->
+            <div class="presets-panel">
+                <h2 class="preset-title">⚡ Presets</h2>
+                
+                <div class="preset-card { { 'active' if key === 'guardian' else } }" onclick="loadPreset('{ { key|default('') } }')">
+                    <div class="preset-icon">{ { preset.icon } }</div>
+                    <div>
+                        <div class="preset-name">{ { preset.name } }</div>
+                        <div class="preset-description">{ { preset.description } }</div>
+                    </div>
+                </div>
+                
+            </div>
+            
+            <!-- Parameters Panel -->
+            <div class="parameters-panel">
+                <!-- Core Parameters -->
+                <div class="param-section">
+                    <h3 class="section-title">🧠 Parámetros Centrales</h3>
+                    
+                    <div class="parameter">
+                        <div class="param-header">
+                            <div class="param-label">
+                                <span class="param-icon">{ { param.icon } }</span>
+                                <span></span>
+                            </div>
+                            <div class="param-value" id="value-{ { key|default('') } }">
+                                { { current[key] |default( 50) } }%
+                            </div>
+                        </div>
+                        <div class="slider-container">
+                            <div class="slider-track" id="track-{ { key|default('') } }" style="width: { { current[key] |default( 50) } }%"></div>
+                            <input type="range" 
+                                   class="param-slider" 
+                                   id="slider-{ { key|default('') } }"
+                                   min="{ { param.min } }" 
+                                   max="{ { param.max } }" 
+                                   value="{ { current[key] |default( 50) } }"
+                                   oninput="updateParameter('{ { key|default('') } }', this.value)">
+                        </div>
+                    </div>
+                    
+                </div>
+                
+                <!-- Behavioral Parameters -->
+                <div class="param-section">
+                    <h3 class="section-title">🎭 Parámetros Comportamentales</h3>
+                    
+                    <div class="parameter">
+                        <div class="param-header">
+                            <div class="param-label">
+                                <span class="param-icon">{ { param.icon } }</span>
+                                <span></span>
+                            </div>
+                            <div class="param-value" id="value-{ { key|default('') } }">
+                                { { current[key] |default( 50) } }%
+                            </div>
+                        </div>
+                        <div class="slider-container">
+                            <div class="slider-track" id="track-{ { key|default('') } }" style="width: { { current[key] |default( 50) } }%"></div>
+                            <input type="range" 
+                                   class="param-slider" 
+                                   id="slider-{ { key|default('') } }"
+                                   min="{ { param.min } }" 
+                                   max="{ { param.max } }" 
+                                   value="{ { current[key] |default( 50) } }"
+                                   oninput="updateParameter('{ { key|default('') } }', this.value)">
+                        </div>
+                    </div>
+                    
+                </div>
+                
+                <!-- Quantum Parameters -->
+                <div class="param-section">
+                    <h3 class="section-title">⚛️ Parámetros Cuánticos</h3>
+                    
+                    <div class="parameter">
+                        <div class="param-header">
+                            <div class="param-label">
+                                <span class="param-icon">{ { param.icon } }</span>
+                                <span></span>
+                            </div>
+                            <div class="param-value" id="value-{ { key|default('') } }">
+                                { { current[key] |default( 50) } }%
+                            </div>
+                        </div>
+                        <div class="slider-container">
+                            <div class="slider-track" id="track-{ { key|default('') } }" style="width: { { current[key] |default( 50) } }%"></div>
+                            <input type="range" 
+                                   class="param-slider" 
+                                   id="slider-{ { key|default('') } }"
+                                   min="{ { param.min } }" 
+                                   max="{ { param.max } }" 
+                                   value="{ { current[key] |default( 50) } }"
+                                   oninput="updateParameter('{ { key|default('') } }', this.value)">
+                        </div>
+                    </div>
+                    
+                </div>
+                
+                <!-- Voice Settings -->
+                <div class="param-section">
+                    <h3 class="section-title">🎤 Configuración de Voz</h3>
+                    <div class="voice-settings">
+                        <div class="voice-option selected" onclick="selectVoice('professional')">
+                            <div>🎩</div>
+                            <div>Profesional</div>
+                        </div>
+                        <div class="voice-option" onclick="selectVoice('friendly')">
+                            <div>😊</div>
+                            <div>Amigable</div>
+                        </div>
+                        <div class="voice-option" onclick="selectVoice('technical')">
+                            <div>🔧</div>
+                            <div>Técnica</div>
+                        </div>
+                        <div class="voice-option" onclick="selectVoice('casual')">
+                            <div>👋</div>
+                            <div>Casual</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Action Buttons -->
+                <div class="actions">
+                    <button class="btn" onclick="resetParameters()">↺ Resetear</button>
+                    <button class="btn" onclick="randomizeParameters()">🎲 Aleatorio</button>
+                    <button class="btn btn-primary" onclick="savePersonality()">💾 Guardar Personalidad</button>
+                </div>
+            </div>
+            
+            <!-- Analysis Panel -->
+            <div class="analysis-panel">
+                <h2 class="analysis-title">📊 Análisis</h2>
+                
+                <!-- 3D Brain Visualization -->
+                <div class="brain-container">
+                    <div class="brain-3d">
+                        <div class="brain-hemisphere"></div>
+                        <div class="brain-hemisphere"></div>
+                        <div class="brain-hemisphere"></div>
+                        <div class="neuron" style="top: 30%; left: 40%;"></div>
+                        <div class="neuron" style="top: 60%; left: 60%;"></div>
+                        <div class="neuron" style="top: 50%; left: 30%;"></div>
+                        <div class="neuron" style="top: 40%; left: 70%;"></div>
+                    </div>
+                </div>
+                
+                <!-- Personality Type -->
+                <div class="personality-type">
+                    <div class="type-label">Tipo de Personalidad</div>
+                    <div class="type-value" id="personality-type">{ { initial_analysis.type } }</div>
+                </div>
+                
+                <!-- Balance Chart -->
+                <div class="balance-chart">
+                    <h4 style="color: var(--neon-cyan); margin-bottom: 15px;">Balance de Personalidad</h4>
+                    <div class="balance-bar">
+                        <span class="balance-label">Lógico</span>
+                        <div class="balance-progress">
+                            <div class="balance-fill" id="balance-logical" style="width: { { initial_analysis.balance.logical } }%"></div>
+                        </div>
+                        <span class="balance-value" id="value-balance-logical">{ { initial_analysis.balance.logical } }%</span>
+                    </div>
+                    <div class="balance-bar">
+                        <span class="balance-label">Emocional</span>
+                        <div class="balance-progress">
+                            <div class="balance-fill" id="balance-emotional" style="width: { { initial_analysis.balance.emotional } }%"></div>
+                        </div>
+                        <span class="balance-value" id="value-balance-emotional">{ { initial_analysis.balance.emotional } }%</span>
+                    </div>
+                    <div class="balance-bar">
+                        <span class="balance-label">Creativo</span>
+                        <div class="balance-progress">
+                            <div class="balance-fill" id="balance-creative" style="width: { { initial_analysis.balance.creative } }%"></div>
+                        </div>
+                        <span class="balance-value" id="value-balance-creative">{ { initial_analysis.balance.creative } }%</span>
+                    </div>
+                </div>
+                
+                <!-- Traits -->
+                <div class="param-section">
+                    <h4 style="color: var(--neon-green); margin-bottom: 15px;">Rasgos Dominantes</h4>
+                    <div class="traits-grid">
+                        
+                        <div class="trait">
+                            <span class="trait-name">{ { trait } }</span>
+                            <span class="trait-level">%</span>
+                        </div>
+                        
+                    </div>
+                </div>
+                
+                <!-- Warnings -->
+                <div class="warnings" id="warnings">
+                    { % for warning in initial_analysis.warnings % }
+                    <div class="warning-item">⚠️ { { warning|default('') } }</div>
+                    { % endfor % }
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Current parameters
+        let currentParams = ;
+        let selectedVoice = 'professional';
+        
+        // Create floating particles
+        function createParticles() {
+            const container = document.getElementById('particles');
+            for (let i = 0; i < 30; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.style.left = Math.random() * 100 + '%';
+                particle.style.animationDelay = Math.random() * 20 + 's';
+                particle.style.animationDuration = (15 + Math.random() * 10) + 's';
+                container.appendChild(particle);
+            }
+        }
+        
+        // Update parameter
+        function updateParameter(key, value) {
+            currentParams[key] = parseFloat(value);
+            
+            // Update UI
+            document.getElementById('value-' + key).textContent = value + '%';
+            document.getElementById('track-' + key).style.width = value + '%';
+            
+            // Analyze personality
+            analyzePersonality();
+        }
+        
+        // Load preset
+        function loadPreset(presetKey) {
+            fetch('{ { _SERVER.PHP_SELF } }', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `ajax=1&action=load_preset&preset=${presetKey}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const preset = data.preset;
+                    
+                    // Update all parameters
+                    for (const [key, value] of Object.entries(preset.params)) {
+                        if (document.getElementById('slider-' + key)) {
+                            document.getElementById('slider-' + key).value = value;
+                            updateParameter(key, value);
+                        }
+                    }
+                    
+                    // Update active preset
+                    document.querySelectorAll('.preset-card').forEach(card => {
+                        card.classList.remove('active');
+                    });
+                    event.currentTarget.classList.add('active');
+                }
+            });
+        }
+        
+        // Analyze personality
+        function analyzePersonality() {
+            fetch('{ { _SERVER.PHP_SELF } }', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `ajax=1&action=analyze&params=${JSON.stringify(currentParams)}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const analysis = data.analysis;
+                    
+                    // Update personality type
+                    document.getElementById('personality-type').textContent = analysis.type;
+                    
+                    // Update balance
+                    ['logical', 'emotional', 'creative'].forEach(type => {
+                        const value = analysis.balance[type];
+                        document.getElementById('balance-' + type).style.width = value + '%';
+                        document.getElementById('value-balance-' + type).textContent = value + '%';
+                    });
+                    
+                    // Update warnings
+                    const warningsDiv = document.getElementById('warnings');
+                    warningsDiv.innerHTML = '';
+                    analysis.warnings.forEach(warning => {
+                        const div = document.createElement('div');
+                        div.className = 'warning-item';
+                        div.textContent = '⚠️ ' + warning;
+                        warningsDiv.appendChild(div);
+                    });
+                }
+            });
+        }
+        
+        // Select voice
+        function selectVoice(voice) {
+            selectedVoice = voice;
+            document.querySelectorAll('.voice-option').forEach(option => {
+                option.classList.remove('selected');
+            });
+            event.currentTarget.classList.add('selected');
+        }
+        
+        // Reset parameters
+        function resetParameters() {
+            const defaultValue = 50;
+            document.querySelectorAll('.param-slider').forEach(slider => {
+                slider.value = defaultValue;
+                const key = slider.id.replace('slider-', '');
+                updateParameter(key, defaultValue);
+            });
+        }
+        
+        // Randomize parameters
+        function randomizeParameters() {
+            document.querySelectorAll('.param-slider').forEach(slider => {
+                const min = parseInt(slider.min);
+                const max = parseInt(slider.max);
+                const value = Math.floor(Math.random() * (max - min + 1)) + min;
+                slider.value = value;
+                const key = slider.id.replace('slider-', '');
+                updateParameter(key, value);
+            });
+        }
+        
+        // Save personality
+        function savePersonality() {
+            const personalityData = {
+                ...currentParams,
+                name: prompt('Nombre de la personalidad:') || 'Personalidad Personalizada',
+                description: prompt('Descripción:') || 'Configuración personalizada',
+                voice_tone: selectedVoice,
+                language_style: 'adaptive',
+                primary_objective: 'balanced',
+                ethical_framework: 'protective',
+                traits: {
+                    protective: currentParams.analytical_power || 50,
+                    analytical: currentParams.analytical_power || 50,
+                    creative: currentParams.creativity_index || 50,
+                    empathetic: currentParams.empathy_level || 50,
+                    logical: currentParams.analytical_power || 50,
+                    intuitive: currentParams.creativity_index || 50,
+                    cautious: 85,
+                    adaptive: currentParams.learning_rate || 50
+                }
+            };
+            
+            fetch('{ { _SERVER.PHP_SELF } }', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `ajax=1&action=save_personality&data=${JSON.stringify(personalityData)}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('✅ ' + data.message);
+                } else {
+                    alert('❌ Error: ' + data.message);
+                }
+            });
+        }
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            createParticles();
+        });
+    </script>
+</body>
+</html>

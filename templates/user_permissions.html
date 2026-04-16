@@ -1,0 +1,3220 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Permisos IA - GuardianIA v3.0 MILITAR</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;500;700&display=swap');
+        
+        :root {
+            --primario: #00ffcc;
+            --secundario: #ff00ff;
+            --acento: #00ff88;
+            --peligro: #ff0044;
+            --advertencia: #ffaa00;
+            --info: #00aaff;
+            --cuantico: #9d00ff;
+            --ia-azul: #00b4ff;
+            --ia-purpura: #b400ff;
+            --oscuro: #000000;
+            --medio: #0a0f1f;
+            --claro: #1a1f2f;
+            --texto: #ffffff;
+            --texto-tenue: #888888;
+            --exito: #00ff44;
+            --critico: #ff0000;
+        }
+        
+        body {
+            font-family: 'Rajdhani', sans-serif;
+            background: var(--oscuro);
+            color: var(--texto);
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+        
+        /* Red neuronal de fondo mejorada */
+        .red-neuronal-fondo {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -3;
+            opacity: 0.15;
+            background: 
+                radial-gradient(circle at 20% 30%, var(--ia-azul) 0%, transparent 50%),
+                radial-gradient(circle at 80% 70%, var(--ia-purpura) 0%, transparent 50%),
+                radial-gradient(circle at 50% 50%, var(--cuantico) 0%, transparent 70%);
+            animation: pulso-neural 8s ease-in-out infinite;
+        }
+        
+        @keyframes pulso-neural {
+            0%, 100% { opacity: 0.15; transform: scale(1); }
+            50% { opacity: 0.25; transform: scale(1.05); }
+        }
+        
+        /* Matriz de permisos de fondo animada */
+        .matriz-permisos-fondo {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -2;
+            opacity: 0.1;
+            background-image: 
+                repeating-linear-gradient(0deg, transparent, transparent 50px, var(--primario) 50px, var(--primario) 51px),
+                repeating-linear-gradient(90deg, transparent, transparent 50px, var(--primario) 50px, var(--primario) 51px);
+            animation: desplazar-matriz 20s linear infinite;
+        }
+        
+        @keyframes desplazar-matriz {
+            from { transform: translate(0, 0); }
+            to { transform: translate(50px, 50px); }
+        }
+        
+        /* Partículas de IA mejoradas */
+        .particulas-ia {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            pointer-events: none;
+        }
+        
+        .particula-ia {
+            position: absolute;
+            width: 6px;
+            height: 6px;
+            background: linear-gradient(135deg, var(--ia-azul), var(--ia-purpura));
+            border-radius: 50%;
+            box-shadow: 0 0 15px var(--ia-azul);
+            animation: flotar-ia 20s linear infinite;
+        }
+        
+        .particula-cuantica {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: var(--cuantico);
+            border-radius: 50%;
+            box-shadow: 0 0 20px var(--cuantico);
+            animation: entrelazar 15s ease-in-out infinite;
+        }
+        
+        @keyframes flotar-ia {
+            from {
+                transform: translateY(100vh) translateX(0) scale(0);
+                opacity: 0;
+            }
+            10% {
+                opacity: 1;
+                transform: translateY(90vh) translateX(20px) scale(1);
+            }
+            90% {
+                opacity: 1;
+                transform: translateY(10vh) translateX(-20px) scale(1);
+            }
+            to {
+                transform: translateY(-10vh) translateX(0) scale(0);
+                opacity: 0;
+            }
+        }
+        
+        @keyframes entrelazar {
+            0%, 100% {
+                transform: translate(0, 0) rotate(0deg);
+                opacity: 0.5;
+            }
+            25% {
+                transform: translate(100px, -50px) rotate(90deg);
+                opacity: 1;
+            }
+            50% {
+                transform: translate(-100px, 100px) rotate(180deg);
+                opacity: 0.8;
+            }
+            75% {
+                transform: translate(50px, 50px) rotate(270deg);
+                opacity: 1;
+            }
+        }
+        
+        /* Encabezado futurista con efectos holográficos */
+        .encabezado {
+            background: linear-gradient(135deg, rgba(0,255,204,0.1), rgba(157,0,255,0.1), rgba(0,180,255,0.1));
+            backdrop-filter: blur(20px);
+            border-bottom: 2px solid var(--primario);
+            padding: 25px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .encabezado::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(0,255,204,0.3), transparent);
+            animation: holograma 4s linear infinite;
+        }
+        
+        @keyframes holograma {
+            from { left: -100%; }
+            to { left: 100%; }
+        }
+        
+        .encabezado::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--primario), var(--ia-azul), var(--secundario), transparent);
+            animation: linea-escaneo 3s linear infinite;
+        }
+        
+        @keyframes linea-escaneo {
+            from { transform: translateX(-100%); }
+            to { transform: translateX(100%); }
+        }
+        
+        .contenido-encabezado {
+            max-width: 1600px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        
+        /* Escudo con IA holográfico */
+        .escudo-ia {
+            width: 70px;
+            height: 80px;
+            position: relative;
+            animation: pulso-escudo 3s ease-in-out infinite;
+        }
+        
+        @keyframes pulso-escudo {
+            0%, 100% { transform: scale(1) rotateY(0deg); }
+            50% { transform: scale(1.1) rotateY(180deg); }
+        }
+        
+        .forma-escudo {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, var(--primario), var(--ia-azul), var(--cuantico));
+            clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 35px;
+            position: relative;
+        }
+        
+        .forma-escudo::after {
+            content: '🛡️';
+            position: absolute;
+            animation: rotar-icono 10s linear infinite;
+        }
+        
+        @keyframes rotar-icono {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        
+        .brillo-escudo {
+            position: absolute;
+            top: -15px;
+            left: -15px;
+            right: -15px;
+            bottom: -15px;
+            background: radial-gradient(circle, var(--ia-azul), transparent);
+            opacity: 0.5;
+            animation: pulso-brillo 2s ease-in-out infinite;
+        }
+        
+        @keyframes pulso-brillo {
+            0%, 100% { opacity: 0.3; transform: scale(1); }
+            50% { opacity: 0.8; transform: scale(1.2); }
+        }
+        
+        /* Estado del sistema mejorado */
+        .estado-sistema {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        
+        .indicador-estado {
+            padding: 8px 16px;
+            background: rgba(0,255,204,0.1);
+            border: 1px solid var(--primario);
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .indicador-estado::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            animation: brillo-indicador 3s linear infinite;
+        }
+        
+        @keyframes brillo-indicador {
+            from { left: -100%; }
+            to { left: 100%; }
+        }
+        
+        .indicador-ia {
+            background: rgba(0,180,255,0.1);
+            border-color: var(--ia-azul);
+            animation: parpadeo-ia 3s infinite;
+        }
+        
+        .indicador-cuantico {
+            background: rgba(157,0,255,0.1);
+            border-color: var(--cuantico);
+            animation: quantum-glow 2s ease-in-out infinite;
+        }
+        
+        .indicador-militar {
+            background: rgba(255,0,68,0.1);
+            border-color: var(--peligro);
+            animation: pulso-militar 2s ease-in-out infinite;
+        }
+        
+        @keyframes pulso-militar {
+            0%, 100% { box-shadow: 0 0 5px var(--peligro); }
+            50% { box-shadow: 0 0 20px var(--peligro), 0 0 40px var(--peligro); }
+        }
+        
+        @keyframes quantum-glow {
+            0%, 100% { box-shadow: 0 0 5px var(--cuantico); }
+            50% { box-shadow: 0 0 20px var(--cuantico), 0 0 40px var(--cuantico); }
+        }
+        
+        @keyframes parpadeo-ia {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        
+        .punto-estado {
+            width: 8px;
+            height: 8px;
+            background: var(--primario);
+            border-radius: 50%;
+            animation: pulso-punto 2s infinite;
+            box-shadow: 0 0 10px currentColor;
+        }
+        
+        .punto-ia {
+            background: var(--ia-azul);
+        }
+        
+        .punto-cuantico {
+            background: var(--cuantico);
+        }
+        
+        .punto-militar {
+            background: var(--peligro);
+        }
+        
+        @keyframes pulso-punto {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.5); opacity: 0.7; }
+        }
+        
+        /* Contenedor principal */
+        .contenedor-principal {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 30px 20px;
+        }
+        
+        /* Grid de permisos responsivo */
+        .grid-permisos {
+            display: grid;
+            grid-template-columns: 380px 1fr;
+            gap: 25px;
+            margin-top: 30px;
+        }
+        
+        /* Panel base futurista */
+        .panel {
+            background: linear-gradient(135deg, rgba(10,15,31,0.9), rgba(0,0,0,0.9));
+            border: 1px solid rgba(0,255,204,0.3);
+            border-radius: 15px;
+            padding: 25px;
+            position: relative;
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+        }
+        
+        .panel::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--primario), transparent);
+            animation: linea-superior 4s linear infinite;
+        }
+        
+        @keyframes linea-superior {
+            from { transform: translateX(-100%); }
+            to { transform: translateX(100%); }
+        }
+        
+        .panel-ia {
+            border-color: rgba(0,180,255,0.3);
+            background: linear-gradient(135deg, rgba(0,15,31,0.9), rgba(0,0,20,0.9));
+        }
+        
+        .panel-cuantico {
+            border-color: rgba(157,0,255,0.3);
+            background: linear-gradient(135deg, rgba(20,0,31,0.9), rgba(10,0,20,0.9));
+        }
+        
+        .panel-militar {
+            border-color: rgba(255,0,68,0.3);
+            background: linear-gradient(135deg, rgba(31,0,15,0.9), rgba(20,0,0,0.9));
+        }
+        
+        .encabezado-panel {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid rgba(0,255,204,0.2);
+            position: relative;
+        }
+        
+        .encabezado-panel::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 50px;
+            height: 1px;
+            background: var(--primario);
+            animation: expandir-linea 2s ease-in-out infinite;
+        }
+        
+        @keyframes expandir-linea {
+            0%, 100% { width: 50px; left: 0; }
+            50% { width: 100%; left: 0; }
+        }
+        
+        .titulo-panel {
+            font-family: 'Orbitron', monospace;
+            font-size: 1.3em;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: var(--primario);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-shadow: 0 0 10px currentColor;
+        }
+        
+        .titulo-panel-ia {
+            color: var(--ia-azul);
+        }
+        
+        .titulo-panel-cuantico {
+            color: var(--cuantico);
+        }
+        
+        .titulo-panel-militar {
+            color: var(--peligro);
+        }
+        
+        /* Lista de usuarios futurista con efectos */
+        .lista-usuarios {
+            max-height: 600px;
+            overflow-y: auto;
+            padding-right: 10px;
+        }
+        
+        .lista-usuarios::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        .lista-usuarios::-webkit-scrollbar-track {
+            background: rgba(0,255,204,0.1);
+            border-radius: 4px;
+        }
+        
+        .lista-usuarios::-webkit-scrollbar-thumb {
+            background: var(--primario);
+            border-radius: 4px;
+        }
+        
+        .tarjeta-usuario {
+            background: rgba(0,255,204,0.05);
+            border: 1px solid rgba(0,255,204,0.2);
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .tarjeta-usuario::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(0,255,204,0.2), transparent);
+            transition: left 0.5s ease;
+        }
+        
+        .tarjeta-usuario:hover::before {
+            left: 100%;
+        }
+        
+        .tarjeta-usuario:hover {
+            transform: translateX(10px);
+            border-color: var(--primario);
+            box-shadow: 0 5px 20px rgba(0,255,204,0.3);
+        }
+        
+        .tarjeta-usuario.seleccionada {
+            background: rgba(0,255,204,0.15);
+            border-color: var(--primario);
+            box-shadow: 0 0 30px rgba(0,255,204,0.4);
+            animation: pulso-seleccion 2s ease-in-out infinite;
+        }
+        
+        @keyframes pulso-seleccion {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+        }
+        
+        .cabecera-usuario {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .nombre-usuario {
+            font-weight: 700;
+            font-size: 1.1em;
+            color: var(--acento);
+            text-shadow: 0 0 5px currentColor;
+        }
+        
+        .estado-usuario {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: 700;
+            text-transform: uppercase;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .estado-usuario::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, rgba(255,255,255,0.2), transparent);
+            transform: translate(-50%, -50%);
+            animation: pulso-estado 2s ease-in-out infinite;
+        }
+        
+        @keyframes pulso-estado {
+            0%, 100% { transform: translate(-50%, -50%) scale(0); opacity: 1; }
+            50% { transform: translate(-50%, -50%) scale(2); opacity: 0; }
+        }
+        
+        .estado-usuario.active {
+            background: rgba(0,255,136,0.2);
+            color: var(--acento);
+            border: 1px solid var(--acento);
+        }
+        
+        .estado-usuario.inactive {
+            background: rgba(255,170,0,0.2);
+            color: var(--advertencia);
+            border: 1px solid var(--advertencia);
+        }
+        
+        .estado-usuario.suspended {
+            background: rgba(255,0,68,0.2);
+            color: var(--peligro);
+            border: 1px solid var(--peligro);
+        }
+        
+        .detalles-usuario {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+            font-size: 0.9em;
+            color: var(--texto-tenue);
+        }
+        
+        .item-detalle {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .item-detalle .icono {
+            font-size: 1.1em;
+        }
+        
+        /* Indicadores de métricas del usuario */
+        .metricas-usuario {
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid rgba(0,255,204,0.2);
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+        }
+        
+        .metrica-mini {
+            text-align: center;
+            padding: 5px;
+            background: rgba(0,0,0,0.3);
+            border-radius: 8px;
+        }
+        
+        .valor-metrica-mini {
+            font-size: 1.2em;
+            font-weight: 700;
+            color: var(--primario);
+            font-family: 'Orbitron', monospace;
+        }
+        
+        .etiqueta-metrica-mini {
+            font-size: 0.7em;
+            color: var(--texto-tenue);
+            text-transform: uppercase;
+        }
+        
+        /* Indicador de confianza IA con gradiente */
+        .confianza-ia-usuario {
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid rgba(0,180,255,0.2);
+        }
+        
+        .barra-confianza {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 5px;
+        }
+        
+        .progreso-confianza {
+            flex: 1;
+            height: 8px;
+            background: rgba(0,0,0,0.5);
+            border-radius: 4px;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .progreso-confianza::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, 
+                var(--peligro) 0%, 
+                var(--advertencia) 30%, 
+                var(--acento) 70%, 
+                var(--ia-azul) 100%);
+            opacity: 0.3;
+        }
+        
+        .nivel-confianza {
+            height: 100%;
+            background: linear-gradient(90deg, var(--ia-azul), var(--ia-purpura));
+            border-radius: 4px;
+            transition: width 1s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .nivel-confianza::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            animation: brillo-barra 2s linear infinite;
+        }
+        
+        @keyframes brillo-barra {
+            from { left: -100%; }
+            to { left: 100%; }
+        }
+        
+        .valor-confianza {
+            font-size: 0.85em;
+            color: var(--ia-azul);
+            font-weight: 700;
+            min-width: 40px;
+            text-shadow: 0 0 5px currentColor;
+        }
+        
+        /* Panel de permisos principal */
+        .panel-permisos {
+            display: grid;
+            grid-template-rows: auto 1fr auto;
+            gap: 20px;
+        }
+        
+        /* Información del usuario seleccionado holográfica */
+        .info-usuario-seleccionado {
+            background: linear-gradient(135deg, rgba(0,255,204,0.1), rgba(0,180,255,0.1), rgba(157,0,255,0.1));
+            border-radius: 12px;
+            padding: 20px;
+            display: grid;
+            grid-template-columns: auto 1fr auto;
+            gap: 20px;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .info-usuario-seleccionado::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(45deg, transparent 30%, rgba(0,255,204,0.1) 50%, transparent 70%);
+            animation: holo-scan 3s linear infinite;
+        }
+        
+        @keyframes holo-scan {
+            from { transform: translateX(-100%); }
+            to { transform: translateX(100%); }
+        }
+        
+        .avatar-usuario {
+            width: 90px;
+            height: 90px;
+            background: conic-gradient(from 0deg, var(--primario), var(--ia-azul), var(--secundario), var(--cuantico), var(--primario));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 30px;
+            font-weight: 700;
+            color: var(--oscuro);
+            position: relative;
+            animation: rotar-avatar 10s linear infinite;
+            box-shadow: 0 0 30px var(--ia-azul);
+        }
+        
+        @keyframes rotar-avatar {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        
+        .avatar-usuario::after {
+            content: '';
+            position: absolute;
+            top: -10px;
+            left: -10px;
+            right: -10px;
+            bottom: -10px;
+            background: radial-gradient(circle, transparent 40%, var(--ia-azul) 100%);
+            opacity: 0.5;
+            animation: pulso-avatar 2s ease-in-out infinite;
+        }
+        
+        @keyframes pulso-avatar {
+            0%, 100% { transform: scale(1); opacity: 0.5; }
+            50% { transform: scale(1.2); opacity: 0.3; }
+        }
+        
+        .detalles-info-usuario h2 {
+            font-family: 'Orbitron', monospace;
+            font-size: 1.8em;
+            color: var(--primario);
+            margin-bottom: 5px;
+            text-shadow: 0 0 15px currentColor;
+        }
+        
+        .meta-usuario {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .insignia-meta {
+            padding: 5px 12px;
+            background: rgba(0,255,204,0.1);
+            border: 1px solid rgba(0,255,204,0.3);
+            border-radius: 20px;
+            font-size: 0.9em;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .insignia-meta::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+            animation: brillo-insignia 3s linear infinite;
+        }
+        
+        @keyframes brillo-insignia {
+            from { left: -100%; }
+            to { left: 100%; }
+        }
+        
+        .insignia-ia {
+            background: rgba(0,180,255,0.1);
+            border-color: rgba(0,180,255,0.3);
+            color: var(--ia-azul);
+        }
+        
+        .insignia-cuantica {
+            background: rgba(157,0,255,0.1);
+            border-color: rgba(157,0,255,0.3);
+            color: var(--cuantico);
+        }
+        
+        .insignia-militar {
+            background: rgba(255,0,68,0.1);
+            border-color: rgba(255,0,68,0.3);
+            color: var(--peligro);
+        }
+        
+        .insignia-premium {
+            background: linear-gradient(135deg, rgba(255,215,0,0.1), rgba(255,255,255,0.1));
+            border-color: #ffd700;
+            color: #ffd700;
+            animation: brillo-premium 2s ease-in-out infinite;
+        }
+        
+        @keyframes brillo-premium {
+            0%, 100% { box-shadow: 0 0 5px #ffd700; }
+            50% { box-shadow: 0 0 20px #ffd700, 0 0 40px #ffd700; }
+        }
+        
+        /* Matriz de permisos con efectos cuánticos */
+        .matriz-permisos {
+            background: rgba(0,0,0,0.5);
+            border-radius: 12px;
+            padding: 20px;
+            overflow: auto;
+            max-height: 500px;
+            position: relative;
+        }
+        
+        .matriz-permisos::-webkit-scrollbar {
+            width: 10px;
+        }
+        
+        .matriz-permisos::-webkit-scrollbar-track {
+            background: rgba(0,255,204,0.1);
+            border-radius: 5px;
+        }
+        
+        .matriz-permisos::-webkit-scrollbar-thumb {
+            background: linear-gradient(180deg, var(--primario), var(--ia-azul));
+            border-radius: 5px;
+        }
+        
+        .categoria-permisos {
+            margin-bottom: 25px;
+            animation: aparecer-categoria 0.5s ease;
+        }
+        
+        @keyframes aparecer-categoria {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .cabecera-categoria {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(0,255,204,0.2);
+            position: relative;
+        }
+        
+        .cabecera-categoria::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: var(--primario);
+            animation: expandir-categoria 1s ease forwards;
+        }
+        
+        @keyframes expandir-categoria {
+            to { width: 100%; }
+        }
+        
+        .icono-categoria {
+            font-size: 24px;
+            animation: rotar-suave 10s linear infinite;
+        }
+        
+        @keyframes rotar-suave {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        
+        .titulo-categoria {
+            font-family: 'Orbitron', monospace;
+            font-size: 1.2em;
+            font-weight: 700;
+            color: var(--primario);
+            text-transform: uppercase;
+            text-shadow: 0 0 10px currentColor;
+        }
+        
+        .titulo-categoria.militar {
+            color: var(--peligro);
+        }
+        
+        .titulo-categoria.cuantico {
+            color: var(--cuantico);
+        }
+        
+        .grid-permisos-items {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 10px;
+        }
+        
+        .item-permiso {
+            background: rgba(0,255,204,0.05);
+            border: 1px solid rgba(0,255,204,0.2);
+            border-radius: 8px;
+            padding: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .item-permiso::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: radial-gradient(circle, var(--primario), transparent);
+            transform: translate(-50%, -50%);
+            transition: all 0.3s ease;
+        }
+        
+        .item-permiso:hover::before {
+            width: 150%;
+            height: 150%;
+            opacity: 0.3;
+        }
+        
+        .item-permiso:hover {
+            background: rgba(0,255,204,0.1);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,255,204,0.2);
+        }
+        
+        .item-permiso.recomendado-ia {
+            border-color: var(--ia-azul);
+            background: rgba(0,180,255,0.05);
+            animation: pulso-ia 3s ease-in-out infinite;
+        }
+        
+        @keyframes pulso-ia {
+            0%, 100% { box-shadow: 0 0 5px var(--ia-azul); }
+            50% { box-shadow: 0 0 15px var(--ia-azul), 0 0 30px var(--ia-azul); }
+        }
+        
+        .item-permiso.recomendado-ia::after {
+            content: '🤖';
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            font-size: 12px;
+            background: var(--ia-azul);
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: girar-icono 2s linear infinite;
+        }
+        
+        @keyframes girar-icono {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        
+        .item-permiso.critico {
+            border-color: var(--peligro);
+            background: rgba(255,0,68,0.05);
+        }
+        
+        .item-permiso.cuantico {
+            border-color: var(--cuantico);
+            background: rgba(157,0,255,0.05);
+        }
+        
+        .item-permiso.militar {
+            border-color: var(--peligro);
+            background: rgba(255,0,68,0.05);
+        }
+        
+        .nombre-permiso {
+            font-size: 0.95em;
+            text-transform: capitalize;
+        }
+        
+        .toggle-permiso {
+            width: 50px;
+            height: 25px;
+            background: rgba(255,0,68,0.3);
+            border-radius: 25px;
+            position: relative;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            overflow: hidden;
+        }
+        
+        .toggle-permiso::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            animation: deslizar-toggle 3s linear infinite;
+        }
+        
+        @keyframes deslizar-toggle {
+            from { transform: translateX(-100%); }
+            to { transform: translateX(100%); }
+        }
+        
+        .toggle-permiso.activo {
+            background: rgba(0,255,136,0.3);
+        }
+        
+        .toggle-permiso::after {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 21px;
+            height: 21px;
+            background: var(--peligro);
+            border-radius: 50%;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+        }
+        
+        .toggle-permiso.activo::after {
+            left: 27px;
+            background: var(--acento);
+            box-shadow: 0 2px 5px rgba(0,255,136,0.5);
+        }
+        
+        /* Panel de análisis de IA avanzado con efectos */
+        .analisis-ia {
+            background: linear-gradient(135deg, rgba(0,180,255,0.1), rgba(180,0,255,0.1));
+            border: 1px solid var(--ia-azul);
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .analisis-ia::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, var(--ia-azul), transparent);
+            opacity: 0.1;
+            animation: rotar-fondo 20s linear infinite;
+        }
+        
+        @keyframes rotar-fondo {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        
+        .cabecera-ia {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .titulo-ia {
+            font-family: 'Orbitron', monospace;
+            font-size: 1.2em;
+            color: var(--ia-azul);
+            text-transform: uppercase;
+            text-shadow: 0 0 15px currentColor;
+        }
+        
+        /* Métricas de IA con animaciones */
+        .metricas-ia {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .metrica-ia {
+            background: rgba(0,0,0,0.3);
+            border-radius: 8px;
+            padding: 10px;
+            text-align: center;
+            border: 1px solid rgba(0,180,255,0.2);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .metrica-ia::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--ia-azul), transparent);
+            animation: linea-metrica 2s linear infinite;
+        }
+        
+        @keyframes linea-metrica {
+            from { transform: translateX(-100%); }
+            to { transform: translateX(100%); }
+        }
+        
+        .valor-metrica {
+            font-size: 1.8em;
+            font-weight: 700;
+            color: var(--ia-azul);
+            font-family: 'Orbitron', monospace;
+            text-shadow: 0 0 10px currentColor;
+            animation: parpadeo-valor 3s ease-in-out infinite;
+        }
+        
+        @keyframes parpadeo-valor {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.8; }
+        }
+        
+        .etiqueta-metrica {
+            font-size: 0.85em;
+            color: var(--texto-tenue);
+            text-transform: uppercase;
+            margin-top: 5px;
+        }
+        
+        /* Medidor de riesgo holográfico */
+        .medidor-riesgo {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin: 20px 0;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .barra-riesgo {
+            flex: 1;
+            height: 35px;
+            background: linear-gradient(to right, 
+                var(--acento) 0%, 
+                var(--advertencia) 50%, 
+                var(--peligro) 100%);
+            border-radius: 20px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: inset 0 2px 10px rgba(0,0,0,0.3), 0 0 20px rgba(0,0,0,0.5);
+        }
+        
+        .barra-riesgo::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: repeating-linear-gradient(
+                90deg,
+                transparent,
+                transparent 10px,
+                rgba(0,0,0,0.3) 10px,
+                rgba(0,0,0,0.3) 20px
+            );
+            animation: mover-patron 1s linear infinite;
+        }
+        
+        @keyframes mover-patron {
+            from { transform: translateX(0); }
+            to { transform: translateX(20px); }
+        }
+        
+        .indicador-riesgo {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 6px;
+            height: 45px;
+            background: white;
+            box-shadow: 0 0 20px rgba(255,255,255,0.8), 0 0 40px rgba(255,255,255,0.5);
+            transition: left 1s ease;
+            border-radius: 3px;
+            animation: pulso-indicador 1s ease-in-out infinite;
+        }
+        
+        @keyframes pulso-indicador {
+            0%, 100% { box-shadow: 0 0 20px rgba(255,255,255,0.8), 0 0 40px rgba(255,255,255,0.5); }
+            50% { box-shadow: 0 0 30px rgba(255,255,255,1), 0 0 60px rgba(255,255,255,0.8); }
+        }
+        
+        .valor-riesgo {
+            font-size: 1.5em;
+            font-weight: 700;
+            font-family: 'Orbitron', monospace;
+            min-width: 70px;
+            text-align: center;
+            text-shadow: 0 0 10px currentColor;
+        }
+        
+        /* Predicciones de IA con efectos */
+        .predicciones-ia {
+            margin-top: 20px;
+            padding: 15px;
+            background: rgba(0,0,0,0.3);
+            border-radius: 8px;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .prediccion {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 10px 0;
+            padding: 10px;
+            background: rgba(0,180,255,0.1);
+            border-left: 3px solid var(--ia-azul);
+            border-radius: 5px;
+            animation: aparecer-prediccion 0.5s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .prediccion::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(0,180,255,0.2), transparent);
+            animation: deslizar-prediccion 3s linear infinite;
+        }
+        
+        @keyframes deslizar-prediccion {
+            from { left: -100%; }
+            to { left: 100%; }
+        }
+        
+        @keyframes aparecer-prediccion {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+        
+        .tipo-prediccion {
+            font-weight: 700;
+            color: var(--ia-azul);
+            text-transform: uppercase;
+            font-size: 0.85em;
+            text-shadow: 0 0 5px currentColor;
+        }
+        
+        .probabilidad-prediccion {
+            padding: 2px 8px;
+            background: rgba(0,180,255,0.2);
+            border-radius: 12px;
+            font-size: 0.8em;
+            color: var(--ia-azul);
+            font-weight: 700;
+            animation: pulso-probabilidad 2s ease-in-out infinite;
+        }
+        
+        @keyframes pulso-probabilidad {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+        
+        .prediccion.critica {
+            border-color: var(--peligro);
+            background: rgba(255,0,68,0.1);
+        }
+        
+        .prediccion.critica .tipo-prediccion {
+            color: var(--peligro);
+        }
+        
+        /* Panel cuántico */
+        .panel-cuantico-info {
+            background: linear-gradient(135deg, rgba(157,0,255,0.1), rgba(0,157,255,0.1));
+            border: 1px solid var(--cuantico);
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .panel-cuantico-info::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 200px;
+            height: 200px;
+            background: radial-gradient(circle, var(--cuantico), transparent);
+            transform: translate(-50%, -50%);
+            opacity: 0.3;
+            animation: pulso-cuantico 3s ease-in-out infinite;
+        }
+        
+        @keyframes pulso-cuantico {
+            0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.3; }
+            50% { transform: translate(-50%, -50%) scale(1.5); opacity: 0.1; }
+        }
+        
+        /* Gráfico de actividad animado */
+        .grafico-actividad {
+            height: 150px;
+            background: rgba(0,0,0,0.3);
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 15px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .linea-grafico {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to top, rgba(0,180,255,0.3), transparent);
+            clip-path: polygon(
+                0% 80%, 10% 70%, 20% 75%, 30% 60%, 40% 65%, 
+                50% 50%, 60% 55%, 70% 40%, 80% 45%, 90% 30%, 100% 35%,
+                100% 100%, 0% 100%
+            );
+            animation: onda-grafico 5s ease-in-out infinite;
+        }
+        
+        @keyframes onda-grafico {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        
+        .puntos-grafico {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            height: 100%;
+        }
+        
+        .punto-grafico {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background: var(--ia-azul);
+            border-radius: 50%;
+            box-shadow: 0 0 10px var(--ia-azul);
+            animation: pulso-punto-grafico 2s ease-in-out infinite;
+        }
+        
+        @keyframes pulso-punto-grafico {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.5); opacity: 0.7; }
+        }
+        
+        /* Recomendaciones de IA */
+        .recomendaciones-ia {
+            margin-top: 15px;
+            padding: 15px;
+            background: rgba(0,0,0,0.3);
+            border-radius: 8px;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .recomendacion {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 8px 0;
+            padding: 8px;
+            background: rgba(157,0,255,0.1);
+            border-left: 3px solid var(--cuantico);
+            border-radius: 5px;
+            animation: aparecer-recomendacion 0.5s ease;
+        }
+        
+        @keyframes aparecer-recomendacion {
+            from {
+                opacity: 0;
+                transform: translateX(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+        
+        /* Botones de acción futuristas */
+        .botones-accion {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .btn-accion {
+            background: linear-gradient(135deg, rgba(0,255,204,0.1), rgba(0,255,136,0.1));
+            border: 2px solid var(--primario);
+            border-radius: 10px;
+            padding: 12px 20px;
+            color: var(--primario);
+            font-weight: 700;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: 'Orbitron', monospace;
+            font-size: 0.9em;
+            letter-spacing: 1px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .btn-accion::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: radial-gradient(circle, var(--primario), transparent);
+            transform: translate(-50%, -50%);
+            transition: all 0.5s ease;
+        }
+        
+        .btn-accion:hover::before {
+            width: 300px;
+            height: 300px;
+        }
+        
+        .btn-accion:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(0,255,204,0.4);
+            text-shadow: 0 0 10px currentColor;
+        }
+        
+        .btn-accion:active {
+            transform: translateY(-1px);
+        }
+        
+        .btn-accion.ia {
+            border-color: var(--ia-azul);
+            color: var(--ia-azul);
+            background: linear-gradient(135deg, rgba(0,180,255,0.1), rgba(180,0,255,0.1));
+        }
+        
+        .btn-accion.ia:hover {
+            background: rgba(0,180,255,0.2);
+            box-shadow: 0 10px 30px rgba(0,180,255,0.4);
+        }
+        
+        .btn-accion.peligro {
+            border-color: var(--peligro);
+            color: var(--peligro);
+            background: linear-gradient(135deg, rgba(255,0,68,0.1), rgba(255,0,0,0.1));
+        }
+        
+        .btn-accion.peligro:hover {
+            background: rgba(255,0,68,0.2);
+            box-shadow: 0 10px 30px rgba(255,0,68,0.4);
+        }
+        
+        .btn-accion.cuantico {
+            border-color: var(--cuantico);
+            color: var(--cuantico);
+            background: linear-gradient(135deg, rgba(157,0,255,0.1), rgba(0,157,255,0.1));
+        }
+        
+        .btn-accion.cuantico:hover {
+            background: rgba(157,0,255,0.2);
+            box-shadow: 0 10px 30px rgba(157,0,255,0.4);
+        }
+        
+        .btn-accion.exito {
+            border-color: var(--exito);
+            color: var(--exito);
+            background: linear-gradient(135deg, rgba(0,255,68,0.1), rgba(0,255,0,0.1));
+        }
+        
+        /* Barra de búsqueda con IA */
+        .contenedor-busqueda {
+            position: relative;
+            margin-bottom: 20px;
+        }
+        
+        .input-busqueda {
+            width: 100%;
+            padding: 15px 50px 15px 50px;
+            background: rgba(0,255,204,0.05);
+            border: 1px solid rgba(0,255,204,0.3);
+            border-radius: 30px;
+            color: var(--texto);
+            font-size: 1em;
+            transition: all 0.3s ease;
+        }
+        
+        .input-busqueda:focus {
+            outline: none;
+            border-color: var(--primario);
+            box-shadow: 0 0 20px rgba(0,255,204,0.3);
+        }
+        
+        .icono-busqueda {
+            position: absolute;
+            left: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--primario);
+            font-size: 20px;
+        }
+        
+        .btn-ia-busqueda {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: var(--ia-azul);
+            border: none;
+            border-radius: 50%;
+            width: 35px;
+            height: 35px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-ia-busqueda:hover {
+            transform: translateY(-50%) scale(1.1);
+            box-shadow: 0 5px 15px rgba(0,180,255,0.4);
+        }
+        
+        /* Modal flotante futurista */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.9);
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal.activo {
+            display: flex;
+        }
+        
+        .contenido-modal {
+            background: linear-gradient(135deg, rgba(10,15,31,0.98), rgba(0,0,0,0.98));
+            border: 2px solid var(--primario);
+            border-radius: 20px;
+            padding: 30px;
+            max-width: 600px;
+            width: 90%;
+            animation: aparecer-modal 0.3s ease;
+            box-shadow: 0 20px 60px rgba(0,255,204,0.3);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .contenido-modal::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--primario), transparent);
+            animation: linea-modal 2s linear infinite;
+        }
+        
+        @keyframes linea-modal {
+            from { transform: translateX(-100%); }
+            to { transform: translateX(100%); }
+        }
+        
+        @keyframes aparecer-modal {
+            from {
+                transform: scale(0.8) rotateX(10deg);
+                opacity: 0;
+            }
+            to {
+                transform: scale(1) rotateX(0);
+                opacity: 1;
+            }
+        }
+        
+        /* Responsive mejorado */
+        @media (max-width: 1200px) {
+            .grid-permisos {
+                grid-template-columns: 1fr;
+            }
+            
+            .metricas-ia {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .estado-sistema {
+                justify-content: center;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .contenido-encabezado {
+                flex-direction: column;
+                gap: 20px;
+                text-align: center;
+            }
+            
+            .info-usuario-seleccionado {
+                grid-template-columns: 1fr;
+                text-align: center;
+            }
+            
+            .avatar-usuario {
+                margin: 0 auto;
+            }
+            
+            .grid-permisos-items {
+                grid-template-columns: 1fr;
+            }
+            
+            .metricas-ia {
+                grid-template-columns: 1fr;
+            }
+            
+            .meta-usuario {
+                justify-content: center;
+            }
+        }
+        
+        /* Animaciones adicionales */
+        @keyframes latido {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        
+        @keyframes resplandor {
+            0%, 100% { box-shadow: 0 0 5px currentColor; }
+            50% { box-shadow: 0 0 20px currentColor, 0 0 40px currentColor; }
+        }
+        
+        @keyframes deslizar-entrada {
+            from { transform: translateX(400px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        
+        @keyframes deslizar-salida {
+            from { transform: translateX(0); opacity: 1; }
+            to { transform: translateX(400px); opacity: 0; }
+        }
+        
+        /* Efectos de carga */
+        .cargando {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(0,255,204,0.3);
+            border-top-color: var(--primario);
+            border-radius: 50%;
+            animation: girar 1s linear infinite;
+        }
+        
+        @keyframes girar {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        
+        /* Notificaciones flotantes */
+        .notificacion {
+            position: fixed;
+            top: 100px;
+            right: 20px;
+            padding: 15px 25px;
+            background: linear-gradient(135deg, rgba(0,255,204,0.95), rgba(0,255,136,0.95));
+            border: 2px solid var(--primario);
+            border-radius: 10px;
+            color: var(--oscuro);
+            font-weight: 700;
+            z-index: 10000;
+            animation: deslizar-entrada 0.3s ease;
+            max-width: 400px;
+            box-shadow: 0 10px 30px rgba(0,255,204,0.4);
+        }
+        
+        .notificacion.advertencia {
+            background: linear-gradient(135deg, rgba(255,170,0,0.95), rgba(255,255,0,0.95));
+            border-color: var(--advertencia);
+        }
+        
+        .notificacion.peligro {
+            background: linear-gradient(135deg, rgba(255,0,68,0.95), rgba(255,0,0,0.95));
+            border-color: var(--peligro);
+        }
+        
+        .notificacion.ia {
+            background: linear-gradient(135deg, rgba(0,180,255,0.95), rgba(180,0,255,0.95));
+            border-color: var(--ia-azul);
+            color: white;
+        }
+        
+        .notificacion.cuantico {
+            background: linear-gradient(135deg, rgba(157,0,255,0.95), rgba(0,157,255,0.95));
+            border-color: var(--cuantico);
+            color: white;
+        }
+        
+        .notificacion.militar {
+            background: linear-gradient(135deg, rgba(255,0,68,0.95), rgba(139,0,0,0.95));
+            border-color: var(--peligro);
+            color: white;
+        }
+        
+        .notificacion.exito {
+            background: linear-gradient(135deg, rgba(0,255,68,0.95), rgba(0,255,0,0.95));
+            border-color: var(--exito);
+        }
+    </style>
+</head>
+<body>
+    <!-- Red neuronal de fondo -->
+    <div class="red-neuronal-fondo"></div>
+    
+    <!-- Matriz de permisos de fondo -->
+    <div class="matriz-permisos-fondo"></div>
+    
+    <!-- Partículas de IA y cuánticas -->
+    <div class="particulas-ia" id="particulasIA"></div>
+    
+    <!-- Encabezado -->
+    <header class="encabezado">
+        <div class="contenido-encabezado">
+            <div style="display: flex; align-items: center; gap: 20px;">
+                <div class="escudo-ia">
+                    <div class="brillo-escudo"></div>
+                    <div class="forma-escudo"></div>
+                </div>
+                <div>
+                    <h1 style="font-family: 'Orbitron', monospace; font-size: 2.5em; font-weight: 900; 
+                               background: linear-gradient(45deg, var(--primario), var(--ia-azul), var(--cuantico)); 
+                               -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+                               text-transform: uppercase; letter-spacing: 3px;">
+                        Permisos de Usuario IA
+                    </h1>
+                    <p style="color: var(--texto-tenue); text-transform: uppercase; letter-spacing: 2px;">
+                        GuardianIA v3.0 - Sistema de Control de Acceso Inteligente Militar
+                    </p>
+                </div>
+            </div>
+            <div class="estado-sistema">
+                <span class="indicador-estado">
+                    <span class="punto-estado"></span>
+                    SISTEMA SEGURO
+                </span>
+                <span class="indicador-estado indicador-ia">
+                    <span class="punto-estado punto-ia"></span>
+                    IA ACTIVA
+                </span>
+                <span class="indicador-estado indicador-cuantico">
+                    <span class="punto-estado punto-cuantico"></span>
+                    CUÁNTICO: { { analisis_ia.quantum_stability } }%
+                </span>
+                
+                <span class="indicador-estado indicador-militar">
+                    <span class="punto-estado punto-militar"></span>
+                    ENCRIPTACIÓN MILITAR
+                </span>
+                { % endif % }
+                { % if tiene_acceso_militar % }
+                <span class="indicador-estado indicador-militar">
+                    <span class="punto-estado punto-militar"></span>
+                    ACCESO MILITAR ACTIVO
+                </span>
+                { % endif % }
+            </div>
+        </div>
+    </header>
+    
+    <!-- Contenedor principal -->
+    <div class="contenedor-principal">
+        <div class="grid-permisos">
+            
+            <!-- Panel lateral de usuarios con IA -->
+            <div class="panel">
+                <div class="encabezado-panel">
+                    <div class="titulo-panel">
+                        <span>👥</span>
+                        Usuarios del Sistema
+                    </div>
+                    <span style="color: var(--primario);">{ { datos_usuarios } }</span>
+                </div>
+                
+                <!-- Barra de búsqueda con IA -->
+                <div class="contenedor-busqueda">
+                    <span class="icono-busqueda">🔍</span>
+                    <input type="text" class="input-busqueda" placeholder="Buscar usuarios..." id="inputBusqueda" onkeyup="buscarUsuarios(|length">
+                    <button class="btn-ia-busqueda" onclick="busquedaIA()" title="Búsqueda inteligente">
+                        <span style="color: white;">🤖</span>
+                    </button>
+                </div>
+                
+                <!-- Lista de usuarios -->
+                <div class="lista-usuarios" id="listaUsuarios">
+                    
+                    <div class="tarjeta-usuario { { 'seleccionada' if indice === 0 else } }" 
+                         onclick="seleccionarUsuario('{ { usuario.id } }')" 
+                         data-usuario-id="{ { usuario.id } }"
+                         data-db-id="{ { usuario.db_id } }"
+                         data-riesgo="{ { usuario.puntuacion_riesgo } }"
+                         data-comportamiento="{ { usuario.patrones_comportamiento } }"
+                         data-acceso-militar="{ { 'true' if usuario.acceso_militar else '' } }"
+                         data-acceso-cuantico="{ { 'true' if usuario.acceso_cuantico else '' } }">
+                        <div class="cabecera-usuario">
+                            <span class="nombre-usuario">{ { usuario.nombre_completo } }</span>
+                            <span class="estado-usuario { { usuario.estado } }">
+                                { { usuario.estado } }
+                            </span>
+                        </div>
+                        <div class="detalles-usuario">
+                            <div class="item-detalle">
+                                <span class="icono">👤</span>
+                                <span>{ { usuario.nombre_usuario } }</span>
+                            </div>
+                            <div class="item-detalle">
+                                <span class="icono">🎖️</span>
+                                <span>{ { usuario.autorizacion } }</span>
+                            </div>
+                            <div class="item-detalle">
+                                <span class="icono">💼</span>
+                                <span>{ { usuario.rol } }</span>
+                            </div>
+                            <div class="item-detalle">
+                                <span class="icono">🤖</span>
+                                <span>IA: { { usuario.acceso_ia } }%</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Métricas del usuario -->
+                        <div class="metricas-usuario">
+                            <div class="metrica-mini">
+                                <div class="valor-metrica-mini">{ { usuario.conversaciones } }</div>
+                                <div class="etiqueta-metrica-mini">Chats</div>
+                            </div>
+                            <div class="metrica-mini">
+                                <div class="valor-metrica-mini">{ { usuario.eventos_seguridad } }</div>
+                                <div class="etiqueta-metrica-mini">Eventos</div>
+                            </div>
+                            <div class="metrica-mini">
+                                <div class="valor-metrica-mini">{ { usuario.prediccion_amenaza } }%</div>
+                                <div class="etiqueta-metrica-mini">Amenaza</div>
+                            </div>
+                        </div>
+                        
+                        <!-- Indicador de confianza IA -->
+                        <div class="confianza-ia-usuario">
+                            <div style="font-size: 0.85em; color: var(--ia-azul); margin-bottom: 5px;">
+                                Confianza IA: { { usuario.confianza_ia } }%
+                            </div>
+                            <div class="barra-confianza">
+                                <div class="progreso-confianza">
+                                    <div class="nivel-confianza" style="width: { { usuario.confianza_ia } }%;"></div>
+                                </div>
+                            </div>
+                            
+                            <div style="margin-top: 5px; font-size: 0.8em; color: var(--advertencia);">
+                                ⚠️ Comportamiento anómalo detectado
+                            </div>
+                            { % endif % }
+                            { % if usuario.acceso_militar % }
+                            <div style="margin-top: 5px; font-size: 0.8em; color: var(--peligro);">
+                                🎖️ Acceso Militar Activo
+                            </div>
+                            { % endif % }
+                            { % if usuario.acceso_cuantico % }
+                            <div style="margin-top: 5px; font-size: 0.8em; color: var(--cuantico);">
+                                ⚛️ Acceso Cuántico Habilitado
+                            </div>
+                            { % endif % }
+                            
+                            <div style="margin-top: 5px; font-size: 0.8em; color: #ffd700;">
+                                ⭐ Usuario Premium
+                            </div>
+                            
+                        </div>
+                    </div>
+                    
+                </div>
+                
+                <!-- Botones de acción -->
+                <div class="botones-accion">
+                    <button class="btn-accion" onclick="agregarUsuario()">
+                        ➕ Agregar
+                    </button>
+                    <button class="btn-accion ia" onclick="analizarTodos()">
+                        🤖 Analizar Todos
+                    </button>
+                    <button class="btn-accion" onclick="sincronizarDB()">
+                        🔄 Sincronizar DB
+                    </button>
+                    <button class="btn-accion exito" onclick="exportarPermisos()">
+                        📤 Exportar
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Panel principal de permisos con IA -->
+            <div class="panel-permisos">
+                <!-- Información del usuario seleccionado -->
+                <div class="panel">
+                    <div class="info-usuario-seleccionado">
+                        <div class="avatar-usuario" id="avatarUsuario">AM</div>
+                        <div class="detalles-info-usuario">
+                            <h2 id="nombreUsuarioSeleccionado">Anderson Mamian</h2>
+                            <div class="meta-usuario">
+                                <span class="insignia-meta">ID: <span id="idUsuarioSeleccionado">USR-001</span></span>
+                                <span class="insignia-meta">Rol: <span id="rolUsuarioSeleccionado">Administrador del Sistema</span></span>
+                                <span class="insignia-meta">Autorización: <span id="autorizacionUsuarioSeleccionado">TOP_SECRET</span></span>
+                                <span class="insignia-meta">Estado: <span id="estadoUsuarioSeleccionado">Activo</span></span>
+                                <span class="insignia-meta insignia-ia">🤖 IA: <span id="iaUsuarioSeleccionado">100%</span></span>
+                                <span class="insignia-meta insignia-ia">🧠 Confianza: <span id="confianzaUsuarioSeleccionado">95%</span></span>
+                                <span class="insignia-meta insignia-cuantica" id="badgeCuantico" style="display: none;">⚛️ Acceso Cuántico</span>
+                                <span class="insignia-meta insignia-militar" id="badgeMilitar" style="display: none;">🎖️ Acceso Militar</span>
+                                <span class="insignia-meta insignia-premium" id="badgePremium" style="display: none;">⭐ Premium</span>
+                            </div>
+                        </div>
+                        <div class="botones-accion" style="width: 250px;">
+                            <button class="btn-accion" onclick="editarUsuario()">✏️ Editar</button>
+                            <button class="btn-accion ia" onclick="analizarUsuario()">🤖 Analizar IA</button>
+                            <button class="btn-accion cuantico" onclick="analizarCuantico()">⚛️ Análisis Cuántico</button>
+                            <button class="btn-accion peligro" onclick="suspenderUsuario()">⚠️ Suspender</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Matriz de permisos con recomendaciones IA -->
+                <div class="panel" style="flex: 1;">
+                    <div class="encabezado-panel">
+                        <div class="titulo-panel">
+                            <span>🔐</span>
+                            Matriz de Permisos Avanzada
+                        </div>
+                        <div style="display: flex; gap: 10px;">
+                            <button class="btn-accion ia" style="padding: 8px 16px; font-size: 0.85em;" onclick="optimizarPermisos()">
+                                🤖 Optimizar con IA
+                            </button>
+                            <button class="btn-accion exito" style="padding: 8px 16px; font-size: 0.85em;" onclick="guardarPermisos()">
+                                💾 Guardar en DB
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="matriz-permisos">
+                        
+                        <div class="categoria-permisos">
+                            <div class="cabecera-categoria">
+                                <span class="icono-categoria">
+                                    
+                                </span>
+                                <span class="titulo-categoria { { 'cuantico' if categoria == 'militar' ? 'militar' : categoria == 'cuantico' else } }">
+                                    
+                                </span>
+                            </div>
+                            <div class="grid-permisos-items">
+                                { % for permiso in permisos % }
+                                
+                                <div class="item-permiso " data-categoria="{ { categoria|default('') } }" data-permiso="{ { permiso|default('') } }">
+                                    <span class="nombre-permiso"></span>
+                                    <div class="toggle-permiso" 
+                                         onclick="alternarPermiso(this, '{ { categoria|default('') } }', '{ { permiso|default('') } }')"
+                                         data-categoria="{ { categoria|default('') } }"
+                                         data-permiso="{ { permiso|default('') } }"></div>
+                                </div>
+                                
+                            </div>
+                        </div>
+                        { % endfor % }
+                    </div>
+                </div>
+                
+                <!-- Paneles de control militar y cuántico -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                    <!-- Panel de control militar -->
+                    <div class="panel panel-militar">
+                        <div class="encabezado-panel">
+                            <div class="titulo-panel titulo-panel-militar">
+                                <span>🎖️</span>
+                                Control Militar
+                            </div>
+                        </div>
+                        
+                        <div class="botones-accion">
+                            { % if tiene_acceso_militar % }
+                            <button class="btn-accion peligro" onclick="ejecutarComandoMilitar('ver_clasificado')">
+                                Ver Clasificado
+                            </button>
+                            <button class="btn-accion peligro" onclick="ejecutarComandoMilitar('modificar_clasificado')">
+                                Modificar Clasificado
+                            </button>
+                            <button class="btn-accion peligro" onclick="ejecutarComandoMilitar('acceso_emergencia')">
+                                Acceso Emergencia
+                            </button>
+                            <button class="btn-accion peligro" onclick="ejecutarComandoMilitar('protocolo_x')">
+                                Protocolo X
+                            </button>
+                            <button class="btn-accion peligro" onclick="ejecutarComandoMilitar('codigo_rojo')">
+                                Código Rojo
+                            </button>
+                            <button class="btn-accion peligro" onclick="ejecutarComandoMilitar('defcon_control')">
+                                Defcon Control
+                            </button>
+                            { % else % }
+                            <p style="text-align: center; color: var(--advertencia); padding: 20px;">
+                                ⚠️ Acceso Militar Denegado - Se requiere autorización TOP_SECRET
+                            </p>
+                            
+                        </div>
+                    </div>
+                    
+                    <!-- Panel de control cuántico -->
+                    <div class="panel panel-cuantico">
+                        <div class="encabezado-panel">
+                            <div class="titulo-panel titulo-panel-cuantico">
+                                <span>⚛️</span>
+                                Control Cuántico
+                            </div>
+                        </div>
+                        
+                        <div class="botones-accion">
+                            { % if tiene_acceso_cuantico % }
+                            <button class="btn-accion cuantico" onclick="ejecutarOperacionCuantica('acceso')">
+                                Acceso
+                            </button>
+                            <button class="btn-accion cuantico" onclick="ejecutarOperacionCuantica('generar_claves')">
+                                Generar Claves
+                            </button>
+                            <button class="btn-accion cuantico" onclick="ejecutarOperacionCuantica('encriptar')">
+                                Encriptar
+                            </button>
+                            <button class="btn-accion cuantico" onclick="ejecutarOperacionCuantica('desencriptar')">
+                                Desencriptar
+                            </button>
+                            <button class="btn-accion cuantico" onclick="ejecutarOperacionCuantica('tunel')">
+                                Tunel
+                            </button>
+                            <button class="btn-accion cuantico" onclick="ejecutarOperacionCuantica('entrelazar')">
+                                Entrelazar
+                            </button>
+                            <button class="btn-accion cuantico" onclick="ejecutarOperacionCuantica('medir')">
+                                Medir
+                            </button>
+                            <button class="btn-accion cuantico" onclick="ejecutarOperacionCuantica('protocolo_bb84')">
+                                Protocolo Bb84
+                            </button>
+                            { % else % }
+                            <p style="text-align: center; color: var(--advertencia); padding: 20px;">
+                                ⚠️ Acceso Cuántico Denegado - Se requiere autorización especial
+                            </p>
+                            
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Panel de análisis de IA avanzado -->
+                <div class="panel panel-ia">
+                    <div class="analisis-ia">
+                        <div class="cabecera-ia">
+                            <span style="font-size: 30px;">🤖</span>
+                            <span class="titulo-ia">Análisis de Seguridad con IA</span>
+                        </div>
+                        
+                        <!-- Métricas de IA -->
+                        <div class="metricas-ia">
+                            <div class="metrica-ia">
+                                <div class="valor-metrica">{ { analisis_ia.modelos_activos } }</div>
+                                <div class="etiqueta-metrica">Modelos Activos</div>
+                            </div>
+                            <div class="metrica-ia">
+                                <div class="valor-metrica">{ { analisis_ia.precision_promedio } }%</div>
+                                <div class="etiqueta-metrica">Precisión</div>
+                            </div>
+                            <div class="metrica-ia">
+                                <div class="valor-metrica">{ { analisis_ia.anomalias_detectadas } }</div>
+                                <div class="etiqueta-metrica">Anomalías</div>
+                            </div>
+                            <div class="metrica-ia">
+                                <div class="valor-metrica">{ { analisis_ia.tasa_acierto } }%</div>
+                                <div class="etiqueta-metrica">Tasa Acierto</div>
+                            </div>
+                        </div>
+                        
+                        <!-- Medidor de riesgo -->
+                        <div class="medidor-riesgo">
+                            <span>Puntuación de Riesgo:</span>
+                            <div class="barra-riesgo">
+                                <div class="indicador-riesgo" id="indicadorRiesgo" style="left: 5%;"></div>
+                            </div>
+                            <span class="valor-riesgo" id="valorRiesgo" style="color: var(--acento);">5%</span>
+                        </div>
+                        
+                        <!-- Predicciones de comportamiento -->
+                        <div class="predicciones-ia" id="prediccionesIA">
+                            { % for pred in predicciones_comportamiento % }
+                            <div class="prediccion { { 'critica' if pred.severidad == 'critica' else } }">
+                                <span class="tipo-prediccion">{ { pred.tipo } }</span>
+                                <span class="probabilidad-prediccion">{ { pred.probabilidad } }%</span>
+                                <span style="flex: 1; margin-left: 10px;">{ { pred.mensaje } }</span>
+                            </div>
+                            { % endfor % }
+                        </div>
+                        
+                        <!-- Gráfico de actividad -->
+                        <div class="grafico-actividad">
+                            <div class="linea-grafico"></div>
+                            <div class="puntos-grafico" id="puntosGrafico"></div>
+                        </div>
+                        
+                        <!-- Recomendaciones de IA -->
+                        <div class="recomendaciones-ia" id="recomendacionesIA">
+                            <div class="recomendacion">
+                                <span>✅</span>
+                                <span>Sistema operando dentro de parámetros normales</span>
+                            </div>
+                            <div class="recomendacion">
+                                <span>📊</span>
+                                <span>Permisos sincronizados con base de datos</span>
+                            </div>
+                            <div class="recomendacion">
+                                <span>🔐</span>
+                                <span>Encriptación militar FIPS 140-2 activa</span>
+                            </div>
+                            <div class="recomendacion">
+                                <span>💡</span>
+                                <span>Se recomienda revisión mensual de permisos críticos</span>
+                            </div>
+                        </div>
+                        
+                        <div class="botones-accion">
+                            <button class="btn-accion ia" onclick="analisisProfundo()">
+                                🔍 Análisis Profundo
+                            </button>
+                            <button class="btn-accion ia" onclick="entrenarModelo()">
+                                📚 Entrenar Modelo
+                            </button>
+                            <button class="btn-accion" onclick="generarReporte()">
+                                📊 Generar Reporte
+                            </button>
+                            <button class="btn-accion cuantico" onclick="prediccionCuantica()">
+                                ⚛️ Predicción Cuántica
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Panel de información cuántica -->
+                <div class="panel panel-cuantico">
+                    <div class="panel-cuantico-info">
+                        <div class="cabecera-ia">
+                            <span style="font-size: 30px;">⚛️</span>
+                            <span class="titulo-ia titulo-panel-cuantico">Estado Cuántico del Sistema</span>
+                        </div>
+                        
+                        <div class="metricas-ia">
+                            <div class="metrica-ia">
+                                <div class="valor-metrica">{ { analisis_ia.quantum_stability } }%</div>
+                                <div class="etiqueta-metrica">Estabilidad</div>
+                            </div>
+                            <div class="metrica-ia">
+                                <div class="valor-metrica">{ { QUANTUM_ENTANGLEMENT_PAIRS |default( 1024) } }</div>
+                                <div class="etiqueta-metrica">Pares Entrelazados</div>
+                            </div>
+                            <div class="metrica-ia">
+                                <div class="valor-metrica">{ { QUANTUM_CHANNEL_FIDELITY * 100, 1) |default( 95 } }%</div>
+                                <div class="etiqueta-metrica">Fidelidad</div>
+                            </div>
+                            <div class="metrica-ia">
+                                <div class="valor-metrica">BB84</div>
+                                <div class="etiqueta-metrica">Protocolo</div>
+                            </div>
+                        </div>
+                        
+                        <div class="recomendaciones-ia">
+                            <div class="recomendacion">
+                                <span>⚛️</span>
+                                <span>Estado cuántico coherente y estable</span>
+                            </div>
+                            <div class="recomendacion">
+                                <span>🔑</span>
+                                <span>Claves cuánticas generadas: </span>
+                            </div>
+                            <div class="recomendacion">
+                                <span>🛡️</span>
+                                <span>Resistencia post-cuántica habilitada</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal -->
+    <div class="modal" id="modal">
+        <div class="contenido-modal">
+            <h2 id="tituloModal" style="font-family: 'Orbitron', monospace; color: var(--primario); margin-bottom: 20px;">
+                Título del Modal
+            </h2>
+            <div id="cuerpoModal">
+                <!-- Contenido dinámico -->
+            </div>
+            <div class="botones-accion" style="margin-top: 20px;">
+                <button class="btn-accion" onclick="cerrarModal()">Cancelar</button>
+                <button class="btn-accion ia" onclick="confirmarAccion()">Confirmar</button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Datos de usuarios desde PHP
+        const datosUsuarios = ;
+        let usuarioSeleccionado = datosUsuarios[0];
+        
+        // Estado del sistema IA
+        const estadoIA = {
+            modelosActivos: { { analisis_ia.modelos_activos } },
+            precision: { { analisis_ia.precision_promedio } },
+            aprendizajeActivo: true,
+            prediccionesRealizadas: 0,
+            entrenamientos: 0,
+            quantumStability: { { analisis_ia.quantum_stability } }
+        };
+        
+        // Configuración del sistema
+        const configuracionSistema = {
+            encriptacionMilitar: { { 'true' if MILITARY_ENCRYPTION_ENABLED else } },
+            fipsCompliance: { { 'true' if FIPS_140_2_COMPLIANCE else } },
+            quantumResistance: { { 'true' if QUANTUM_RESISTANCE_ENABLED else } },
+            neuralDepth: { { NEURAL_NETWORK_DEPTH |default( 7) } },
+            accesoMilitar: { { 'true' if tiene_acceso_militar else } },
+            accesoCuantico: { { 'true' if tiene_acceso_cuantico else } }
+        };
+        
+        // Crear partículas de IA y cuánticas
+        function crearParticulasIA() {
+            const contenedor = document.getElementById('particulasIA');
+            
+            // Partículas de IA
+            for (let i = 0; i < 30; i++) {
+                const particula = document.createElement('div');
+                particula.className = 'particula-ia';
+                particula.style.left = Math.random() * 100 + '%';
+                particula.style.animationDelay = Math.random() * 20 + 's';
+                particula.style.animationDuration = (15 + Math.random() * 10) + 's';
+                contenedor.appendChild(particula);
+            }
+            
+            // Partículas cuánticas
+            for (let i = 0; i < 15; i++) {
+                const particula = document.createElement('div');
+                particula.className = 'particula-cuantica';
+                particula.style.left = Math.random() * 100 + '%';
+                particula.style.top = Math.random() * 100 + '%';
+                particula.style.animationDelay = Math.random() * 15 + 's';
+                contenedor.appendChild(particula);
+            }
+        }
+        
+        // Crear puntos en el gráfico
+        function crearPuntosGrafico() {
+            const contenedor = document.getElementById('puntosGrafico');
+            if (!contenedor) return;
+            
+            const puntos = [
+                {left: '10%', bottom: '70%'},
+                {left: '30%', bottom: '60%'},
+                {left: '50%', bottom: '50%'},
+                {left: '70%', bottom: '40%'},
+                {left: '90%', bottom: '30%'}
+            ];
+            
+            puntos.forEach((punto, index) => {
+                const puntoEl = document.createElement('div');
+                puntoEl.className = 'punto-grafico';
+                puntoEl.style.left = punto.left;
+                puntoEl.style.bottom = punto.bottom;
+                puntoEl.style.animationDelay = (index * 0.2) + 's';
+                contenedor.appendChild(puntoEl);
+            });
+        }
+        
+        // Seleccionar usuario con análisis IA
+        function seleccionarUsuario(idUsuario) {
+            // Actualizar selección visual
+            document.querySelectorAll('.tarjeta-usuario').forEach(tarjeta => {
+                tarjeta.classList.remove('seleccionada');
+            });
+            
+            const tarjetaSeleccionada = document.querySelector(`[data-usuario-id="${idUsuario}"]`);
+            if (tarjetaSeleccionada) {
+                tarjetaSeleccionada.classList.add('seleccionada');
+            }
+            
+            // Encontrar usuario
+            usuarioSeleccionado = datosUsuarios.find(u => u.id === idUsuario);
+            if (!usuarioSeleccionado) return;
+            
+            // Actualizar información del usuario
+            const iniciales = usuarioSeleccionado.nombre_completo.split(' ').map(n => n[0]).join('');
+            document.getElementById('avatarUsuario').textContent = iniciales;
+            document.getElementById('nombreUsuarioSeleccionado').textContent = usuarioSeleccionado.nombre_completo;
+            document.getElementById('idUsuarioSeleccionado').textContent = usuarioSeleccionado.id;
+            document.getElementById('rolUsuarioSeleccionado').textContent = usuarioSeleccionado.rol;
+            document.getElementById('autorizacionUsuarioSeleccionado').textContent = usuarioSeleccionado.autorizacion;
+            document.getElementById('estadoUsuarioSeleccionado').textContent = usuarioSeleccionado.estado;
+            document.getElementById('iaUsuarioSeleccionado').textContent = usuarioSeleccionado.acceso_ia + '%';
+            document.getElementById('confianzaUsuarioSeleccionado').textContent = usuarioSeleccionado.confianza_ia + '%';
+            
+            // Mostrar/ocultar badges especiales
+            document.getElementById('badgeCuantico').style.display = 
+                usuarioSeleccionado.acceso_cuantico ? 'inline-block' : 'none';
+            document.getElementById('badgeMilitar').style.display = 
+                usuarioSeleccionado.acceso_militar ? 'inline-block' : 'none';
+            document.getElementById('badgePremium').style.display = 
+                usuarioSeleccionado.premium_status === 'premium' ? 'inline-block' : 'none';
+            
+            // Actualizar indicador de riesgo
+            actualizarIndicadorRiesgo(usuarioSeleccionado.puntuacion_riesgo);
+            
+            // Actualizar permisos según el usuario
+            actualizarPermisos();
+            
+            // Análisis automático de IA
+            analizarComportamientoIA(usuarioSeleccionado);
+            
+            // Efecto visual
+            animarSeleccion();
+        }
+        
+        // Actualizar indicador de riesgo con IA
+        function actualizarIndicadorRiesgo(puntuacion) {
+            const indicador = document.getElementById('indicadorRiesgo');
+            const valor = document.getElementById('valorRiesgo');
+            
+            indicador.style.left = puntuacion + '%';
+            valor.textContent = puntuacion + '%';
+            
+            // Cambiar color según el riesgo
+            if (puntuacion < 30) {
+                valor.style.color = 'var(--acento)';
+            } else if (puntuacion < 70) {
+                valor.style.color = 'var(--advertencia)';
+            } else {
+                valor.style.color = 'var(--peligro)';
+            }
+            
+            // Generar recomendaciones basadas en el riesgo
+            generarRecomendacionesIA(puntuacion);
+        }
+        
+        // Analizar comportamiento con IA
+        function analizarComportamientoIA(usuario) {
+            if (usuario.patrones_comportamiento === 'anomalo') {
+                // Actualizar predicciones para usuarios anómalos
+                const prediccionesContainer = document.getElementById('prediccionesIA');
+                let html = `
+                    <div class="prediccion critica">
+                        <span class="tipo-prediccion">⚠️ ALERTA</span>
+                        <span class="probabilidad-prediccion">85%</span>
+                        <span style="flex: 1; margin-left: 10px;">Comportamiento anómalo detectado - Requiere revisión inmediata</span>
+                    </div>
+                `;
+                
+                if (usuario.eventos_seguridad > 5) {
+                    html += `
+                    <div class="prediccion critica">
+                        <span class="tipo-prediccion">SEGURIDAD</span>
+                        <span class="probabilidad-prediccion">${72 + usuario.eventos_seguridad}%</span>
+                        <span style="flex: 1; margin-left: 10px;">Múltiples eventos de seguridad registrados</span>
+                    </div>
+                    `;
+                }
+                
+                prediccionesContainer.innerHTML = html;
+            }
+        }
+        
+        // Generar recomendaciones de IA
+        function generarRecomendacionesIA(riesgo) {
+            const recomendacionesContainer = document.getElementById('recomendacionesIA');
+            let recomendaciones = [];
+            
+            if (riesgo > 50) {
+                recomendaciones = [
+                    {icono: '⚠️', texto: 'Nivel de riesgo elevado detectado'},
+                    {icono: '🔐', texto: 'Se recomienda revisión inmediata de permisos'},
+                    {icono: '📊', texto: 'Activar monitoreo en tiempo real'},
+                    {icono: '🚨', texto: 'Considerar restricción temporal de accesos críticos'}
+                ];
+            } else if (riesgo > 30) {
+                recomendaciones = [
+                    {icono: '📊', texto: 'Riesgo moderado - Monitorear actividad'},
+                    {icono: '🔍', texto: 'Revisar logs de acceso recientes'},
+                    {icono: '📈', texto: 'Análisis predictivo sugiere vigilancia preventiva'}
+                ];
+            } else {
+                recomendaciones = [
+                    {icono: '✅', texto: 'Patrones de comportamiento normales'},
+                    {icono: '🛡️', texto: 'Seguridad óptima confirmada'},
+                    {icono: '📊', texto: 'Métricas dentro de rangos esperados'}
+                ];
+            }
+            
+            // Agregar recomendación de base de datos si está conectada
+            if ({ { 'true' if db } }) {
+                recomendaciones.push({
+                    icono: '💾', 
+                    texto: 'Base de datos sincronizada - { { stats_sistema.connection_info.type |default( 'fallback') } } mode'
+                });
+            }
+            
+            recomendacionesContainer.innerHTML = recomendaciones.map(rec => 
+                `<div class="recomendacion">
+                    <span>${rec.icono}</span>
+                    <span>${rec.texto}</span>
+                </div>`
+            ).join('');
+        }
+        
+        // Alternar permiso con análisis IA y verificación militar/cuántica
+        function alternarPermiso(elemento, categoria, permiso) {
+            // Verificar si el usuario tiene acceso para esta categoría
+            if (categoria === 'militar' && !usuarioSeleccionado.acceso_militar) {
+                mostrarNotificacion('🎖️ Acceso Militar Denegado - Se requiere autorización TOP_SECRET', 'peligro');
+                return;
+            }
+            
+            if (categoria === 'cuantico' && !usuarioSeleccionado.acceso_cuantico) {
+                mostrarNotificacion('⚛️ Acceso Cuántico Denegado - Se requiere autorización especial', 'advertencia');
+                return;
+            }
+            
+            elemento.classList.toggle('activo');
+            
+            // Efecto visual
+            const item = elemento.parentElement;
+            item.style.transform = 'scale(1.1)';
+            setTimeout(() => {
+                item.style.transform = 'scale(1)';
+            }, 200);
+            
+            // Análisis de impacto con IA
+            analizarImpactoPermiso(elemento);
+        }
+        
+        // Analizar impacto del permiso
+        function analizarImpactoPermiso(elemento) {
+            const item = elemento.parentElement;
+            const nombrePermiso = item.querySelector('.nombre-permiso').textContent;
+            const categoria = item.dataset.categoria;
+            const activo = elemento.classList.contains('activo');
+            
+            // Verificar permisos críticos
+            const permisosCriticos = ['eliminar', 'protocolo x', 'codigo rojo', 'defcon control'];
+            
+            if (activo && permisosCriticos.some(p => nombrePermiso.toLowerCase().includes(p))) {
+                mostrarNotificacion('⚠️ IA: Permiso crítico activado - Requiere autorización adicional', 'advertencia');
+                
+                // Log en consola para debug
+                console.log(`Permiso crítico activado: ${categoria}/${nombrePermiso}`);
+            }
+            
+            // Verificar permisos cuánticos
+            if (categoria === 'cuantico' && activo) {
+                mostrarNotificacion('⚛️ Acceso cuántico habilitado - Protocolo de seguridad activado', 'cuantico');
+            }
+            
+            // Verificar permisos militares
+            // Verificar permisos militares
+            if (categoria === 'militar' && activo) {
+                mostrarNotificacion('🎖️ Acceso militar activado - Protocolo de seguridad máximo', 'militar');
+            }
+            
+            // Actualizar métricas de IA
+            estadoIA.prediccionesRealizadas++;
+            actualizarMetricasIA();
+        }
+        
+        // Actualizar permisos según el usuario
+        function actualizarPermisos() {
+            // Resetear todos los permisos
+            document.querySelectorAll('.toggle-permiso').forEach(toggle => {
+                toggle.classList.remove('activo');
+            });
+            
+            // Configurar permisos según el rol
+            if (usuarioSeleccionado.rol.includes('Administrador')) {
+                // Administrador tiene acceso completo
+                document.querySelectorAll('[data-categoria="sistema"] .toggle-permiso').forEach(toggle => {
+                    toggle.classList.add('activo');
+                });
+                document.querySelectorAll('[data-categoria="base_datos"] .toggle-permiso').forEach(toggle => {
+                    toggle.classList.add('activo');
+                });
+                document.querySelectorAll('[data-categoria="ia"] .toggle-permiso').forEach(toggle => {
+                    toggle.classList.add('activo');
+                });
+                document.querySelectorAll('[data-categoria="seguridad"] .toggle-permiso').forEach(toggle => {
+                    toggle.classList.add('activo');
+                });
+            } else if (usuarioSeleccionado.rol.includes('Premium')) {
+                // Usuario premium tiene acceso medio
+                document.querySelectorAll('[data-categoria="sistema"] .toggle-permiso').forEach((toggle, i) => {
+                    if (i < 3) toggle.classList.add('activo');
+                });
+                document.querySelectorAll('[data-categoria="ia"] .toggle-permiso').forEach((toggle, i) => {
+                    if (i < 4) toggle.classList.add('activo');
+                });
+            }
+            
+            // Permisos militares solo si tiene acceso
+            if (usuarioSeleccionado.acceso_militar) {
+                document.querySelectorAll('[data-categoria="militar"] .toggle-permiso').forEach((toggle, i) => {
+                    if (i < 2) toggle.classList.add('activo'); // Solo algunos por defecto
+                });
+            }
+            
+            // Permisos cuánticos solo si tiene acceso
+            if (usuarioSeleccionado.acceso_cuantico) {
+                document.querySelectorAll('[data-categoria="cuantico"] .toggle-permiso').forEach((toggle, i) => {
+                    if (i < 3) toggle.classList.add('activo'); // Solo algunos por defecto
+                });
+            }
+        }
+        
+        // Buscar usuarios con filtro IA
+        function buscarUsuarios() {
+            const busqueda = document.getElementById('inputBusqueda').value.toLowerCase();
+            const tarjetas = document.querySelectorAll('.tarjeta-usuario');
+            
+            tarjetas.forEach(tarjeta => {
+                const nombre = tarjeta.querySelector('.nombre-usuario').textContent.toLowerCase();
+                const detalles = tarjeta.textContent.toLowerCase();
+                
+                if (detalles.includes(busqueda)) {
+                    tarjeta.style.display = 'block';
+                    tarjeta.style.animation = 'aparecer-categoria 0.3s ease';
+                } else {
+                    tarjeta.style.display = 'none';
+                }
+            });
+            
+            // Análisis de búsqueda con IA
+            if (busqueda.length > 3) {
+                estadoIA.prediccionesRealizadas++;
+            }
+        }
+        
+        // Búsqueda inteligente con IA
+        function busquedaIA() {
+            mostrarModal('Búsqueda Inteligente con IA', `
+                <p>La IA está analizando patrones de comportamiento...</p>
+                <div class="cargando" style="margin: 20px auto;"></div>
+                <p style="margin-top: 20px; color: var(--texto-tenue);">
+                    Analizando ${datosUsuarios.length} usuarios con ${estadoIA.modelosActivos} modelos activos
+                </p>
+            `);
+            
+            setTimeout(() => {
+                cerrarModal();
+                
+                // Filtrar usuarios anómalos
+                const usuariosAnomalos = datosUsuarios.filter(u => u.patrones_comportamiento === 'anomalo');
+                
+                if (usuariosAnomalos.length > 0) {
+                    mostrarNotificacion(`🤖 IA: ${usuariosAnomalos.length} usuarios con comportamiento anómalo detectados`, 'ia');
+                    
+                    // Resaltar usuarios anómalos
+                    document.querySelectorAll('.tarjeta-usuario').forEach(tarjeta => {
+                        const usuarioId = tarjeta.dataset.usuarioId;
+                        if (usuariosAnomalos.some(u => u.id === usuarioId)) {
+                            tarjeta.style.borderColor = 'var(--advertencia)';
+                            tarjeta.style.boxShadow = '0 0 20px var(--advertencia)';
+                        }
+                    });
+                } else {
+                    mostrarNotificacion('✅ IA: Todos los usuarios operan dentro de parámetros normales', 'exito');
+                }
+            }, 2000);
+        }
+        
+        // Optimizar permisos con IA
+        function optimizarPermisos() {
+            mostrarNotificacion('🤖 IA: Optimizando permisos basado en análisis predictivo...', 'ia');
+            
+            // Simular análisis de IA
+            const permisosRecomendados = analizarPermisosOptimos(usuarioSeleccionado);
+            
+            setTimeout(() => {
+                aplicarPermisosRecomendados(permisosRecomendados);
+                mostrarNotificacion(`✅ IA: Permisos optimizados - ${permisosRecomendados.cambios} cambios aplicados`, 'exito');
+                estadoIA.prediccionesRealizadas += 10;
+                actualizarMetricasIA();
+            }, 1500);
+        }
+        
+        // Analizar permisos óptimos con IA
+        function analizarPermisosOptimos(usuario) {
+            let cambios = 0;
+            const recomendaciones = {};
+            
+            // Lógica de análisis basada en rol y comportamiento
+            if (usuario.confianza_ia > 80) {
+                // Usuario confiable - más permisos
+                document.querySelectorAll('[data-categoria="sistema"]').forEach((item, i) => {
+                    if (i < 4 && !item.querySelector('.toggle-permiso').classList.contains('activo')) {
+                        item.querySelector('.toggle-permiso').classList.add('activo');
+                        cambios++;
+                    }
+                });
+            } else {
+                // Usuario con riesgo - restringir permisos críticos
+                document.querySelectorAll('.item-permiso.critico .toggle-permiso.activo').forEach(toggle => {
+                    toggle.classList.remove('activo');
+                    cambios++;
+                });
+            }
+            
+            return { cambios, recomendaciones };
+        }
+        
+        // Aplicar permisos recomendados
+        function aplicarPermisosRecomendados(recomendaciones) {
+            // Los permisos ya fueron aplicados en analizarPermisosOptimos
+            // Aquí podrías hacer efectos visuales adicionales
+            document.querySelectorAll('.item-permiso.recomendado-ia').forEach(item => {
+                item.style.animation = 'pulso-ia 1s ease-in-out';
+            });
+        }
+        
+        // Guardar permisos en base de datos
+        function guardarPermisos() {
+            mostrarNotificacion('💾 Guardando permisos en base de datos...', 'info');
+            
+            // Recopilar permisos activos
+            const permisosActivos = {};
+            document.querySelectorAll('.toggle-permiso.activo').forEach(toggle => {
+                const categoria = toggle.dataset.categoria;
+                const permiso = toggle.dataset.permiso;
+                
+                if (!permisosActivos[categoria]) {
+                    permisosActivos[categoria] = [];
+                }
+                permisosActivos[categoria].push(permiso);
+            });
+            
+            // Enviar a servidor
+            fetch('permisos_ia', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `action=guardar_permisos&usuario_id=${usuarioSeleccionado.db_id}&permisos=${JSON.stringify(permisosActivos)}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    mostrarNotificacion('✅ Permisos guardados correctamente en la base de datos', 'exito');
+                } else {
+                    mostrarNotificacion('⚠️ Error al guardar permisos: ' + data.message, 'peligro');
+                }
+            })
+            .catch(error => {
+                mostrarNotificacion('⚠️ Error de conexión con la base de datos', 'peligro');
+                console.error('Error:', error);
+            });
+        }
+        
+        // Análisis profundo con IA
+        function analisisProfundo() {
+            mostrarModal('Análisis Profundo con IA', `
+                <div style="text-align: center;">
+                    <div class="cargando" style="margin: 20px auto;"></div>
+                    <h3 style="color: var(--ia-azul);">Ejecutando análisis profundo...</h3>
+                    <p style="margin-top: 20px;">Modelos en ejecución:</p>
+                    <ul style="list-style: none; padding: 0;">
+                        <li>🧠 Red neuronal profunda (${configuracionSistema.neuralDepth} capas)</li>
+                        <li>📊 Análisis predictivo avanzado</li>
+                        <li>🔍 Detección de anomalías</li>
+                        <li>⚡ Procesamiento cuántico híbrido</li>
+                    </ul>
+                    <div style="margin-top: 20px; padding: 15px; background: rgba(0,180,255,0.1); border-radius: 8px;">
+                        <div style="color: var(--ia-azul);">Progreso: <span id="progresoAnalisis">0</span>%</div>
+                        <div style="width: 100%; height: 20px; background: rgba(0,0,0,0.3); border-radius: 10px; margin-top: 10px; overflow: hidden;">
+                            <div id="barraProgresoAnalisis" style="width: 0%; height: 100%; background: linear-gradient(90deg, var(--ia-azul), var(--ia-purpura)); transition: width 0.3s ease;"></div>
+                        </div>
+                    </div>
+                </div>
+            `);
+            
+            // Simular progreso de análisis
+            let progreso = 0;
+            const intervalo = setInterval(() => {
+                progreso += 5;
+                document.getElementById('progresoAnalisis').textContent = progreso;
+                document.getElementById('barraProgresoAnalisis').style.width = progreso + '%';
+                
+                if (progreso >= 100) {
+                    clearInterval(intervalo);
+                    setTimeout(() => {
+                        cerrarModal();
+                        mostrarResultadosAnalisis();
+                    }, 500);
+                }
+            }, 100);
+        }
+        
+        // Mostrar resultados del análisis
+        function mostrarResultadosAnalisis() {
+            const resultados = {
+                amenazasDetectadas: Math.floor(Math.random() * 3),
+                vulnerabilidades: Math.floor(Math.random() * 5),
+                optimizaciones: Math.floor(Math.random() * 10) + 5,
+                predicciones: Math.floor(Math.random() * 8) + 3
+            };
+            
+            mostrarModal('Resultados del Análisis Profundo', `
+                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin-bottom: 20px;">
+                    <div style="padding: 15px; background: rgba(255,0,68,0.1); border: 1px solid var(--peligro); border-radius: 8px;">
+                        <div style="font-size: 2em; color: var(--peligro); font-weight: 700;">${resultados.amenazasDetectadas}</div>
+                        <div style="color: var(--texto-tenue); text-transform: uppercase; font-size: 0.85em;">Amenazas Detectadas</div>
+                    </div>
+                    <div style="padding: 15px; background: rgba(255,170,0,0.1); border: 1px solid var(--advertencia); border-radius: 8px;">
+                        <div style="font-size: 2em; color: var(--advertencia); font-weight: 700;">${resultados.vulnerabilidades}</div>
+                        <div style="color: var(--texto-tenue); text-transform: uppercase; font-size: 0.85em;">Vulnerabilidades</div>
+                    </div>
+                    <div style="padding: 15px; background: rgba(0,255,136,0.1); border: 1px solid var(--acento); border-radius: 8px;">
+                        <div style="font-size: 2em; color: var(--acento); font-weight: 700;">${resultados.optimizaciones}</div>
+                        <div style="color: var(--texto-tenue); text-transform: uppercase; font-size: 0.85em;">Optimizaciones</div>
+                    </div>
+                    <div style="padding: 15px; background: rgba(0,180,255,0.1); border: 1px solid var(--ia-azul); border-radius: 8px;">
+                        <div style="font-size: 2em; color: var(--ia-azul); font-weight: 700;">${resultados.predicciones}</div>
+                        <div style="color: var(--texto-tenue); text-transform: uppercase; font-size: 0.85em;">Predicciones</div>
+                    </div>
+                </div>
+                <div style="padding: 15px; background: rgba(0,0,0,0.3); border-radius: 8px;">
+                    <h4 style="color: var(--primario); margin-bottom: 10px;">Recomendaciones de IA:</h4>
+                    <ul style="list-style: none; padding: 0;">
+                        <li style="margin: 8px 0;">✅ Implementar autenticación de dos factores para usuarios de alto riesgo</li>
+                        <li style="margin: 8px 0;">📊 Revisar permisos de base de datos cada 30 días</li>
+                        <li style="margin: 8px 0;">🔐 Activar encriptación cuántica para comunicaciones sensibles</li>
+                        <li style="margin: 8px 0;">🤖 Entrenar modelo con nuevos patrones detectados</li>
+                    </ul>
+                </div>
+            `);
+        }
+        
+        // Entrenar modelo de IA
+        function entrenarModelo() {
+            mostrarNotificacion('📚 Iniciando entrenamiento del modelo de IA...', 'ia');
+            
+            estadoIA.entrenamientos++;
+            
+            setTimeout(() => {
+                estadoIA.precision = Math.min(99.9, estadoIA.precision + 0.5);
+                actualizarMetricasIA();
+                mostrarNotificacion(`✅ Entrenamiento completado - Precisión mejorada a ${estadoIA.precision.toFixed(1)}%`, 'exito');
+            }, 3000);
+        }
+        
+        // Generar reporte completo
+        function generarReporte() {
+            mostrarNotificacion('📊 Generando reporte completo del sistema...', 'info');
+            
+            setTimeout(() => {
+                const reporte = {
+                    fecha: new Date().toLocaleString(),
+                    usuarios: datosUsuarios.length,
+                    usuariosActivos: datosUsuarios.filter(u => u.estado === 'active').length,
+                    usuariosSuspendidos: datosUsuarios.filter(u => u.estado === 'suspended').length,
+                    riesgoPromedio: datosUsuarios.reduce((acc, u) => acc + u.puntuacion_riesgo, 0) / datosUsuarios.length,
+                    confianzaPromedio: datosUsuarios.reduce((acc, u) => acc + u.confianza_ia, 0) / datosUsuarios.length,
+                    anomaliasDetectadas: datosUsuarios.filter(u => u.patrones_comportamiento === 'anomalo').length,
+                    prediccionesIA: estadoIA.prediccionesRealizadas,
+                    entrenamientosIA: estadoIA.entrenamientos,
+                    precisionIA: estadoIA.precision,
+                    estabilidadCuantica: estadoIA.quantumStability
+                };
+                
+                console.log('Reporte generado:', reporte);
+                mostrarNotificacion('✅ Reporte generado correctamente - Descargando...', 'exito');
+                
+                // Simular descarga
+                const blob = new Blob([JSON.stringify(reporte, null, 2)], {type: 'application/json'});
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `reporte_guardianIA_${Date.now()}.json`;
+                a.click();
+            }, 2000);
+        }
+        
+        // Predicción cuántica
+        function prediccionCuantica() {
+            if (!configuracionSistema.accesoCuantico) {
+                mostrarNotificacion('⚛️ Acceso cuántico denegado - Se requiere autorización', 'advertencia');
+                return;
+            }
+            
+            mostrarModal('Predicción Cuántica', `
+                <div style="text-align: center;">
+                    <div style="font-size: 60px; margin: 20px 0; animation: rotar-suave 2s linear infinite;">⚛️</div>
+                    <h3 style="color: var(--cuantico);">Ejecutando predicción cuántica...</h3>
+                    <p style="margin-top: 20px; color: var(--texto-tenue);">
+                        Procesando ${1024} qubits entrelazados<br>
+                        Protocolo BB84 activo<br>
+                        Estabilidad: ${estadoIA.quantumStability}%
+                    </p>
+                    <div class="cargando" style="margin: 20px auto;"></div>
+                </div>
+            `);
+            
+            setTimeout(() => {
+                cerrarModal();
+                mostrarNotificacion('⚛️ Predicción cuántica completada - 98.7% de certeza en patrones futuros', 'cuantico');
+            }, 3000);
+        }
+        
+        // Ejecutar comando militar
+        function ejecutarComandoMilitar(comando) {
+            if (!configuracionSistema.accesoMilitar) {
+                mostrarNotificacion('🎖️ Acceso militar denegado', 'peligro');
+                return;
+            }
+            
+            mostrarNotificacion(`🎖️ Ejecutando comando militar: ${comando.toUpperCase()}...`, 'militar');
+            
+            fetch('permisos_ia', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `action=militar_${comando}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    mostrarNotificacion(`✅ ${data.data}`, 'exito');
+                } else {
+                    mostrarNotificacion(`⚠️ ${data.message}`, 'peligro');
+                }
+            })
+            .catch(error => {
+                mostrarNotificacion('⚠️ Error en comunicación militar', 'peligro');
+            });
+        }
+        
+        // Ejecutar operación cuántica
+        function ejecutarOperacionCuantica(operacion) {
+            if (!configuracionSistema.accesoCuantico) {
+                mostrarNotificacion('⚛️ Acceso cuántico denegado', 'advertencia');
+                return;
+            }
+            
+            mostrarNotificacion(`⚛️ Ejecutando operación cuántica: ${operacion.toUpperCase()}...`, 'cuantico');
+            
+            fetch('permisos_ia', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `action=cuantico_${operacion}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    mostrarNotificacion(`✅ Operación cuántica completada`, 'exito');
+                    console.log('Resultado cuántico:', data.data);
+                } else {
+                    mostrarNotificacion(`⚠️ ${data.message}`, 'advertencia');
+                }
+            })
+            .catch(error => {
+                mostrarNotificacion('⚠️ Error en comunicación cuántica', 'advertencia');
+            });
+        }
+        
+        // Sincronizar con base de datos
+        function sincronizarDB() {
+            mostrarNotificacion('🔄 Sincronizando con base de datos...', 'info');
+            
+            setTimeout(() => {
+                mostrarNotificacion('✅ Base de datos sincronizada correctamente', 'exito');
+            }, 2000);
+        }
+        
+        // Exportar permisos
+        function exportarPermisos() {
+            const datosExportar = {
+                fecha: new Date().toISOString(),
+                usuario: usuarioSeleccionado,
+                permisos: {}
+            };
+            
+            // Recopilar permisos activos
+            document.querySelectorAll('.toggle-permiso.activo').forEach(toggle => {
+                const categoria = toggle.dataset.categoria;
+                const permiso = toggle.dataset.permiso;
+                
+                if (!datosExportar.permisos[categoria]) {
+                    datosExportar.permisos[categoria] = [];
+                }
+                datosExportar.permisos[categoria].push(permiso);
+            });
+            
+            // Descargar JSON
+            const blob = new Blob([JSON.stringify(datosExportar, null, 2)], {type: 'application/json'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `permisos_${usuarioSeleccionado.nombre_usuario}_${Date.now()}.json`;
+            a.click();
+            
+            mostrarNotificacion('📤 Permisos exportados correctamente', 'exito');
+        }
+        
+        // Actualizar métricas de IA
+        function actualizarMetricasIA() {
+            // Actualizar valores en la interfaz
+            document.querySelectorAll('.metrica-ia .valor-metrica').forEach((el, index) => {
+                switch(index) {
+                    case 0:
+                        el.textContent = estadoIA.modelosActivos;
+                        break;
+                    case 1:
+                        el.textContent = estadoIA.precision.toFixed(1) + '%';
+                        break;
+                    case 2:
+                        el.textContent = Math.floor(Math.random() * 5);
+                        break;
+                    case 3:
+                        el.textContent = (96.8 + Math.random() * 3).toFixed(1) + '%';
+                        break;
+                }
+            });
+        }
+        
+        // Funciones de usuario
+        function agregarUsuario() {
+            mostrarModal('Agregar Nuevo Usuario', `
+                <form style="display: grid; gap: 15px;">
+                    <input type="text" placeholder="Nombre completo" style="padding: 10px; background: rgba(0,255,204,0.05); border: 1px solid var(--primario); border-radius: 5px; color: var(--texto);">
+                    <input type="text" placeholder="Nombre de usuario" style="padding: 10px; background: rgba(0,255,204,0.05); border: 1px solid var(--primario); border-radius: 5px; color: var(--texto);">
+                    <input type="email" placeholder="Email" style="padding: 10px; background: rgba(0,255,204,0.05); border: 1px solid var(--primario); border-radius: 5px; color: var(--texto);">
+                    <select style="padding: 10px; background: rgba(0,255,204,0.05); border: 1px solid var(--primario); border-radius: 5px; color: var(--texto);">
+                        <option value="basic">Usuario Básico</option>
+                        <option value="premium">Usuario Premium</option>
+                        <option value="admin">Administrador</option>
+                    </select>
+                </form>
+            `);
+        }
+        
+        function editarUsuario() {
+            mostrarModal('Editar Usuario', `
+                <form style="display: grid; gap: 15px;">
+                    <input type="text" value="${usuarioSeleccionado.nombre_completo}" style="padding: 10px; background: rgba(0,255,204,0.05); border: 1px solid var(--primario); border-radius: 5px; color: var(--texto);">
+                    <input type="text" value="${usuarioSeleccionado.nombre_usuario}" style="padding: 10px; background: rgba(0,255,204,0.05); border: 1px solid var(--primario); border-radius: 5px; color: var(--texto);">
+                    <input type="email" value="${usuarioSeleccionado.email}" style="padding: 10px; background: rgba(0,255,204,0.05); border: 1px solid var(--primario); border-radius: 5px; color: var(--texto);">
+                    <select style="padding: 10px; background: rgba(0,255,204,0.05); border: 1px solid var(--primario); border-radius: 5px; color: var(--texto);">
+                        <option value="active" ${usuarioSeleccionado.estado === 'active' ? 'selected' : ''}>Activo</option>
+                        <option value="inactive" ${usuarioSeleccionado.estado === 'inactive' ? 'selected' : ''}>Inactivo</option>
+                        <option value="suspended" ${usuarioSeleccionado.estado === 'suspended' ? 'selected' : ''}>Suspendido</option>
+                    </select>
+                </form>
+            `);
+        }
+        
+        function analizarUsuario() {
+            mostrarNotificacion(`🤖 Analizando usuario ${usuarioSeleccionado.nombre_completo} con IA...`, 'ia');
+            
+            setTimeout(() => {
+                const analisis = {
+                    riesgo: usuarioSeleccionado.puntuacion_riesgo,
+                    confianza: usuarioSeleccionado.confianza_ia,
+                    comportamiento: usuarioSeleccionado.patrones_comportamiento,
+                    prediccion: usuarioSeleccionado.prediccion_amenaza
+                };
+                
+                mostrarModal('Análisis de Usuario con IA', `
+                    <div style="display: grid; gap: 15px;">
+                        <div style="padding: 15px; background: rgba(0,180,255,0.1); border: 1px solid var(--ia-azul); border-radius: 8px;">
+                            <h4 style="color: var(--ia-azul); margin-bottom: 10px;">Análisis Completo</h4>
+                            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;">
+                                <div>Puntuación de Riesgo:</div>
+                                <div style="color: ${analisis.riesgo > 50 ? 'var(--peligro)' : 'var(--acento)'}">${analisis.riesgo}%</div>
+                                <div>Nivel de Confianza:</div>
+                                <div style="color: var(--ia-azul)">${analisis.confianza}%</div>
+                                <div>Comportamiento:</div>
+                                <div style="color: ${analisis.comportamiento === 'anomalo' ? 'var(--advertencia)' : 'var(--acento)'}">${analisis.comportamiento}</div>
+                                <div>Predicción de Amenaza:</div>
+                                <div style="color: ${analisis.prediccion > 50 ? 'var(--peligro)' : 'var(--advertencia)'}">${analisis.prediccion}%</div>
+                            </div>
+                        </div>
+                        <div style="padding: 15px; background: rgba(0,0,0,0.3); border-radius: 8px;">
+                            <h4 style="color: var(--primario); margin-bottom: 10px;">Recomendaciones</h4>
+                            <ul style="list-style: none; padding: 0;">
+                                ${analisis.riesgo > 50 ? '<li>⚠️ Revisar permisos críticos inmediatamente</li>' : ''}
+                                ${analisis.comportamiento === 'anomalo' ? '<li>🔍 Auditoría completa recomendada</li>' : ''}
+                                ${analisis.confianza < 70 ? '<li>📊 Monitoreo continuo activado</li>' : ''}
+                                <li>✅ Análisis completado satisfactoriamente</li>
+                            </ul>
+                        </div>
+                    </div>
+                `);
+            }, 2000);
+        }
+        
+        function analizarCuantico() {
+            if (!configuracionSistema.accesoCuantico) {
+                mostrarNotificacion('⚛️ Acceso cuántico denegado', 'advertencia');
+                return;
+            }
+            
+            mostrarNotificacion('⚛️ Iniciando análisis cuántico...', 'cuantico');
+            
+            setTimeout(() => {
+                mostrarNotificacion('⚛️ Análisis cuántico completado - Estado coherente confirmado', 'exito');
+            }, 3000);
+        }
+        
+        function suspenderUsuario() {
+            mostrarModal('Suspender Usuario', `
+                <p style="color: var(--advertencia); margin-bottom: 20px;">
+                    ⚠️ ¿Está seguro de suspender al usuario <strong>${usuarioSeleccionado.nombre_completo}</strong>?
+                </p>
+                <p style="color: var(--texto-tenue);">
+                    Esta acción revocará todos los permisos y accesos del usuario.
+                </p>
+            `);
+        }
+        
+        function analizarTodos() {
+            mostrarNotificacion('🤖 Analizando todos los usuarios con IA...', 'ia');
+            
+            let analizados = 0;
+            const intervalo = setInterval(() => {
+                analizados++;
+                if (analizados <= datosUsuarios.length) {
+                    mostrarNotificacion(`🤖 Analizando usuario ${analizados}/${datosUsuarios.length}...`, 'ia');
+                } else {
+                    clearInterval(intervalo);
+                    mostrarNotificacion(`✅ Análisis completo - ${datosUsuarios.length} usuarios procesados`, 'exito');
+                }
+            }, 500);
+        }
+        
+        // Efectos visuales
+        function animarSeleccion() {
+            const panel = document.querySelector('.info-usuario-seleccionado');
+            if (panel) {
+                panel.style.animation = 'aparecer-modal 0.3s ease';
+            }
+        }
+        
+        // Sistema de notificaciones
+        function mostrarNotificacion(mensaje, tipo = 'info') {
+            const notificacion = document.createElement('div');
+            notificacion.className = `notificacion ${tipo}`;
+            notificacion.textContent = mensaje;
+            notificacion.style.animation = 'deslizar-entrada 0.3s ease';
+            
+            document.body.appendChild(notificacion);
+            
+            setTimeout(() => {
+                notificacion.style.animation = 'deslizar-salida 0.3s ease';
+                setTimeout(() => {
+                    notificacion.remove();
+                }, 300);
+            }, 4000);
+        }
+        
+        // Sistema de modales
+        function mostrarModal(titulo, contenido) {
+            const modal = document.getElementById('modal');
+            document.getElementById('tituloModal').textContent = titulo;
+            document.getElementById('cuerpoModal').innerHTML = contenido;
+            modal.classList.add('activo');
+        }
+        
+        function cerrarModal() {
+            document.getElementById('modal').classList.remove('activo');
+        }
+        
+        function confirmarAccion() {
+            cerrarModal();
+            mostrarNotificacion('✅ Acción confirmada', 'exito');
+        }
+        
+        // Inicialización
+        document.addEventListener('DOMContentLoaded', function() {
+            // Crear efectos visuales
+            crearParticulasIA();
+            crearPuntosGrafico();
+            
+            // Seleccionar primer usuario
+            if (datosUsuarios.length > 0) {
+                seleccionarUsuario(datosUsuarios[0].id);
+            }
+            
+            // Actualizar métricas iniciales
+            actualizarMetricasIA();
+            
+            // Simular actividad del sistema
+            setInterval(() => {
+                // Actualizar métricas aleatorias
+                const metricas = document.querySelectorAll('.metrica-ia .valor-metrica');
+                if (metricas[2]) {
+                    metricas[2].textContent = Math.floor(Math.random() * 5);
+                }
+            }, 5000);
+            
+            // Mostrar notificación de bienvenida
+            setTimeout(() => {
+                mostrarNotificacion('✅ Sistema GuardianIA v3.0 iniciado correctamente', 'exito');
+                
+                if (configuracionSistema.encriptacionMilitar) {
+                    setTimeout(() => {
+                        mostrarNotificacion('🎖️ Encriptación militar FIPS 140-2 activa', 'militar');
+                    }, 2000);
+                }
+                
+                if (configuracionSistema.quantumResistance) {
+                    setTimeout(() => {
+                        mostrarNotificacion('⚛️ Resistencia post-cuántica habilitada', 'cuantico');
+                    }, 4000);
+                }
+            }, 1000);
+        });
+        
+        // Prevenir cierre accidental
+        window.addEventListener('beforeunload', function(e) {
+            if (document.querySelectorAll('.toggle-permiso.activo').length > 0) {
+                e.preventDefault();
+                e.returnValue = '¿Está seguro de salir? Los cambios no guardados se perderán.';
+            }
+        });
+    </script>
+</body>
+</html>
